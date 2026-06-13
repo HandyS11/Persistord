@@ -88,4 +88,43 @@ public class CoreEntityMappingTests
         Assert.Equal("Ali", entity.Nickname);
         Assert.Equal(joined, entity.JoinedAt);
     }
+
+    [Fact]
+    public void ToChannelEntity_maps_id_guild_name()
+    {
+        var channel = Substitute.For<ITextChannel>();
+        channel.Id.Returns(500UL);
+        channel.GuildId.Returns(100UL);
+        channel.Name.Returns("general");
+
+        var entity = channel.ToChannelEntity();
+
+        Assert.Equal(500UL, entity.Id);
+        Assert.Equal(100UL, entity.GuildId);
+        Assert.Equal("general", entity.Name);
+    }
+
+    [Fact]
+    public void ToChannelEntity_maps_category_parent_for_nested_channel()
+    {
+        var channel = Substitute.For<ITextChannel>(); // ITextChannel : INestedChannel
+        channel.Id.Returns(501UL);
+        channel.GuildId.Returns(100UL);
+        channel.CategoryId.Returns(600UL);
+
+        var entity = channel.ToChannelEntity();
+
+        Assert.Equal(600UL, entity.ParentId);
+    }
+
+    [Fact]
+    public void ToChannelEntity_leaves_parent_null_when_not_nested()
+    {
+        var channel = Substitute.For<IGuildChannel>();
+        channel.Id.Returns(502UL);
+
+        var entity = channel.ToChannelEntity();
+
+        Assert.Null(entity.ParentId);
+    }
 }
