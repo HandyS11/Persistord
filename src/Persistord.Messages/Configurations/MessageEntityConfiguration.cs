@@ -29,13 +29,7 @@ public sealed class MessageEntityConfiguration : IEntityTypeConfiguration<Messag
             builder.HasQueryFilter(m => !m.IsDeleted);
         }
 
-        builder.OwnsMany(m => m.Embeds, e =>
-        {
-            e.OwnsOne(x => x.Footer);
-            e.OwnsOne(x => x.Author);
-            e.OwnsMany(x => x.Fields);
-        });
-
+        builder.HasMany(m => m.Embeds).WithOne().HasForeignKey(e => e.MessageId);
         builder.HasMany(m => m.Attachments).WithOne().HasForeignKey(a => a.MessageId);
         builder.HasMany(m => m.Reactions).WithOne().HasForeignKey(r => r.MessageId);
     }

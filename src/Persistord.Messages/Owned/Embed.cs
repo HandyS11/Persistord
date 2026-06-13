@@ -1,8 +1,14 @@
 namespace Persistord.Messages.Owned;
 
-/// <summary>An owned embed model. Has no key of its own; lives under a message.</summary>
+/// <summary>An embed stored as a relational child of a message.</summary>
 public class Embed
 {
+    /// <summary>Surrogate primary key.</summary>
+    public long Id { get; set; }
+
+    /// <summary>The owning message snowflake id (foreign key).</summary>
+    public ulong MessageId { get; set; }
+
     /// <summary>Embed title.</summary>
     public string? Title { get; set; }
 

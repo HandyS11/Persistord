@@ -20,7 +20,9 @@ public static class ModelBuilderExtensions
     public static ModelBuilder ApplyMessagesModule(this ModelBuilder modelBuilder, bool filterDeleted = true)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
-        modelBuilder.ApplyConfiguration(new MessageEntityConfiguration(filterDeleted));
-        return modelBuilder;
+        return modelBuilder
+            .ApplyConfiguration(new MessageEntityConfiguration(filterDeleted))
+            .ApplyConfiguration(new EmbedEntityConfiguration())
+            .ApplyConfiguration(new AttachmentEntityConfiguration());
     }
 }
