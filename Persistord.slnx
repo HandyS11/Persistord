@@ -4,4 +4,7 @@
     <Project Path="src/Persistord.History/Persistord.History.csproj" />
     <Project Path="src/Persistord.Messages/Persistord.Messages.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Persistord.Core.Tests/Persistord.Core.Tests.csproj" />
+  </Folder>
 </Solution>
