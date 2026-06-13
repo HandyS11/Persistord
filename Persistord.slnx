@@ -1,2 +1,7 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Persistord.Core/Persistord.Core.csproj" />
+    <Project Path="src/Persistord.History/Persistord.History.csproj" />
+    <Project Path="src/Persistord.Messages/Persistord.Messages.csproj" />
+  </Folder>
 </Solution>
