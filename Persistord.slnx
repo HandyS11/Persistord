@@ -8,5 +8,6 @@
     <Project Path="tests/Persistord.Core.Tests/Persistord.Core.Tests.csproj" />
     <Project Path="tests/Persistord.History.Tests/Persistord.History.Tests.csproj" />
     <Project Path="tests/Persistord.Messages.Tests/Persistord.Messages.Tests.csproj" />
+    <Project Path="tests/Persistord.Provider.Tests/Persistord.Provider.Tests.csproj" />
   </Folder>
 </Solution>
