@@ -422,3 +422,8 @@ StrykerOutput/
 
 tmp/
 temp/
+
+# Local sample database files
+*.db
+*.db-shm
+*.db-wal
