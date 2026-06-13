@@ -13,6 +13,7 @@ public static class DiscordNetMappingExtensions
 {
     /// <summary>Maps a Discord.Net guild channel to a <see cref="ChannelEntity"/>.</summary>
     /// <param name="channel">The guild channel to map.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="channel"/> is <see langword="null"/>.</exception>
     public static ChannelEntity ToChannelEntity(this IGuildChannel channel)
     {
         ArgumentNullException.ThrowIfNull(channel);
@@ -27,12 +28,19 @@ public static class DiscordNetMappingExtensions
         };
     }
 
+    /// <summary>
+    /// Maps a guild channel to a <see cref="ChannelType"/>.
+    /// Arm order matters: in Discord.Net 3.x both <see cref="IThreadChannel"/> and <see cref="IVoiceChannel"/>
+    /// extend <see cref="ITextChannel"/>, so more-derived types must be matched before <see cref="ITextChannel"/>
+    /// to avoid silently falling into the Text arm.
+    /// </summary>
+    /// <param name="channel">The guild channel to map.</param>
     private static ChannelType MapChannelType(IGuildChannel channel) => channel switch
     {
         ICategoryChannel => ChannelType.Category,
         IThreadChannel => ChannelType.Thread,
         IVoiceChannel => ChannelType.Voice,
         ITextChannel => ChannelType.Text,
-        _ => ChannelType.Text,
+        _ => ChannelType.Text, // covers forum, stage, and future unknown channel types
     };
 }
