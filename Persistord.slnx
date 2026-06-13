@@ -6,6 +6,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Persistord.Core.Tests/Persistord.Core.Tests.csproj" />
+    <Project Path="tests/Persistord.History.Tests/Persistord.History.Tests.csproj" />
     <Project Path="tests/Persistord.Messages.Tests/Persistord.Messages.Tests.csproj" />
   </Folder>
 </Solution>
