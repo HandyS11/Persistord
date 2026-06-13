@@ -1,0 +1,94 @@
+name: CD
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Resolve Version from Tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          if [[ "$VERSION" == *-* ]]; then
+            echo "IS_PRERELEASE=true" >> "$GITHUB_ENV"
+            echo "Resolved prerelease version $VERSION."
+          else
+            echo "IS_PRERELEASE=false" >> "$GITHUB_ENV"
+            echo "Resolved stable version $VERSION."
+          fi
+
+      - name: Verify Tag Branch
+        run: |
+          git fetch origin main develop
+          if [[ "$IS_PRERELEASE" == "true" ]]; then
+            if git merge-base --is-ancestor "$GITHUB_SHA" origin/main \
+               || git merge-base --is-ancestor "$GITHUB_SHA" origin/develop; then
+              echo "Prerelease tag $GITHUB_REF_NAME verified on main or develop."
+            else
+              echo "::error::Prerelease tag $GITHUB_REF_NAME does not point to a commit on main or develop."
+              exit 1
+            fi
+          elif ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Stable tag $GITHUB_REF_NAME does not point to a commit on main."
+            exit 1
+          else
+            echo "Stable tag $GITHUB_REF_NAME verified on main."
+          fi
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Pack NuGet Package Persistord.Core
+        run: cd ./src/Persistord.Core/ && dotnet pack --configuration Release -p:Version=$VERSION
+
+      - name: Pack NuGet Package Persistord.Messages
+        run: cd ./src/Persistord.Messages/ && dotnet pack --configuration Release -p:Version=$VERSION
+
+      - name: Pack NuGet Package Persistord.History
+        run: cd ./src/Persistord.History/ && dotnet pack --configuration Release -p:Version=$VERSION
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          path: ./**/*.nupkg
+
+      - name: NuGet login (trusted publishing)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: HandyS11
+
+      - name: Publish NuGet Package to NuGet.org
+        run: dotnet nuget push ./**/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Publish NuGet Package to GitHub Packages
+        run: dotnet nuget push ./**/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          shopt -s globstar
+          PRERELEASE_FLAG=""
+          if [[ "$IS_PRERELEASE" == "true" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          gh release create "$GITHUB_REF_NAME" ./**/*.nupkg ./**/*.snupkg --generate-notes $PRERELEASE_FLAG
