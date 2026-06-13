@@ -8,8 +8,8 @@ public class UlongConverterTests
     [Theory]
     [InlineData(0UL)]
     [InlineData(1UL)]
-    [InlineData(175928847299117063UL)]        // a real-shaped snowflake
-    [InlineData(ulong.MaxValue)]               // exercises the high bit
+    [InlineData(175928847299117063UL)] // a real-shaped snowflake
+    [InlineData(ulong.MaxValue)] // exercises the high bit
     public void RoundTrip_IsExact(ulong value)
     {
         var converter = new UlongToLongConverter();

@@ -11,6 +11,9 @@ public sealed class MemberEntityConfiguration : IEntityTypeConfiguration<MemberE
     public void Configure(EntityTypeBuilder<MemberEntity> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        builder.HasKey(m => new { m.GuildId, m.UserId });
+        builder.HasKey(m => new
+        {
+            m.GuildId, m.UserId
+        });
     }
 }

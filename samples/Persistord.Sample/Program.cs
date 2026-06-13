@@ -9,7 +9,10 @@ var options = new DbContextOptionsBuilder<MyBotContext>()
 await using var context = new MyBotContext(options);
 await context.Database.EnsureCreatedAsync();
 
-context.Guilds.Add(new GuildEntity { Id = 1UL, Name = "Sample Guild", OwnerId = 2UL });
+context.Guilds.Add(new GuildEntity
+{
+    Id = 1UL, Name = "Sample Guild", OwnerId = 2UL
+});
 await context.SaveChangesAsync();
 
 Console.WriteLine($"Guilds persisted: {await context.Guilds.CountAsync()}");

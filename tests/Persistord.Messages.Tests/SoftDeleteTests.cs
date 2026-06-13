@@ -13,7 +13,10 @@ public class SoftDeleteTests
         using (connection)
         using (context)
         {
-            context.Messages.Add(new MessageEntity { Id = 1UL, ChannelId = 2UL, AuthorId = 3UL, IsDeleted = true });
+            context.Messages.Add(new MessageEntity
+            {
+                Id = 1UL, ChannelId = 2UL, AuthorId = 3UL, IsDeleted = true
+            });
             context.SaveChanges();
             context.ChangeTracker.Clear();
 
@@ -29,7 +32,10 @@ public class SoftDeleteTests
         using (connection)
         using (context)
         {
-            context.Messages.Add(new MessageEntity { Id = 1UL, ChannelId = 2UL, AuthorId = 3UL, IsDeleted = true });
+            context.Messages.Add(new MessageEntity
+            {
+                Id = 1UL, ChannelId = 2UL, AuthorId = 3UL, IsDeleted = true
+            });
             context.SaveChanges();
             context.ChangeTracker.Clear();
 

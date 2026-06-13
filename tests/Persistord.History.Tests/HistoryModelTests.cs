@@ -13,7 +13,10 @@ public class HistoryModelTests
         using (connection)
         using (context)
         {
-            var message = new MessageEntity { Id = 100UL, ChannelId = 1UL, AuthorId = 2UL, Content = "original" };
+            var message = new MessageEntity
+            {
+                Id = 100UL, ChannelId = 1UL, AuthorId = 2UL, Content = "original"
+            };
             context.Messages.Add(message);
             context.MessageHistory.Add(new MessageHistoryEntity
             {
@@ -55,7 +58,10 @@ public class HistoryModelTests
             var entity = context.Model.FindEntityType(typeof(MessageHistoryEntity))!;
             var index = entity.GetIndexes().Single();
             Assert.Equal(
-                new[] { nameof(MessageHistoryEntity.MessageId), nameof(MessageHistoryEntity.RecordedAt) },
+                new[]
+                {
+                    nameof(MessageHistoryEntity.MessageId), nameof(MessageHistoryEntity.RecordedAt)
+                },
                 index.Properties.Select(p => p.Name).ToArray());
         }
     }

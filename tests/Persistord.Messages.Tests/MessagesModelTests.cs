@@ -20,9 +20,34 @@ public class MessagesModelTests
                 ChannelId = 20UL,
                 AuthorId = 30UL,
                 Content = "hello",
-                Embeds = { new Embed { Title = "t", Fields = { new EmbedField { Name = "n", Value = "v" } } } },
-                Attachments = { new AttachmentEntity { Id = 1UL, FileName = "a.png", Url = "http://x" } },
-                Reactions = { new ReactionEntity { Emoji = "👍", Count = 2 } },
+                Embeds =
+                {
+                    new Embed
+                    {
+                        Title = "t",
+                        Fields =
+                        {
+                            new EmbedField
+                            {
+                                Name = "n", Value = "v"
+                            }
+                        }
+                    }
+                },
+                Attachments =
+                {
+                    new AttachmentEntity
+                    {
+                        Id = 1UL, FileName = "a.png", Url = "http://x"
+                    }
+                },
+                Reactions =
+                {
+                    new ReactionEntity
+                    {
+                        Emoji = "👍", Count = 2
+                    }
+                },
             });
             context.SaveChanges();
             context.ChangeTracker.Clear();

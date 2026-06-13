@@ -12,7 +12,10 @@ public class CoreModelTests
         using (connection)
         using (context)
         {
-            context.Guilds.Add(new GuildEntity { Id = ulong.MaxValue, Name = "g", OwnerId = 1UL });
+            context.Guilds.Add(new GuildEntity
+            {
+                Id = ulong.MaxValue, Name = "g", OwnerId = 1UL
+            });
             context.SaveChanges();
             context.ChangeTracker.Clear();
 
@@ -43,7 +46,10 @@ public class CoreModelTests
         {
             var key = context.Model.FindEntityType(typeof(MemberEntity))!.FindPrimaryKey()!;
             Assert.Equal(
-                new[] { nameof(MemberEntity.GuildId), nameof(MemberEntity.UserId) },
+                new[]
+                {
+                    nameof(MemberEntity.GuildId), nameof(MemberEntity.UserId)
+                },
                 key.Properties.Select(p => p.Name).ToArray());
         }
     }

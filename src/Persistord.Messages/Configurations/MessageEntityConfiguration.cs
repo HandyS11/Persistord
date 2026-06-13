@@ -22,7 +22,10 @@ public sealed class MessageEntityConfiguration : IEntityTypeConfiguration<Messag
         ArgumentNullException.ThrowIfNull(builder);
         builder.HasKey(m => m.Id);
         builder.Property(m => m.Id).ValueGeneratedNever();
-        builder.HasIndex(m => new { m.ChannelId, m.Id });
+        builder.HasIndex(m => new
+        {
+            m.ChannelId, m.Id
+        });
 
         if (_filterDeleted)
         {

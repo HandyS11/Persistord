@@ -37,7 +37,8 @@ public class PostgresRoundTripTests : IClassFixture<PostgresFixture>
         Skip.IfNot(_fixture.Available, "Docker/Postgres not available.");
 
         var connectionString = _fixture.ConnectionString
-            ?? throw new InvalidOperationException("Fixture reported available but has no connection string.");
+                               ?? throw new InvalidOperationException(
+                                   "Fixture reported available but has no connection string.");
 
         var options = new DbContextOptionsBuilder<PgContext>()
             .UseNpgsql(connectionString)
@@ -46,13 +47,22 @@ public class PostgresRoundTripTests : IClassFixture<PostgresFixture>
         await using var context = new PgContext(options);
         await context.Database.EnsureCreatedAsync();
 
-        context.Guilds.Add(new GuildEntity { Id = ulong.MaxValue, Name = "g", OwnerId = 1UL });
+        context.Guilds.Add(new GuildEntity
+        {
+            Id = ulong.MaxValue, Name = "g", OwnerId = 1UL
+        });
         context.Messages.Add(new MessageEntity
         {
             Id = 5UL,
             ChannelId = 6UL,
             AuthorId = 7UL,
-            Embeds = { new Embed { Title = "t" } },
+            Embeds =
+            {
+                new Embed
+                {
+                    Title = "t"
+                }
+            },
         });
         await context.SaveChangesAsync();
         context.ChangeTracker.Clear();

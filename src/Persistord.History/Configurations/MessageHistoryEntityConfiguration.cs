@@ -14,7 +14,10 @@ public sealed class MessageHistoryEntityConfiguration : IEntityTypeConfiguration
         ArgumentNullException.ThrowIfNull(builder);
         builder.HasKey(h => h.Id);
         builder.Property(h => h.Id).ValueGeneratedOnAdd();
-        builder.HasIndex(h => new { h.MessageId, h.RecordedAt });
+        builder.HasIndex(h => new
+        {
+            h.MessageId, h.RecordedAt
+        });
 
         builder.HasOne<MessageEntity>()
             .WithMany()
