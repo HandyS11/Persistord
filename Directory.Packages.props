@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Packages -->
+    <PackageVersion Include="Discord.Net" Version="3.15.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.9" />
   </ItemGroup>
@@ -16,6 +17,7 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.0.0" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+    <PackageVersion Include="NSubstitute" Version="5.1.0" />
     <PackageVersion Include="Xunit.SkippableFact" Version="1.5.23" />
   </ItemGroup>
   <ItemGroup>

@@ -1,0 +1,1 @@
+# Persistord.Adapters.DiscordNet
