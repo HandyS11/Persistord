@@ -1,6 +1,11 @@
 using Discord;
 using Persistord.Core.Entities;
+using Persistord.Messages.Entities;
 using ChannelType = Persistord.Core.Entities.ChannelType;
+using Embed = Persistord.Messages.Owned.Embed;
+using EmbedAuthor = Persistord.Messages.Owned.EmbedAuthor;
+using EmbedField = Persistord.Messages.Owned.EmbedField;
+using EmbedFooter = Persistord.Messages.Owned.EmbedFooter;
 
 namespace Persistord.Adapters.DiscordNet;
 
@@ -106,4 +111,94 @@ public static class DiscordNetMappingExtensions
         ITextChannel => ChannelType.Text,
         _ => ChannelType.Text, // covers forum, stage, and future unknown channel types
     };
+
+    /// <summary>
+    /// Maps a Discord.Net message to a <see cref="MessageEntity"/>, including embeds,
+    /// attachments, and reactions. Soft-delete state and EF-generated keys are left
+    /// at their defaults; child foreign keys are filled by EF from the navigation
+    /// collections on save.
+    /// </summary>
+    /// <param name="message">The Discord.Net message to map.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="message"/> is <see langword="null"/>.</exception>
+    public static MessageEntity ToMessageEntity(this IMessage message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        var entity = new MessageEntity
+        {
+            Id = message.Id,
+            ChannelId = message.Channel.Id,
+            AuthorId = message.Author.Id,
+            Content = message.Content,
+            EditedAt = message.EditedTimestamp,
+        };
+
+        foreach (var attachment in message.Attachments)
+        {
+            entity.Attachments.Add(new AttachmentEntity
+            {
+                Id = attachment.Id,
+                FileName = attachment.Filename ?? string.Empty,
+                Url = attachment.Url ?? string.Empty,
+            });
+        }
+
+        foreach (var (emote, metadata) in message.Reactions)
+        {
+            entity.Reactions.Add(new ReactionEntity
+            {
+                Emoji = emote.Name ?? string.Empty,
+                Count = metadata.ReactionCount,
+            });
+        }
+
+        foreach (var embed in message.Embeds)
+        {
+            entity.Embeds.Add(MapEmbed(embed));
+        }
+
+        return entity;
+    }
+
+    /// <summary>Maps a Discord.Net embed to a Persistord <see cref="Embed"/>.</summary>
+    /// <param name="embed">The Discord.Net embed to map.</param>
+    private static Embed MapEmbed(IEmbed embed)
+    {
+        var mapped = new Embed
+        {
+            Title = embed.Title,
+            Description = embed.Description,
+            Color = embed.Color.HasValue ? unchecked((int)embed.Color.Value.RawValue) : null,
+        };
+
+        if (embed.Footer.HasValue)
+        {
+            mapped.Footer = new EmbedFooter
+            {
+                Text = embed.Footer.Value.Text,
+                IconUrl = embed.Footer.Value.IconUrl,
+            };
+        }
+
+        if (embed.Author.HasValue)
+        {
+            mapped.Author = new EmbedAuthor
+            {
+                Name = embed.Author.Value.Name,
+                Url = embed.Author.Value.Url,
+            };
+        }
+
+        foreach (var field in embed.Fields)
+        {
+            mapped.Fields.Add(new EmbedField
+            {
+                Name = field.Name ?? string.Empty,
+                Value = field.Value ?? string.Empty,
+                Inline = field.Inline,
+            });
+        }
+
+        return mapped;
+    }
 }
