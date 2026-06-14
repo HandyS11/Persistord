@@ -52,6 +52,8 @@ Console.WriteLine($"Messages visible by default: {visible}; including soft-delet
 // The append-only history retains every change in order.
 var history = await db.MessageHistory
     .Where(h => h.MessageId == messageId)
+    // Id is an autoincrement surrogate, so insertion order is chronological.
+    // RecordedAt is intentionally skipped: SQLite cannot ORDER BY a DateTimeOffset column.
     .OrderBy(h => h.Id)
     .ToListAsync();
 Console.WriteLine($"History rows: {history.Count}");
