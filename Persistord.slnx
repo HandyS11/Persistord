@@ -1,6 +1,10 @@
 <Solution>
   <Folder Name="/samples/">
     <Project Path="samples/Persistord.Sample/Persistord.Sample.csproj" />
+    <Project Path="samples/Persistord.Sample.CoreGraph/Persistord.Sample.CoreGraph.csproj" />
+    <Project Path="samples/Persistord.Sample.Messages/Persistord.Sample.Messages.csproj" />
+    <Project Path="samples/Persistord.Sample.History/Persistord.Sample.History.csproj" />
+    <Project Path="samples/Persistord.Sample.DiscordNet/Persistord.Sample.DiscordNet.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Persistord.Adapters.DiscordNet/Persistord.Adapters.DiscordNet.csproj" />

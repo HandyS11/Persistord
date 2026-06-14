@@ -129,8 +129,12 @@ deletion — stays valid.
 - [Usage guide](docs/usage.md) — end-to-end walkthrough, migrations, provider notes.
 - Per-package READMEs: [Core](src/Persistord.Core), [Messages](src/Persistord.Messages),
   [History](src/Persistord.History), [Adapters.DiscordNet](src/Persistord.Adapters.DiscordNet).
-- [`samples/Persistord.Sample`](samples/Persistord.Sample) — runnable example
-  (SQLite, all three modules, generated migration).
+- Samples — runnable, focused walkthroughs (all SQLite):
+  - [`Persistord.Sample`](samples/Persistord.Sample) — minimal quick-start (all three modules, generated migration).
+  - [`Persistord.Sample.CoreGraph`](samples/Persistord.Sample.CoreGraph) — guilds, channels, users, members, roles, and the snowflake round-trip.
+  - [`Persistord.Sample.Messages`](samples/Persistord.Sample.Messages) — messages with embeds, attachments, and reactions.
+  - [`Persistord.Sample.History`](samples/Persistord.Sample.History) — soft-delete, query filters, and append-only history.
+  - [`Persistord.Sample.DiscordNet`](samples/Persistord.Sample.DiscordNet) — `.To*Entity()` mappers driven by faked Discord.Net types.
 
 ## Building
 
