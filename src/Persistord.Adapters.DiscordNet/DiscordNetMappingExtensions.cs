@@ -141,7 +141,7 @@ public static class DiscordNetMappingExtensions
         {
             entity.Reactions.Add(new ReactionEntity
             {
-                Emoji = emote.Name ?? string.Empty, Count = metadata.ReactionCount,
+                Emoji = MapEmote(emote), Count = metadata.ReactionCount,
             });
         }
 
@@ -152,6 +152,17 @@ public static class DiscordNetMappingExtensions
 
         return entity;
     }
+
+    /// <summary>
+    /// Formats a reaction emote for storage: custom emotes become <c>name:id</c> (preserving
+    /// the snowflake), while unicode emoji are stored as their raw <see cref="IEmote.Name"/>.
+    /// </summary>
+    /// <param name="emote">The Discord.Net emote to format.</param>
+    private static string MapEmote(IEmote emote) => emote switch
+    {
+        Emote custom => $"{custom.Name}:{custom.Id}",
+        _ => emote.Name ?? string.Empty,
+    };
 
     /// <summary>
     /// Builds a <see cref="MessageHistoryEntity"/> snapshot of a message for the given

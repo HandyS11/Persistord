@@ -1,4 +1,3 @@
-using System.Reflection;
 using Discord;
 using NSubstitute;
 using Persistord.Adapters.DiscordNet;
@@ -89,6 +88,29 @@ public class MessageMappingTests
         var mapped = Assert.Single(entity.Reactions);
         Assert.Equal("👍", mapped.Emoji);
         Assert.Equal(3, mapped.Count);
+    }
+
+    [Fact]
+    public void ToMessageEntity_maps_custom_emote_reaction_as_name_id()
+    {
+        var emote = Emote.Parse("<:partyblob:806139563617779712>");
+
+        // ReactionMetadata.ReactionCount has an internal setter; use reflection+boxing to set it.
+        object boxedMetadata = new ReactionMetadata();
+        typeof(ReactionMetadata).GetProperty(nameof(ReactionMetadata.ReactionCount))!
+            .SetValue(boxedMetadata, 1);
+        var reactions = new Dictionary<IEmote, ReactionMetadata>
+        {
+            [emote] = (ReactionMetadata)boxedMetadata,
+        };
+
+        var message = MinimalMessage();
+        message.Reactions.Returns(reactions);
+
+        var entity = message.ToMessageEntity();
+
+        var mapped = Assert.Single(entity.Reactions);
+        Assert.Equal("partyblob:806139563617779712", mapped.Emoji);
     }
 
     [Fact]
