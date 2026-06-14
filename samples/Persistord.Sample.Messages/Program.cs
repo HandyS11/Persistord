@@ -21,19 +21,13 @@ var message = new MessageEntity
     Content = "Check out this release!",
 };
 
-#pragma warning disable S1075 // sample URLs — not production paths
-const string footerIconUrl = "https://example/icon.png";
-const string authorUrl = "https://github.com/HandyS11/Persistord";
-const string attachmentUrl = "https://cdn/changelog.txt";
-#pragma warning restore S1075
-
 var embed = new Embed
 {
     Title = "Persistord 1.0",
     Description = "Provider-agnostic Discord persistence.",
     Color = 0x5865F2,
-    Footer = new EmbedFooter { Text = "released today", IconUrl = footerIconUrl },
-    Author = new EmbedAuthor { Name = "Persistord", Url = authorUrl },
+    Footer = new EmbedFooter { Text = "released today", IconUrl = "https://example/icon.png" },
+    Author = new EmbedAuthor { Name = "Persistord", Url = "https://github.com/HandyS11/Persistord" },
 };
 embed.Fields.Add(new EmbedField { Name = "Providers", Value = "any EF Core 10", Inline = true });
 embed.Fields.Add(new EmbedField { Name = "Modules", Value = "Core, Messages, History", Inline = true });
@@ -41,7 +35,7 @@ message.Embeds.Add(embed);
 
 message.Attachments.Add(new AttachmentEntity
 {
-    Id = 9100UL, FileName = "changelog.txt", Url = attachmentUrl,
+    Id = 9100UL, FileName = "changelog.txt", Url = "https://cdn/changelog.txt",
 });
 message.Reactions.Add(new ReactionEntity { Emoji = "🎉", Count = 12 });
 message.Reactions.Add(new ReactionEntity { Emoji = "rocket:806139563617779712", Count = 5 });
