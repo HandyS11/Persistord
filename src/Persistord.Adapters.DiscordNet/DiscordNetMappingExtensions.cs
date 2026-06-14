@@ -43,9 +43,7 @@ public static class DiscordNetMappingExtensions
 
         return new GuildEntity
         {
-            Id = guild.Id,
-            Name = guild.Name ?? string.Empty,
-            OwnerId = guild.OwnerId,
+            Id = guild.Id, Name = guild.Name ?? string.Empty, OwnerId = guild.OwnerId,
         };
     }
 
@@ -58,9 +56,7 @@ public static class DiscordNetMappingExtensions
 
         return new UserEntity
         {
-            Id = user.Id,
-            Username = user.Username ?? string.Empty,
-            GlobalName = user.GlobalName,
+            Id = user.Id, Username = user.Username ?? string.Empty, GlobalName = user.GlobalName,
         };
     }
 
@@ -90,10 +86,7 @@ public static class DiscordNetMappingExtensions
 
         return new MemberEntity
         {
-            GuildId = member.GuildId,
-            UserId = member.Id,
-            Nickname = member.Nickname,
-            JoinedAt = member.JoinedAt,
+            GuildId = member.GuildId, UserId = member.Id, Nickname = member.Nickname, JoinedAt = member.JoinedAt,
         };
     }
 
@@ -148,8 +141,7 @@ public static class DiscordNetMappingExtensions
         {
             entity.Reactions.Add(new ReactionEntity
             {
-                Emoji = emote.Name ?? string.Empty,
-                Count = metadata.ReactionCount,
+                Emoji = emote.Name ?? string.Empty, Count = metadata.ReactionCount,
             });
         }
 
@@ -197,8 +189,7 @@ public static class DiscordNetMappingExtensions
         {
             mapped.Footer = new EmbedFooter
             {
-                Text = embed.Footer.Value.Text,
-                IconUrl = embed.Footer.Value.IconUrl,
+                Text = embed.Footer.Value.Text, IconUrl = embed.Footer.Value.IconUrl,
             };
         }
 
@@ -206,8 +197,7 @@ public static class DiscordNetMappingExtensions
         {
             mapped.Author = new EmbedAuthor
             {
-                Name = embed.Author.Value.Name,
-                Url = embed.Author.Value.Url,
+                Name = embed.Author.Value.Name, Url = embed.Author.Value.Url,
             };
         }
 
@@ -215,9 +205,7 @@ public static class DiscordNetMappingExtensions
         {
             mapped.Fields.Add(new EmbedField
             {
-                Name = field.Name ?? string.Empty,
-                Value = field.Value ?? string.Empty,
-                Inline = field.Inline,
+                Name = field.Name ?? string.Empty, Value = field.Value ?? string.Empty, Inline = field.Inline,
             });
         }
 

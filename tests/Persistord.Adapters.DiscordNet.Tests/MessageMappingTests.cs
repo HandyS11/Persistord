@@ -98,8 +98,16 @@ public class MessageMappingTests
             .WithTitle("T")
             .WithDescription("D")
             .WithColor(new Color(0x00FF00))
-            .WithFooter(f => { f.Text = "foot"; f.IconUrl = "https://i/foot.png"; })
-            .WithAuthor(a => { a.Name = "auth"; a.Url = "https://a"; })
+            .WithFooter(f =>
+            {
+                f.Text = "foot";
+                f.IconUrl = "https://i/foot.png";
+            })
+            .WithAuthor(a =>
+            {
+                a.Name = "auth";
+                a.Url = "https://a";
+            })
             .AddField("fname", "fvalue", inline: true)
             .Build();
 
