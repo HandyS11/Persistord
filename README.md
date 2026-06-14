@@ -1,6 +1,7 @@
 # Persistord
 
 [![CI](https://github.com/HandyS11/Persistord/actions/workflows/CI.yml/badge.svg)](https://github.com/HandyS11/Persistord/actions/workflows/CI.yml)
+[![NuGet](https://img.shields.io/nuget/v/Persistord.svg?label=Persistord)](https://www.nuget.org/packages/Persistord)
 [![NuGet](https://img.shields.io/nuget/v/Persistord.Core.svg?label=Persistord.Core)](https://www.nuget.org/packages/Persistord.Core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -24,7 +25,7 @@ database or Discord library.
 
 | Package | Adds | Depends on |
 | --- | --- | --- |
-| [`Persistord`](src/Persistord) | meta package — bundles Core, Messages, and History | — |
+| [`Persistord`](src/Persistord) | meta package — bundles Core, Messages, and History | Core, Messages, History |
 | [`Persistord.Core`](src/Persistord.Core) | snowflake conversion, base `DiscordDbContext`, core skeleton entities | — |
 | [`Persistord.Messages`](src/Persistord.Messages) | `MessageEntity` (soft-delete), embeds, attachments, reactions | Core |
 | [`Persistord.History`](src/Persistord.History) | append-only `MessageHistoryEntity` with a real FK to messages | Messages |
