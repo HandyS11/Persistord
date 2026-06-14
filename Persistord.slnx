@@ -7,6 +7,7 @@
     <Project Path="samples/Persistord.Sample.DiscordNet/Persistord.Sample.DiscordNet.csproj" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/Persistord/Persistord.csproj" />
     <Project Path="src/Persistord.Adapters.DiscordNet/Persistord.Adapters.DiscordNet.csproj" />
     <Project Path="src/Persistord.Core/Persistord.Core.csproj" />
     <Project Path="src/Persistord.History/Persistord.History.csproj" />

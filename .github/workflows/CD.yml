@@ -64,6 +64,9 @@ jobs:
       - name: Pack NuGet Package Persistord.History
         run: cd ./src/Persistord.History/ && dotnet pack --configuration Release -p:Version=$VERSION
 
+      - name: Pack NuGet Package Persistord
+        run: cd ./src/Persistord/ && dotnet pack --configuration Release -p:Version=$VERSION
+
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v7
         with:
