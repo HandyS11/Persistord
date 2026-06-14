@@ -16,10 +16,16 @@ await db.Database.EnsureCreatedAsync();
 const ulong messageId = 7001UL;
 
 // 1. Create the message and record a "Created" history snapshot.
-db.Messages.Add(new MessageEntity { Id = messageId, ChannelId = 1001UL, AuthorId = 4242UL, Content = "first draft" });
+db.Messages.Add(new MessageEntity
+{
+    Id = messageId, ChannelId = 1001UL, AuthorId = 4242UL, Content = "first draft"
+});
 db.MessageHistory.Add(new MessageHistoryEntity
 {
-    MessageId = messageId, Content = "first draft", RecordedAt = DateTimeOffset.UtcNow, ChangeType = HistoryChangeType.Created,
+    MessageId = messageId,
+    Content = "first draft",
+    RecordedAt = DateTimeOffset.UtcNow,
+    ChangeType = HistoryChangeType.Created,
 });
 await db.SaveChangesAsync();
 
@@ -29,7 +35,10 @@ message.Content = "edited text";
 message.EditedAt = DateTimeOffset.UtcNow;
 db.MessageHistory.Add(new MessageHistoryEntity
 {
-    MessageId = messageId, Content = "edited text", RecordedAt = DateTimeOffset.UtcNow, ChangeType = HistoryChangeType.Edited,
+    MessageId = messageId,
+    Content = "edited text",
+    RecordedAt = DateTimeOffset.UtcNow,
+    ChangeType = HistoryChangeType.Edited,
 });
 await db.SaveChangesAsync();
 
@@ -39,7 +48,10 @@ message.IsDeleted = true;
 message.DeletedAt = DateTimeOffset.UtcNow;
 db.MessageHistory.Add(new MessageHistoryEntity
 {
-    MessageId = messageId, Content = message.Content, RecordedAt = DateTimeOffset.UtcNow, ChangeType = HistoryChangeType.Deleted,
+    MessageId = messageId,
+    Content = message.Content,
+    RecordedAt = DateTimeOffset.UtcNow,
+    ChangeType = HistoryChangeType.Deleted,
 });
 await db.SaveChangesAsync();
 
@@ -52,8 +64,10 @@ Console.WriteLine($"Messages visible by default: {visible}; including soft-delet
 // The append-only history retains every change in order.
 var history = await db.MessageHistory
     .Where(h => h.MessageId == messageId)
-    // Id is an autoincrement surrogate, so insertion order is chronological.
-    // RecordedAt is intentionally skipped: SQLite cannot ORDER BY a DateTimeOffset column.
+    // Order by Id (an autoincrement surrogate); rows are appended in order, so Id order is chronological.
+    // Ordering by RecordedAt would read better, but EF Core's SQLite provider cannot ORDER BY a
+    // DateTimeOffset. Other providers (PostgreSQL, SQL Server) can, and the History module indexes
+    // (MessageId, RecordedAt) for exactly that.
     .OrderBy(h => h.Id)
     .ToListAsync();
 Console.WriteLine($"History rows: {history.Count}");

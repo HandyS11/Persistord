@@ -66,7 +66,10 @@ emote.Name.Returns("🎉");
 object boxedMetadata = new ReactionMetadata();
 typeof(ReactionMetadata).GetProperty(nameof(ReactionMetadata.ReactionCount))!
     .SetValue(boxedMetadata, 7);
-var reactions = new Dictionary<IEmote, ReactionMetadata> { [emote] = (ReactionMetadata)boxedMetadata };
+var reactions = new Dictionary<IEmote, ReactionMetadata>
+{
+    [emote] = (ReactionMetadata)boxedMetadata
+};
 
 var embed = new EmbedBuilder()
     .WithTitle("Persistord 1.0")
@@ -107,7 +110,8 @@ var storedMessage = await db.Messages
 Console.WriteLine($"Mapped guild: {storedGuild.Name} (owner {storedGuild.OwnerId})");
 Console.WriteLine($"Mapped role: {storedRole.Name} permissions={storedRole.Permissions} color=0x{storedRole.Color:X6}");
 Console.WriteLine($"Mapped message {storedMessage.Id}: \"{storedMessage.Content}\"");
-Console.WriteLine($"  embeds={storedMessage.Embeds.Count} attachments={storedMessage.Attachments.Count} reactions={storedMessage.Reactions.Count}");
+Console.WriteLine(
+    $"  embeds={storedMessage.Embeds.Count} attachments={storedMessage.Attachments.Count} reactions={storedMessage.Reactions.Count}");
 Console.WriteLine($"  reaction: {storedMessage.Reactions.Single().Emoji} x{storedMessage.Reactions.Single().Count}");
 Console.WriteLine($"History rows: {await db.MessageHistory.CountAsync()}");
 
@@ -115,4 +119,5 @@ Console.WriteLine($"History rows: {await db.MessageHistory.CountAsync()}");
 var storedChannel = await db.Channels.SingleAsync();
 var storedMember = await db.Members.SingleAsync();
 Console.WriteLine($"Mapped channel: {storedChannel.Name} ({storedChannel.Type})");
-Console.WriteLine($"Mapped member: guild {storedMember.GuildId}, user {storedMember.UserId}, nickname {storedMember.Nickname}");
+Console.WriteLine(
+    $"Mapped member: guild {storedMember.GuildId}, user {storedMember.UserId}, nickname {storedMember.Nickname}");

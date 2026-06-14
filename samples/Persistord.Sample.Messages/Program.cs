@@ -18,10 +18,7 @@ await db.Database.EnsureCreatedAsync();
 // plus relational attachments and reactions.
 var message = new MessageEntity
 {
-    Id = 9001UL,
-    ChannelId = 1001UL,
-    AuthorId = 4242UL,
-    Content = "Check out this release!",
+    Id = 9001UL, ChannelId = 1001UL, AuthorId = 4242UL, Content = "Check out this release!",
 };
 
 var embed = new Embed
@@ -29,19 +26,37 @@ var embed = new Embed
     Title = "Persistord 1.0",
     Description = "Provider-agnostic Discord persistence.",
     Color = 0x5865F2,
-    Footer = new EmbedFooter { Text = "released today", IconUrl = "https://example/icon.png" },
-    Author = new EmbedAuthor { Name = "Persistord", Url = "https://github.com/HandyS11/Persistord" },
+    Footer = new EmbedFooter
+    {
+        Text = "released today", IconUrl = "https://example/icon.png"
+    },
+    Author = new EmbedAuthor
+    {
+        Name = "Persistord", Url = "https://github.com/HandyS11/Persistord"
+    },
 };
-embed.Fields.Add(new EmbedField { Name = "Providers", Value = "any EF Core 10", Inline = true });
-embed.Fields.Add(new EmbedField { Name = "Modules", Value = "Core, Messages, History", Inline = true });
+embed.Fields.Add(new EmbedField
+{
+    Name = "Providers", Value = "any EF Core 10", Inline = true
+});
+embed.Fields.Add(new EmbedField
+{
+    Name = "Modules", Value = "Core, Messages, History", Inline = true
+});
 message.Embeds.Add(embed);
 
 message.Attachments.Add(new AttachmentEntity
 {
     Id = 9100UL, FileName = "changelog.txt", Url = "https://cdn/changelog.txt",
 });
-message.Reactions.Add(new ReactionEntity { Emoji = "🎉", Count = 12 });
-message.Reactions.Add(new ReactionEntity { Emoji = "rocket:806139563617779712", Count = 5 });
+message.Reactions.Add(new ReactionEntity
+{
+    Emoji = "🎉", Count = 12
+});
+message.Reactions.Add(new ReactionEntity
+{
+    Emoji = "rocket:806139563617779712", Count = 5
+});
 
 db.Messages.Add(message);
 await db.SaveChangesAsync();
@@ -55,6 +70,7 @@ var stored = await db.Messages
 
 Console.WriteLine($"Message {stored.Id}: \"{stored.Content}\"");
 var storedEmbed = stored.Embeds.Single();
-Console.WriteLine($"Embed: {storedEmbed.Title} | footer='{storedEmbed.Footer?.Text}' author='{storedEmbed.Author?.Name}' fields={storedEmbed.Fields.Count}");
+Console.WriteLine(
+    $"Embed: {storedEmbed.Title} | footer='{storedEmbed.Footer?.Text}' author='{storedEmbed.Author?.Name}' fields={storedEmbed.Fields.Count}");
 Console.WriteLine($"Attachments: {string.Join(", ", stored.Attachments.Select(a => a.FileName))}");
 Console.WriteLine($"Reactions: {string.Join(", ", stored.Reactions.Select(r => $"{r.Emoji} x{r.Count}"))}");
