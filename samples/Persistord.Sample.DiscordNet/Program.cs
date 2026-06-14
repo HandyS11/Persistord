@@ -44,6 +44,8 @@ attachment.Id.Returns(800UL);
 attachment.Filename.Returns("changelog.txt");
 attachment.Url.Returns("https://cdn/changelog.txt");
 
+// A unicode reaction emoji. The mapper stores unicode emoji as their raw name;
+// a custom guild emote would instead be stored as name then id, preserving its snowflake.
 var emote = Substitute.For<IEmote>();
 emote.Name.Returns("🎉");
 object boxedMetadata = new ReactionMetadata();
