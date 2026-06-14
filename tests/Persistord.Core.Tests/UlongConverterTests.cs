@@ -13,8 +13,8 @@ public class UlongConverterTests
     public void RoundTrip_IsExact(ulong value)
     {
         var converter = new UlongToLongConverter();
-        long stored = (long)converter.ConvertToProvider(value)!;
-        ulong back = (ulong)converter.ConvertFromProvider(stored)!;
+        var stored = (long)converter.ConvertToProvider(value)!;
+        var back = (ulong)converter.ConvertFromProvider(stored)!;
         Assert.Equal(value, back);
     }
 
