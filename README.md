@@ -13,7 +13,7 @@ database provider and the Discord gateway.
 ![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet)
 [![NuGet Version](https://img.shields.io/nuget/v/Persistord.svg)](https://www.nuget.org/packages/Persistord)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![codecov](https://codecov.io/gh/HandyS11/Persistord/graph/badge.svg?token=0u3aaXW3DK)](https://codecov.io/gh/HandyS11/Persistord)
+[![codecov](https://codecov.io/gh/HandyS11/Persistord/branch/develop/graph/badge.svg?token=0u3aaXW3DK)](https://codecov.io/gh/HandyS11/Persistord/tree/develop)
 [![Mutation Score](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2FHandyS11%2FPersistord%2Fdevelop)](https://dashboard.stryker-mutator.io/reports/github.com/HandyS11/Persistord/develop)
 
 [Getting Started](https://handys11.github.io/Persistord/articles/getting-started.html) ·

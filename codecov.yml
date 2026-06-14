@@ -1,0 +1,24 @@
+# Coverage is only uploaded on push to develop (see .github/workflows/Sonar.yml). The
+# README badge points at that branch via the /branch/develop/ path form; Codecov's
+# default branch is set in the dashboard (Settings -> General), not in this file.
+codecov:
+  require_ci_to_pass: true
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: auto
+
+comment:
+  layout: "reach, diff, flags, files"
+  require_changes: false
+
+# Keep parity with sonar.coverage.exclusions in Sonar.yml.
+ignore:
+  - "samples/**"
+  - "tests/**"

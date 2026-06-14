@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Persistord.Core.Tests;
 
@@ -12,6 +13,7 @@ public static class SqliteFixture
         connection.Open();
         var options = new DbContextOptionsBuilder<TestContext>()
             .UseSqlite(connection)
+            .ReplaceService<IModelCacheKeyFactory, UniqueModelCacheKeyFactory>()
             .Options;
         var context = new TestContext(options);
         context.Database.EnsureCreated();

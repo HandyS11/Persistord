@@ -25,7 +25,7 @@ public sealed class TestContext(DbContextOptions<TestContext> options, bool filt
         connection.Open();
         var options = new DbContextOptionsBuilder<TestContext>()
             .UseSqlite(connection)
-            .ReplaceService<IModelCacheKeyFactory, FilterAwareModelCacheKeyFactory>()
+            .ReplaceService<IModelCacheKeyFactory, UniqueModelCacheKeyFactory>()
             .Options;
         var context = new TestContext(options, filterDeleted);
         context.Database.EnsureCreated();

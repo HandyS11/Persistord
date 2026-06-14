@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Persistord.History;
 using Persistord.History.Entities;
 using Persistord.Messages;
@@ -25,7 +26,10 @@ public sealed class TestContext(DbContextOptions<TestContext> options)
     {
         var connection = new SqliteConnection("DataSource=:memory:");
         connection.Open();
-        var options = new DbContextOptionsBuilder<TestContext>().UseSqlite(connection).Options;
+        var options = new DbContextOptionsBuilder<TestContext>()
+            .UseSqlite(connection)
+            .ReplaceService<IModelCacheKeyFactory, UniqueModelCacheKeyFactory>()
+            .Options;
         var context = new TestContext(options);
         context.Database.EnsureCreated();
         return (connection, context);
