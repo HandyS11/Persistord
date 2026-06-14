@@ -12,5 +12,6 @@ namespace Persistord.Core.Tests;
 [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ReplaceService.")]
 internal sealed class UniqueModelCacheKeyFactory : IModelCacheKeyFactory
 {
-    public object Create(DbContext context, bool designTime) => Guid.NewGuid();
+    public object Create(DbContext context, bool designTime) =>
+        (context.GetType(), designTime, Guid.NewGuid());
 }

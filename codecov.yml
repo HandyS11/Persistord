@@ -1,8 +1,7 @@
+# Coverage is only uploaded on push to develop (see .github/workflows/Sonar.yml). The
+# README badge points at that branch via the /branch/develop/ path form; Codecov's
+# default branch is set in the dashboard (Settings -> General), not in this file.
 codecov:
-  # Coverage is only uploaded on push to develop (see .github/workflows/Sonar.yml).
-  # Without this, Codecov tracks the repo's old default branch (main), which has no
-  # data, so the README badge renders "unknown".
-  branch: develop
   require_ci_to_pass: true
 
 coverage:
