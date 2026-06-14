@@ -1,16 +1,27 @@
-# Using Persistord
+# Getting Started
 
-Persistord is a layered set of NuGet packages that model Discord data for EF Core:
+This guide walks through the minimum setup to start persisting Discord data with
+Persistord: install the packages, derive a context, choose a provider, and write
+your first records.
 
-| Package | Adds | Depends on |
-| --- | --- | --- |
-| `Persistord.Core` | snowflake conversion, base `DiscordDbContext`, core skeleton entities | — |
-| `Persistord.Messages` | `MessageEntity` (soft-delete), embeds, attachments, reactions | Core |
-| `Persistord.History` | append-only `MessageHistoryEntity` with a real FK to messages | Messages |
+## Install
 
-The library defines the **model only**. It never calls `UseSqlite`/`UseNpgsql`,
-never talks to Discord, and never references a Discord client library. You compose
-it into your own bot.
+The easiest way is the meta package, which pulls in `Core`, `Messages`, and
+`History` in one reference:
+
+```bash
+# Recommended: the full library-neutral stack in one package
+dotnet add package Persistord
+```
+
+Or install modules individually:
+
+```bash
+dotnet add package Persistord.Core
+dotnet add package Persistord.Messages      # optional: message persistence
+dotnet add package Persistord.History       # optional: requires Messages
+dotnet add package Persistord.Adapters.DiscordNet   # optional: Discord.Net mappers
+```
 
 ## 1. Derive a context
 
@@ -82,23 +93,13 @@ db.MessageHistory.Add(new MessageHistoryEntity
 await db.SaveChangesAsync();
 ```
 
-## 4. Migrations
+## Next steps
 
-Persistord ships the model, not migrations — you generate them against your own
-context and provider:
-
-```bash
-dotnet ef migrations add Initial --project YourBot.csproj
-dotnet ef database update --project YourBot.csproj
-```
-
-See [`samples/Persistord.Sample`](../samples/Persistord.Sample) for a runnable
-end-to-end example (SQLite, all three modules, generated migration).
-
-## Soft-delete & history
-
-Deleting a message sets `IsDeleted`/`DeletedAt` rather than removing the row, and a
-default query filter hides soft-deleted messages (`IgnoreQueryFilters()` to include
-them, or `ApplyMessagesModule(filterDeleted: false)` to disable). Because the row
-survives, `MessageHistoryEntity`'s foreign key to it — including the row logging the
-deletion — stays valid. See the per-package READMEs for details.
+- [Migrations](migrations.md) — generate and apply EF Core migrations against your
+  own context and provider.
+- [Snowflake Conversion](snowflake-conversion.md) — how `ulong ↔ long` storage
+  works and when to care.
+- [Messages](messages.md) — soft-delete, embeds, attachments, reactions, and query
+  filters.
+- [DbContext Lifetime](dbcontext-lifetime.md) — patterns for `IDbContextFactory`
+  in a concurrent bot.

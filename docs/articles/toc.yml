@@ -1,0 +1,32 @@
+- name: Get Started
+  items:
+    - name: Introduction
+      href: introduction.md
+    - name: Getting Started
+      href: getting-started.md
+    - name: Migrations
+      href: migrations.md
+- name: Guides
+  items:
+    - name: Snowflake Conversion
+      href: snowflake-conversion.md
+    - name: Core Graph
+      href: core-graph.md
+    - name: Messages
+      href: messages.md
+    - name: Soft-delete & Query Filters
+      href: soft-delete-and-query-filters.md
+    - name: History
+      href: history.md
+    - name: DbContext Lifetime
+      href: dbcontext-lifetime.md
+    - name: Discord.Net Adapter
+      href: discord-net-adapter.md
+- name: Resources
+  items:
+    - name: Samples
+      href: samples.md
+    - name: Recipes
+      href: recipes.md
+    - name: Troubleshooting
+      href: troubleshooting.md
