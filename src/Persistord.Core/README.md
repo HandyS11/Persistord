@@ -1,5 +1,15 @@
 # Persistord.Core
 
+<div align="center">
+
+[![NuGet](https://img.shields.io/nuget/v/Persistord.Core.svg?label=Persistord.Core)](https://www.nuget.org/packages/Persistord.Core)
+[![Downloads](https://img.shields.io/nuget/dt/Persistord.Core.svg)](https://www.nuget.org/packages/Persistord.Core)
+
+[← Persistord docs](https://github.com/HandyS11/Persistord#readme) ·
+[Documentation site](https://handys11.github.io/Persistord/)
+
+</div>
+
 Foundation package for [Persistord](https://github.com/HandyS11/Persistord), a
 provider-agnostic, Discord-library-agnostic persistence layer for Discord bots
 built on EF Core 10.

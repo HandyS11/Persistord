@@ -1,5 +1,15 @@
 # Persistord.History
 
+<div align="center">
+
+[![NuGet](https://img.shields.io/nuget/v/Persistord.History.svg?label=Persistord.History)](https://www.nuget.org/packages/Persistord.History)
+[![Downloads](https://img.shields.io/nuget/dt/Persistord.History.svg)](https://www.nuget.org/packages/Persistord.History)
+
+[← Persistord docs](https://github.com/HandyS11/Persistord#readme) ·
+[Documentation site](https://handys11.github.io/Persistord/)
+
+</div>
+
 Append-only message-history module for
 [Persistord](https://github.com/HandyS11/Persistord). Depends on
 `Persistord.Messages` (and therefore `Persistord.Core`).

@@ -1,5 +1,15 @@
 # Persistord
 
+<div align="center">
+
+[![NuGet](https://img.shields.io/nuget/v/Persistord.svg?label=Persistord)](https://www.nuget.org/packages/Persistord)
+[![Downloads](https://img.shields.io/nuget/dt/Persistord.svg)](https://www.nuget.org/packages/Persistord)
+
+[← Persistord docs](https://github.com/HandyS11/Persistord#readme) ·
+[Documentation site](https://handys11.github.io/Persistord/)
+
+</div>
+
 The convenience meta package for [Persistord](https://github.com/HandyS11/Persistord).
 
 Installing `Persistord` pulls in the full library-neutral stack in one reference:

@@ -1,5 +1,15 @@
 # Persistord.Adapters.DiscordNet
 
+<div align="center">
+
+[![NuGet](https://img.shields.io/nuget/v/Persistord.Adapters.DiscordNet.svg?label=Persistord.Adapters.DiscordNet)](https://www.nuget.org/packages/Persistord.Adapters.DiscordNet)
+[![Downloads](https://img.shields.io/nuget/dt/Persistord.Adapters.DiscordNet.svg)](https://www.nuget.org/packages/Persistord.Adapters.DiscordNet)
+
+[← Persistord docs](https://github.com/HandyS11/Persistord#readme) ·
+[Documentation site](https://handys11.github.io/Persistord/)
+
+</div>
+
 Opt-in adapter that maps [Discord.Net](https://github.com/discord-net/Discord.Net)
 interface types to [Persistord](https://github.com/HandyS11/Persistord) entities.
 
