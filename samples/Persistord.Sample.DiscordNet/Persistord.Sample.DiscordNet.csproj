@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- Sample uses illustrative hard-coded URLs. -->
+    <NoWarn>$(NoWarn);S1075</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Discord.Net" />
+    <PackageReference Include="NSubstitute" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Persistord.Core/Persistord.Core.csproj" />
+    <ProjectReference Include="../../src/Persistord.Messages/Persistord.Messages.csproj" />
+    <ProjectReference Include="../../src/Persistord.History/Persistord.History.csproj" />
+    <ProjectReference Include="../../src/Persistord.Adapters.DiscordNet/Persistord.Adapters.DiscordNet.csproj" />
+  </ItemGroup>
+</Project>
