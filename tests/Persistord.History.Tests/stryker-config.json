@@ -1,0 +1,17 @@
+{
+  "stryker-config": {
+    "reporters": [
+      "html",
+      "cleartext"
+    ],
+    "project-info": {
+      "name": "github.com/HandyS11/Persistord",
+      "module": "Persistord.History"
+    },
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 0
+    }
+  }
+}
