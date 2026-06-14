@@ -24,6 +24,7 @@ database or Discord library.
 
 | Package | Adds | Depends on |
 | --- | --- | --- |
+| [`Persistord`](src/Persistord) | meta package — bundles Core, Messages, and History | — |
 | [`Persistord.Core`](src/Persistord.Core) | snowflake conversion, base `DiscordDbContext`, core skeleton entities | — |
 | [`Persistord.Messages`](src/Persistord.Messages) | `MessageEntity` (soft-delete), embeds, attachments, reactions | Core |
 | [`Persistord.History`](src/Persistord.History) | append-only `MessageHistoryEntity` with a real FK to messages | Messages |
@@ -35,6 +36,10 @@ DiscordNet adapter **only** if you use Discord.Net.
 ## Install
 
 ```bash
+# Recommended: the full library-neutral stack in one package
+dotnet add package Persistord
+
+# Or install modules individually:
 dotnet add package Persistord.Core
 dotnet add package Persistord.Messages      # optional: message persistence
 dotnet add package Persistord.History       # optional: requires Messages
