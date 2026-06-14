@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <PackageId>Persistord</PackageId>
+    <Description>Meta package that bundles the library-neutral Persistord stack — Core, Messages, and History — in a single reference.</Description>
+    <Authors>HandyS11</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>discord;efcore;persistence;meta</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Persistord.Core/Persistord.Core.csproj" />
+    <ProjectReference Include="../Persistord.Messages/Persistord.Messages.csproj" />
+    <ProjectReference Include="../Persistord.History/Persistord.History.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildProjectDirectory)/README.md" Pack="true" PackagePath="\" Condition="Exists('README.md')" />
+  </ItemGroup>
+</Project>
