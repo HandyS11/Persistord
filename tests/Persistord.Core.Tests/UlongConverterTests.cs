@@ -28,4 +28,19 @@ public class UlongConverterTests
         var back = (ulong?)converter.ConvertFromProvider(stored);
         Assert.Equal(value, back);
     }
+
+    [Fact]
+    public void NullableConverter_expression_handles_both_branches()
+    {
+        // EF's ConvertToProvider/ConvertFromProvider short-circuit nulls before the lambda
+        // runs, so the HasValue branch is only reachable by invoking the raw expression.
+        var converter = new NullableUlongToLongConverter();
+        var toProvider = converter.ConvertToProviderExpression.Compile();
+        var fromProvider = converter.ConvertFromProviderExpression.Compile();
+
+        Assert.Null(toProvider(null));
+        Assert.Equal(42L, toProvider(42UL));
+        Assert.Null(fromProvider(null));
+        Assert.Equal(42UL, fromProvider(42L));
+    }
 }

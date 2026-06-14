@@ -1,0 +1,25 @@
+codecov:
+  # Coverage is only uploaded on push to develop (see .github/workflows/Sonar.yml).
+  # Without this, Codecov tracks the repo's old default branch (main), which has no
+  # data, so the README badge renders "unknown".
+  branch: develop
+  require_ci_to_pass: true
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: auto
+
+comment:
+  layout: "reach, diff, flags, files"
+  require_changes: false
+
+# Keep parity with sonar.coverage.exclusions in Sonar.yml.
+ignore:
+  - "samples/**"
+  - "tests/**"
