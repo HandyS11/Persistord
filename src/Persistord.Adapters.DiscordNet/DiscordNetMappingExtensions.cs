@@ -73,7 +73,7 @@ public static class DiscordNetMappingExtensions
             GuildId = role.Guild.Id,
             Name = role.Name ?? string.Empty,
             Permissions = role.Permissions.RawValue,
-            Color = unchecked((int)role.Color.RawValue),
+            Color = unchecked((int)role.Colors.PrimaryColor.RawValue),
         };
     }
 

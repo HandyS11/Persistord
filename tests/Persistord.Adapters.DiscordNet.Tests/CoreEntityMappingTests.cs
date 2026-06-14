@@ -60,7 +60,7 @@ public class CoreEntityMappingTests
         role.Guild.Returns(guild);
         role.Name.Returns("Admins");
         role.Permissions.Returns(new GuildPermissions(8UL));
-        role.Color.Returns(new Color(0xFF0000));
+        role.Colors.Returns(RoleColors.Solid(new Color(0xFF0000)));
 
         var entity = role.ToRoleEntity();
 

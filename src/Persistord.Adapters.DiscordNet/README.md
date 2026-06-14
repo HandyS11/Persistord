@@ -47,6 +47,6 @@ Because they bind to Discord.Net **interfaces**, the mappers work for both gatew
 
 ## Versioning
 
-This package declares a **minimum** Discord.Net version and no upper bound, so you may
-upgrade Discord.Net freely within its current major version. A new adapter release
-follows each Discord.Net breaking major.
+This package declares a Discord.Net version range of `[3.20.0, 4.0.0)`, so you may
+upgrade Discord.Net freely within its current major version while a breaking `4.0`
+is held back. A new adapter release follows each Discord.Net breaking major.
