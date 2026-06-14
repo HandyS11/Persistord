@@ -1,5 +1,6 @@
 using Discord;
 using Persistord.Core.Entities;
+using Persistord.History.Entities;
 using Persistord.Messages.Entities;
 using ChannelType = Persistord.Core.Entities.ChannelType;
 using Embed = Persistord.Messages.Owned.Embed;
@@ -158,6 +159,27 @@ public static class DiscordNetMappingExtensions
         }
 
         return entity;
+    }
+
+    /// <summary>
+    /// Builds a <see cref="MessageHistoryEntity"/> snapshot of a message for the given
+    /// change type. <see cref="MessageHistoryEntity.RecordedAt"/> is stamped with the
+    /// current UTC time; the surrogate key is left for EF to assign.
+    /// </summary>
+    /// <param name="message">The Discord.Net message to snapshot.</param>
+    /// <param name="changeType">The kind of change this snapshot records.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="message"/> is <see langword="null"/>.</exception>
+    public static MessageHistoryEntity ToHistoryEntity(this IMessage message, HistoryChangeType changeType)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        return new MessageHistoryEntity
+        {
+            MessageId = message.Id,
+            Content = message.Content,
+            RecordedAt = DateTimeOffset.UtcNow,
+            ChangeType = changeType,
+        };
     }
 
     /// <summary>Maps a Discord.Net embed to a Persistord <see cref="Embed"/>.</summary>
