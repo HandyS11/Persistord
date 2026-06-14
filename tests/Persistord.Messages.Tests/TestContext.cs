@@ -6,15 +6,10 @@ using Persistord.Messages.Entities;
 
 namespace Persistord.Messages.Tests;
 
-public sealed class TestContext : Persistord.Core.DiscordDbContext
+public sealed class TestContext(DbContextOptions<TestContext> options, bool filterDeleted = true)
+    : Persistord.Core.DiscordDbContext(options)
 {
-    internal readonly bool FilterDeleted;
-
-    public TestContext(DbContextOptions<TestContext> options, bool filterDeleted = true)
-        : base(options)
-    {
-        FilterDeleted = filterDeleted;
-    }
+    internal readonly bool FilterDeleted = filterDeleted;
 
     public DbSet<MessageEntity> Messages => Set<MessageEntity>();
 

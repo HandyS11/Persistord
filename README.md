@@ -11,6 +11,7 @@ database provider and the Discord gateway.
 [![Docs](https://github.com/HandyS11/Persistord/actions/workflows/Documentation.yml/badge.svg)](https://handys11.github.io/Persistord/)
 
 ![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet)
+[![NuGet Version](https://img.shields.io/nuget/v/Persistord.svg)](https://www.nuget.org/packages/Persistord)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![codecov](https://codecov.io/gh/HandyS11/Persistord/graph/badge.svg?token=0u3aaXW3DK)](https://codecov.io/gh/HandyS11/Persistord)
 [![Mutation Score](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2FHandyS11%2FPersistord%2Fdevelop)](https://dashboard.stryker-mutator.io/reports/github.com/HandyS11/Persistord/develop)
@@ -31,21 +32,15 @@ database or Discord library.
 
 ## Packages
 
-| Package | Version | Downloads | Adds | Depends on |
-| --- | --- | --- | --- | --- |
-| [`Persistord`](src/Persistord) | [![NuGet](https://img.shields.io/nuget/v/Persistord.svg)](https://www.nuget.org/packages/Persistord) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.svg)](https://www.nuget.org/packages/Persistord) | meta package — bundles Core, Messages, and History | Core, Messages, History |
-| [`Persistord.Core`](src/Persistord.Core) | [![NuGet](https://img.shields.io/nuget/v/Persistord.Core.svg)](https://www.nuget.org/packages/Persistord.Core) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Core.svg)](https://www.nuget.org/packages/Persistord.Core) | snowflake conversion, base `DiscordDbContext`, core skeleton entities | — |
-| [`Persistord.Messages`](src/Persistord.Messages) | [![NuGet](https://img.shields.io/nuget/v/Persistord.Messages.svg)](https://www.nuget.org/packages/Persistord.Messages) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Messages.svg)](https://www.nuget.org/packages/Persistord.Messages) | `MessageEntity` (soft-delete), embeds, attachments, reactions | Core |
-| [`Persistord.History`](src/Persistord.History) | [![NuGet](https://img.shields.io/nuget/v/Persistord.History.svg)](https://www.nuget.org/packages/Persistord.History) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.History.svg)](https://www.nuget.org/packages/Persistord.History) | append-only `MessageHistoryEntity` with a real FK to messages | Messages |
-| [`Persistord.Adapters.DiscordNet`](src/Persistord.Adapters.DiscordNet) | [![NuGet](https://img.shields.io/nuget/v/Persistord.Adapters.DiscordNet.svg)](https://www.nuget.org/packages/Persistord.Adapters.DiscordNet) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Adapters.DiscordNet.svg)](https://www.nuget.org/packages/Persistord.Adapters.DiscordNet) | `.To*Entity()` mappers from [Discord.Net](https://github.com/discord-net/Discord.Net) types | Core, Messages, History |
+| Package | Downloads | Adds | Depends on |
+| --- | --- | --- | --- |
+| [`Persistord`](src/Persistord) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.svg)](https://www.nuget.org/packages/Persistord) | meta package — bundles Core, Messages, and History | Core, Messages, History |
+| [`Persistord.Core`](src/Persistord.Core) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Core.svg)](https://www.nuget.org/packages/Persistord.Core) | snowflake conversion, base `DiscordDbContext`, core skeleton entities | — |
+| [`Persistord.Messages`](src/Persistord.Messages) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Messages.svg)](https://www.nuget.org/packages/Persistord.Messages) | `MessageEntity` (soft-delete), embeds, attachments, reactions | Core |
+| [`Persistord.History`](src/Persistord.History) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.History.svg)](https://www.nuget.org/packages/Persistord.History) | append-only `MessageHistoryEntity` with a real FK to messages | Messages |
+| [`Persistord.Adapters.DiscordNet`](src/Persistord.Adapters.DiscordNet) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Adapters.DiscordNet.svg)](https://www.nuget.org/packages/Persistord.Adapters.DiscordNet) | `.To*Entity()` mappers from [Discord.Net](https://github.com/discord-net/Discord.Net) types | Core, Messages, History |
 
 The core packages are independent of any Discord client library. Install the DiscordNet adapter **only** if you use Discord.Net.
-
-## Versions
-
-![skills](https://skillicons.dev/icons?i=cs,dotnet)
-
-Targets **.NET 10** only — EF Core 10 requires `net10.0` (LTS, supported to Nov 2028).
 
 ## Install
 

@@ -5,17 +5,9 @@ using Persistord.Messages.Entities;
 namespace Persistord.Messages.Configurations;
 
 /// <summary>EF Core configuration for <see cref="MessageEntity"/>.</summary>
-public sealed class MessageEntityConfiguration : IEntityTypeConfiguration<MessageEntity>
+/// <param name="filterDeleted">When true, applies a global query filter that hides soft-deleted messages.</param>
+public sealed class MessageEntityConfiguration(bool filterDeleted) : IEntityTypeConfiguration<MessageEntity>
 {
-    private readonly bool _filterDeleted;
-
-    /// <summary>Creates the configuration.</summary>
-    /// <param name="filterDeleted">When true, applies a global query filter that hides soft-deleted messages.</param>
-    public MessageEntityConfiguration(bool filterDeleted)
-    {
-        _filterDeleted = filterDeleted;
-    }
-
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<MessageEntity> builder)
     {
@@ -27,7 +19,7 @@ public sealed class MessageEntityConfiguration : IEntityTypeConfiguration<Messag
             m.ChannelId, m.Id
         });
 
-        if (_filterDeleted)
+        if (filterDeleted)
         {
             builder.HasQueryFilter(m => !m.IsDeleted);
         }

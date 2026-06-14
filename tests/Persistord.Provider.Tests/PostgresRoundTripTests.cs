@@ -9,10 +9,9 @@ using Xunit;
 
 namespace Persistord.Provider.Tests;
 
-public sealed class PgContext : Persistord.Core.DiscordDbContext
+public sealed class PgContext(DbContextOptions<PgContext> options)
+    : Persistord.Core.DiscordDbContext(options)
 {
-    public PgContext(DbContextOptions<PgContext> options) : base(options) { }
-
     public DbSet<MessageEntity> Messages => Set<MessageEntity>();
 
     public DbSet<MessageHistoryEntity> MessageHistory => Set<MessageHistoryEntity>();
@@ -25,18 +24,14 @@ public sealed class PgContext : Persistord.Core.DiscordDbContext
     }
 }
 
-public class PostgresRoundTripTests : IClassFixture<PostgresFixture>
+public class PostgresRoundTripTests(PostgresFixture fixture) : IClassFixture<PostgresFixture>
 {
-    private readonly PostgresFixture _fixture;
-
-    public PostgresRoundTripTests(PostgresFixture fixture) => _fixture = fixture;
-
     [SkippableFact]
     public async Task Snowflake_RoundTrips_OnPostgres()
     {
-        Skip.IfNot(_fixture.Available, "Docker/Postgres not available.");
+        Skip.IfNot(fixture.Available, "Docker/Postgres not available.");
 
-        var connectionString = _fixture.ConnectionString
+        var connectionString = fixture.ConnectionString
                                ?? throw new InvalidOperationException(
                                    "Fixture reported available but has no connection string.");
 

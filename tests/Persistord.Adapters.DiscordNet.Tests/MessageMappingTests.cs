@@ -20,8 +20,8 @@ public class MessageMappingTests
         message.Author.Returns(author);
         message.Content.Returns("hello");
         message.EditedTimestamp.Returns((DateTimeOffset?)null);
-        message.Embeds.Returns(Array.Empty<IEmbed>());
-        message.Attachments.Returns(Array.Empty<IAttachment>());
+        message.Embeds.Returns([]);
+        message.Attachments.Returns([]);
         message.Reactions.Returns(new Dictionary<IEmote, ReactionMetadata>());
         return message;
     }

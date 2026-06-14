@@ -7,13 +7,9 @@ using Persistord.Messages.Entities;
 
 namespace Persistord.History.Tests;
 
-public sealed class TestContext : Persistord.Core.DiscordDbContext
+public sealed class TestContext(DbContextOptions<TestContext> options)
+    : Persistord.Core.DiscordDbContext(options)
 {
-    public TestContext(DbContextOptions<TestContext> options)
-        : base(options)
-    {
-    }
-
     public DbSet<MessageEntity> Messages => Set<MessageEntity>();
 
     public DbSet<MessageHistoryEntity> MessageHistory => Set<MessageHistoryEntity>();
