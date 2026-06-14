@@ -42,7 +42,8 @@ db.Members.Add(new MemberEntity
 });
 db.Roles.Add(new RoleEntity
 {
-    Id = 2000UL, GuildId = guildId, Name = "Admin", Permissions = 8UL, Color = 0xFF0000,
+    Id = 2000UL, GuildId = guildId, Name = "Admin", Permissions = 8UL,
+    Color = 0xFF0000, // Color is a plain int RGB value — not a snowflake, so no ulong conversion applies.
 });
 
 await db.SaveChangesAsync();
