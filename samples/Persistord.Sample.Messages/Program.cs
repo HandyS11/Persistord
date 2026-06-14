@@ -3,6 +3,8 @@ using Persistord.Messages.Entities;
 using Persistord.Messages.Owned;
 using Persistord.Sample.Messages;
 
+// The library never picks a provider; this sample uses SQLite to stay
+// self-contained. Any EF Core 10 relational provider works the same way.
 var options = new DbContextOptionsBuilder<MessagesContext>()
     .UseSqlite("DataSource=messages.db")
     .Options;
@@ -12,7 +14,8 @@ await db.Database.EnsureDeletedAsync();
 await db.Database.EnsureCreatedAsync();
 
 // A message carrying every kind of rich content the Messages module models:
-// an owned embed (with footer, author and fields), relational attachments and reactions.
+// a relational embed (whose Footer and Author are EF-owned value objects, Fields a relational child),
+// plus relational attachments and reactions.
 var message = new MessageEntity
 {
     Id = 9001UL,
