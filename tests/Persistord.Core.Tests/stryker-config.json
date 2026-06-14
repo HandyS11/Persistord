@@ -4,9 +4,9 @@
       "html",
       "cleartext"
     ],
-    "dashboard": {
-      "project": "github.com/HandyS11/Persistord",
-      "module": "default"
+    "project-info": {
+      "name": "github.com/HandyS11/Persistord",
+      "module": "Persistord.Core"
     },
     "thresholds": {
       "high": 80,
