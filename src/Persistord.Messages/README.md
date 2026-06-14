@@ -1,5 +1,15 @@
 # Persistord.Messages
 
+<div align="center">
+
+[![NuGet](https://img.shields.io/nuget/v/Persistord.Messages.svg?label=Persistord.Messages)](https://www.nuget.org/packages/Persistord.Messages)
+[![Downloads](https://img.shields.io/nuget/dt/Persistord.Messages.svg)](https://www.nuget.org/packages/Persistord.Messages)
+
+[← Persistord docs](https://github.com/HandyS11/Persistord#readme) ·
+[Documentation site](https://handys11.github.io/Persistord/)
+
+</div>
+
 Message-persistence module for [Persistord](https://github.com/HandyS11/Persistord).
 Depends on `Persistord.Core`.
 

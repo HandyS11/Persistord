@@ -1,17 +1,25 @@
+<div align="center">
+
 # Persistord
 
+**A provider-agnostic, Discord-library-agnostic persistence layer for Discord bots, built on EF Core 10.**
+Ships the model only — entities, conventions, and module configurations. You stay in control of the
+database provider and the Discord gateway.
+
 [![CI](https://github.com/HandyS11/Persistord/actions/workflows/CI.yml/badge.svg)](https://github.com/HandyS11/Persistord/actions/workflows/CI.yml)
-[![NuGet](https://img.shields.io/nuget/v/Persistord.svg?label=Persistord)](https://www.nuget.org/packages/Persistord)
-[![NuGet](https://img.shields.io/nuget/v/Persistord.Core.svg?label=Persistord.Core)](https://www.nuget.org/packages/Persistord.Core)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CD](https://github.com/HandyS11/Persistord/actions/workflows/CD.yml/badge.svg)](https://github.com/HandyS11/Persistord/actions/workflows/CD.yml)
+[![Docs](https://github.com/HandyS11/Persistord/actions/workflows/Documentation.yml/badge.svg)](https://handys11.github.io/Persistord/)
 
-A **provider-agnostic, Discord-library-agnostic** persistence layer for Discord bots,
-built on EF Core 10.
+![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![codecov](https://codecov.io/gh/HandyS11/Persistord/graph/badge.svg?token=0u3aaXW3DK)](https://codecov.io/gh/HandyS11/Persistord)
+[![Mutation Score](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2FHandyS11%2FPersistord%2Fdevelop)](https://dashboard.stryker-mutator.io/reports/github.com/HandyS11/Persistord/develop)
 
-Persistord ships the **model only** — entities, conventions, and module
-configurations. It never selects a database provider, never talks to Discord, and
-never references a Discord client library. You compose it into your own bot and stay
-in control of the provider and the gateway.
+[Getting Started](https://handys11.github.io/Persistord/articles/getting-started.html) ·
+[Documentation](https://handys11.github.io/Persistord/) ·
+[Samples](samples/README.md)
+
+</div>
 
 ## Why
 
@@ -23,16 +31,21 @@ database or Discord library.
 
 ## Packages
 
-| Package | Adds | Depends on |
-| --- | --- | --- |
-| [`Persistord`](src/Persistord) | meta package — bundles Core, Messages, and History | Core, Messages, History |
-| [`Persistord.Core`](src/Persistord.Core) | snowflake conversion, base `DiscordDbContext`, core skeleton entities | — |
-| [`Persistord.Messages`](src/Persistord.Messages) | `MessageEntity` (soft-delete), embeds, attachments, reactions | Core |
-| [`Persistord.History`](src/Persistord.History) | append-only `MessageHistoryEntity` with a real FK to messages | Messages |
-| [`Persistord.Adapters.DiscordNet`](src/Persistord.Adapters.DiscordNet) | `.To*Entity()` mappers from [Discord.Net](https://github.com/discord-net/Discord.Net) types | Core, Messages, History |
+| Package | Version | Downloads | Adds | Depends on |
+| --- | --- | --- | --- | --- |
+| [`Persistord`](src/Persistord) | [![NuGet](https://img.shields.io/nuget/v/Persistord.svg)](https://www.nuget.org/packages/Persistord) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.svg)](https://www.nuget.org/packages/Persistord) | meta package — bundles Core, Messages, and History | Core, Messages, History |
+| [`Persistord.Core`](src/Persistord.Core) | [![NuGet](https://img.shields.io/nuget/v/Persistord.Core.svg)](https://www.nuget.org/packages/Persistord.Core) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Core.svg)](https://www.nuget.org/packages/Persistord.Core) | snowflake conversion, base `DiscordDbContext`, core skeleton entities | — |
+| [`Persistord.Messages`](src/Persistord.Messages) | [![NuGet](https://img.shields.io/nuget/v/Persistord.Messages.svg)](https://www.nuget.org/packages/Persistord.Messages) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Messages.svg)](https://www.nuget.org/packages/Persistord.Messages) | `MessageEntity` (soft-delete), embeds, attachments, reactions | Core |
+| [`Persistord.History`](src/Persistord.History) | [![NuGet](https://img.shields.io/nuget/v/Persistord.History.svg)](https://www.nuget.org/packages/Persistord.History) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.History.svg)](https://www.nuget.org/packages/Persistord.History) | append-only `MessageHistoryEntity` with a real FK to messages | Messages |
+| [`Persistord.Adapters.DiscordNet`](src/Persistord.Adapters.DiscordNet) | [![NuGet](https://img.shields.io/nuget/v/Persistord.Adapters.DiscordNet.svg)](https://www.nuget.org/packages/Persistord.Adapters.DiscordNet) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Adapters.DiscordNet.svg)](https://www.nuget.org/packages/Persistord.Adapters.DiscordNet) | `.To*Entity()` mappers from [Discord.Net](https://github.com/discord-net/Discord.Net) types | Core, Messages, History |
 
-The core packages are independent of any Discord client library. Install the
-DiscordNet adapter **only** if you use Discord.Net.
+The core packages are independent of any Discord client library. Install the DiscordNet adapter **only** if you use Discord.Net.
+
+## Versions
+
+![skills](https://skillicons.dev/icons?i=cs,dotnet)
+
+Targets **.NET 10** only — EF Core 10 requires `net10.0` (LTS, supported to Nov 2028).
 
 ## Install
 
@@ -132,15 +145,15 @@ deletion — stays valid.
 
 ## Documentation
 
-- [Usage guide](docs/usage.md) — end-to-end walkthrough, migrations, provider notes.
+Full guides and the API reference live on the **[documentation site](https://handys11.github.io/Persistord/)**
+(built with DocFX). Start with [Getting Started](https://handys11.github.io/Persistord/articles/getting-started.html),
+browse the [Guides](https://handys11.github.io/Persistord/articles/snowflake-conversion.html) and
+[Recipes](https://handys11.github.io/Persistord/articles/recipes.html), or check
+[Troubleshooting](https://handys11.github.io/Persistord/articles/troubleshooting.html) if something isn't working.
+
 - Per-package READMEs: [Core](src/Persistord.Core), [Messages](src/Persistord.Messages),
   [History](src/Persistord.History), [Adapters.DiscordNet](src/Persistord.Adapters.DiscordNet).
-- Samples — runnable, focused walkthroughs (all SQLite):
-  - [`Persistord.Sample`](samples/Persistord.Sample) — minimal quick-start (all three modules, generated migration).
-  - [`Persistord.Sample.CoreGraph`](samples/Persistord.Sample.CoreGraph) — guilds, channels, users, members, roles, and the snowflake round-trip.
-  - [`Persistord.Sample.Messages`](samples/Persistord.Sample.Messages) — messages with embeds, attachments, and reactions.
-  - [`Persistord.Sample.History`](samples/Persistord.Sample.History) — soft-delete, query filters, and append-only history.
-  - [`Persistord.Sample.DiscordNet`](samples/Persistord.Sample.DiscordNet) — `.To*Entity()` mappers driven by faked Discord.Net types.
+- Samples — runnable, focused walkthroughs (all SQLite): [`samples/`](samples/README.md).
 
 ## Building
 
