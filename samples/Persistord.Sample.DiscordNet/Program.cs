@@ -35,6 +35,21 @@ role.Name.Returns("Admin");
 role.Permissions.Returns(new GuildPermissions(8UL));
 role.Colors.Returns(RoleColors.Solid(new Color(0xFF0000)));
 
+// A faked guild text channel for the channel mapper. ITextChannel implements
+// INestedChannel, so the mapper reads CategoryId (left unset here -> null ParentId)
+// and resolves the channel kind to ChannelType.Text.
+var textChannel = Substitute.For<ITextChannel>();
+textChannel.Id.Returns(500UL);
+textChannel.GuildId.Returns(100UL);
+textChannel.Name.Returns("general");
+
+// A faked guild member for the member mapper, linking user 200 to guild 100.
+var member = Substitute.For<IGuildUser>();
+member.GuildId.Returns(100UL);
+member.Id.Returns(200UL);
+member.Nickname.Returns("Boss");
+member.JoinedAt.Returns(new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero));
+
 // Build a faked message carrying an attachment, a reaction and an embed.
 var channel = Substitute.For<IMessageChannel>();
 channel.Id.Returns(500UL);
@@ -76,6 +91,8 @@ message.Embeds.Returns([embed]);
 db.Guilds.Add(guild.ToGuildEntity());
 db.Users.Add(user.ToUserEntity());
 db.Roles.Add(role.ToRoleEntity());
+db.Channels.Add(textChannel.ToChannelEntity());
+db.Members.Add(member.ToMemberEntity());
 db.Messages.Add(message.ToMessageEntity());
 db.MessageHistory.Add(message.ToHistoryEntity(HistoryChangeType.Created));
 await db.SaveChangesAsync();
@@ -93,3 +110,9 @@ Console.WriteLine($"Mapped message {storedMessage.Id}: \"{storedMessage.Content}
 Console.WriteLine($"  embeds={storedMessage.Embeds.Count} attachments={storedMessage.Attachments.Count} reactions={storedMessage.Reactions.Count}");
 Console.WriteLine($"  reaction: {storedMessage.Reactions.Single().Emoji} x{storedMessage.Reactions.Single().Count}");
 Console.WriteLine($"History rows: {await db.MessageHistory.CountAsync()}");
+
+// These two exercise the channel and member mappers (ToChannelEntity / ToMemberEntity).
+var storedChannel = await db.Channels.SingleAsync();
+var storedMember = await db.Members.SingleAsync();
+Console.WriteLine($"Mapped channel: {storedChannel.Name} ({storedChannel.Type})");
+Console.WriteLine($"Mapped member: guild {storedMember.GuildId}, user {storedMember.UserId}, nickname {storedMember.Nickname}");
