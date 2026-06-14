@@ -3,6 +3,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <IncludeBuildOutput>false</IncludeBuildOutput>
+    <!-- Meta package ships no assemblies, so there are no PDBs; skip the (empty) symbol
+         package that NuGet.org rejects with "does not contain any symbol (.pdb) files". -->
+    <IncludeSymbols>false</IncludeSymbols>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
     <PackageId>Persistord</PackageId>
     <Description>Meta package that bundles the library-neutral Persistord stack — Core, Messages, and History — in a single reference.</Description>
