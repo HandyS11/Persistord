@@ -10,15 +10,10 @@ namespace Persistord.Core;
 /// module configurations in <c>OnModelCreating</c>. The library never selects a
 /// provider; the consumer calls <c>UseSqlite</c>/<c>UseNpgsql</c>/etc.
 /// </summary>
-public abstract class DiscordDbContext : DbContext
+/// <remarks>Initializes the context with the given options.</remarks>
+/// <param name="options">The context options supplied by the consumer.</param>
+public abstract class DiscordDbContext(DbContextOptions options) : DbContext(options)
 {
-    /// <summary>Initializes the context with the given options.</summary>
-    /// <param name="options">The context options supplied by the consumer.</param>
-    protected DiscordDbContext(DbContextOptions options)
-        : base(options)
-    {
-    }
-
     /// <summary>Persisted guilds.</summary>
     public DbSet<GuildEntity> Guilds => Set<GuildEntity>();
 
