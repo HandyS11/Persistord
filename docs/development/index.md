@@ -28,15 +28,20 @@ after cleanup, so run this locally before pushing.
 ## Mutation Testing (Local)
 
 [Stryker.NET](https://stryker-mutator.io/docs/stryker-net/introduction/) is available
-as a local tool. After restoring tools, run it from any test project directory:
+as a local tool. After restoring tools, run it from a test project directory:
 
 ```bash
 dotnet tool restore
 cd tests/Persistord.Core.Tests
-dotnet stryker --project Persistord.Core.csproj --reporter cleartext
+dotnet stryker --config-file stryker-config.json --project Persistord.Core.csproj --reporter cleartext
 ```
 
-Replace the `--project` value to target a different module (e.g. `Persistord.Messages.csproj`).
+Replace `tests/Persistord.Core.Tests` and `--project Persistord.Core.csproj` to target a
+different module (e.g. `tests/Persistord.Messages.Tests` / `Persistord.Messages.csproj`).
+Each library test project contains its own `stryker-config.json`.
+
+The **full mutation suite** runs weekly (Mondays 03:00 UTC) and on manual dispatch in CI
+via the Mutation workflow (`.github/workflows/Mutation.yml`).
 
 ## CI
 
@@ -46,6 +51,15 @@ pull requests. It builds and tests on both **Linux** and **Windows**:
 - `dotnet restore` → `dotnet build --configuration Release` → `dotnet test`
 - Formatting check (ReSharper, Linux only) — fails if any diff is produced
 - Provider integration tests run as a separate job on Linux
+
+### Quality analysis
+
+The Sonar workflow (`.github/workflows/Sonar.yml`) runs on every push to `develop` and
+performs:
+
+- **SonarQube analysis** — static analysis and code-smell reporting.
+- **Codecov coverage upload** — line and branch coverage from the `XPlat Code Coverage`
+  collector, uploaded via `codecov/codecov-action`.
 
 ## Docs (This Site)
 

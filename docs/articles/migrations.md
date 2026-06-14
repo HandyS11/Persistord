@@ -19,5 +19,5 @@ in `OnModelCreating` (`ApplyMessagesModule()`, `ApplyHistoryModule()`).
 
 ## Runnable example
 
-See [`samples/Persistord.Sample`](../../samples/Persistord.Sample) for a runnable
-end-to-end example (SQLite, all three modules, generated migration).
+See the [Samples](samples.md) article for a runnable end-to-end example (SQLite,
+all three modules, generated migration).
