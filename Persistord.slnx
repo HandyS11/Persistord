@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/samples/">
     <Project Path="samples/Persistord.Sample/Persistord.Sample.csproj" />
+    <Project Path="samples/Persistord.Sample.CoreGraph/Persistord.Sample.CoreGraph.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Persistord.Adapters.DiscordNet/Persistord.Adapters.DiscordNet.csproj" />
