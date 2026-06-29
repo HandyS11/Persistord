@@ -454,6 +454,7 @@ dotnet_diagnostic.CA1515.severity = none # Application API means internal classe
 dotnet_diagnostic.CS1591.severity = none # Missing XML comment for publicly visible type or member
 dotnet_diagnostic.CA2000.severity = none # Using statement required for IDisposable
 dotnet_diagnostic.CA2007.severity = none # Consider calling ConfigureAwait on the awaited task
+dotnet_diagnostic.VSTHRD103.severity = none # Add synchronously blocks, await AddAsync — false positive: EF Core's DbSet.Add is the correct sync API, AddAsync only exists for DB-hitting value generators (HiLo), so it is unneeded for entities with explicit IDs
 
 dotnet_diagnostic.IDE1006.severity = none # Naming rule for test classes
 
