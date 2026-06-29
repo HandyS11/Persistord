@@ -1,7 +1,5 @@
-using System.Collections.Immutable;
 using Discord;
 using NSubstitute;
-using Persistord.Adapters.DiscordNet;
 using Xunit;
 
 namespace Persistord.Adapters.DiscordNet.Tests;
@@ -90,7 +88,7 @@ public class NullFallbackTests
         embed.Color.Returns((Color?)null);
         embed.Footer.Returns((EmbedFooter?)null);
         embed.Author.Returns((EmbedAuthor?)null);
-        embed.Fields.Returns(ImmutableArray.Create(default(EmbedField)));
+        embed.Fields.Returns([default]);
 
         var message = MessageStub();
         message.Embeds.Returns([embed]);

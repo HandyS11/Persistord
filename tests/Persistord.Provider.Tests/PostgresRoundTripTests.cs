@@ -42,11 +42,11 @@ public class PostgresRoundTripTests(PostgresFixture fixture) : IClassFixture<Pos
         await using var context = new PgContext(options);
         await context.Database.EnsureCreatedAsync();
 
-        context.Guilds.Add(new GuildEntity
+        await context.Guilds.AddAsync(new GuildEntity
         {
             Id = ulong.MaxValue, Name = "g", OwnerId = 1UL
         });
-        context.Messages.Add(new MessageEntity
+        await context.Messages.AddAsync(new MessageEntity
         {
             Id = 5UL,
             ChannelId = 6UL,
