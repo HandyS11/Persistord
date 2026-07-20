@@ -9,3 +9,12 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      # These are the minimum EF Core versions our published packages declare, not the
+      # versions we test against. Raising them forces every consumer onto a newer EF and
+      # breaks anyone pinned lower (CS1705), so they must only ever move as a deliberate,
+      # documented decision. Latest-EF coverage still happens automatically: test and
+      # sample projects reference Sqlite/Npgsql, which Dependabot does update and which
+      # pull EF Core in transitively at their own version.
+      - dependency-name: "Microsoft.EntityFrameworkCore"
+      - dependency-name: "Microsoft.EntityFrameworkCore.Relational"
