@@ -3,10 +3,20 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Packages -->
+    <!-- Packages.
+
+         These are the versions baked into the shipped nupkgs, so they are floors, not
+         pins: NuGet resolves a range to its LOWEST satisfying version, which means the
+         published assemblies are compiled against EF Core 10.0.0 and load fine on any
+         10.0.x a consumer happens to resolve. Bumping these floors is a BREAKING change
+         for consumers — it forces them onto the newer EF and, because their copy of our
+         assembly then binds to a version they may not have, produces CS1705. Dependabot
+         is configured to leave them alone (see .github/dependabot.yml); test and sample
+         projects pull EF transitively via Sqlite/Npgsql, so CI still exercises latest.
+         Raise the floor only deliberately, when we start using a newer EF API. -->
     <PackageVersion Include="Discord.Net" Version="[3.20.1, 4.0.0)" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="[10.0.0, 11.0.0)" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="[10.0.0, 11.0.0)" />
   </ItemGroup>
   <ItemGroup>
     <!-- Test + sample -->
