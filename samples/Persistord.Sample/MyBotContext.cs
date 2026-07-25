@@ -8,10 +8,8 @@ using Persistord.Messages.Entities;
 namespace Persistord.Sample;
 
 /// <summary>Example derived context wiring all three Persistord modules.</summary>
-public sealed class MyBotContext : DiscordDbContext
+public sealed class MyBotContext(DbContextOptions<MyBotContext> options) : DiscordDbContext(options)
 {
-    public MyBotContext(DbContextOptions<MyBotContext> options) : base(options) { }
-
     public DbSet<MessageEntity> Messages => Set<MessageEntity>();
 
     public DbSet<MessageHistoryEntity> MessageHistory => Set<MessageHistoryEntity>();

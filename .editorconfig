@@ -467,7 +467,10 @@ dotnet_diagnostic.xUnit1044.severity = none # Object might be serializable (bull
 dotnet_diagnostic.xUnit1045.severity = none # Object might be serializable (bullshit)
 
 [samples/**]
-generated_code = true
+# NB: samples are hand-written, so they are deliberately not marked `generated_code = true`.
+# That flag switches off the nullable context (see CS8669), which silently disables null-safety
+# analysis in the very code consumers copy from — and makes every `!` a no-op that trips S8970.
+dotnet_diagnostic.CA1515.severity = none # Samples model what a consumer writes; public types are intentional
 dotnet_diagnostic.CA2007.severity = none # ConfigureAwait not required in console-app entry points
 dotnet_diagnostic.CS1591.severity = none # XML docs not required in sample apps
 
