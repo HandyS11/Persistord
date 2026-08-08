@@ -9,6 +9,15 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      # One PR for every NuGet update instead of one per package.
+      nuget:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+          - "major"
     ignore:
       # These are the minimum EF Core versions our published packages declare, not the
       # versions we test against. Raising them forces every consumer onto a newer EF and
@@ -18,3 +27,17 @@ updates:
       # pull EF Core in transitively at their own version.
       - dependency-name: "Microsoft.EntityFrameworkCore"
       - dependency-name: "Microsoft.EntityFrameworkCore.Relational"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      # One PR for every GitHub Actions update instead of one per action.
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+          - "major"
