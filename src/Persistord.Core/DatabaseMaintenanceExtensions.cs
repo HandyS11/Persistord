@@ -9,14 +9,6 @@ namespace Persistord.Core;
 /// <summary>Whole-database helpers for tests and local tooling.</summary>
 public static class DatabaseMaintenanceExtensions
 {
-#pragma warning disable S3011 // Deliberate: reaches our own private generic helpers to close them over each entity type.
-    private static readonly MethodInfo DeleteAllMethod = typeof(DatabaseMaintenanceExtensions)
-        .GetMethod(nameof(DeleteAllAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
-
-    private static readonly MethodInfo ClearSelfReferenceMethod = typeof(DatabaseMaintenanceExtensions)
-        .GetMethod(nameof(ClearSelfReferenceAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
-#pragma warning restore S3011
-
     /// <summary>
     /// Deletes every row of every mapped entity type, dependents before principals, in one
     /// transaction. Plain <c>DELETE</c> on every relational provider: no <c>PRAGMA</c>, no
@@ -117,4 +109,11 @@ public static class DatabaseMaintenanceExtensions
                 calls => calls.SetProperty(propertyAccess, default(TProperty)!),
                 cancellationToken);
     }
+#pragma warning disable S3011 // Deliberate: reaches our own private generic helpers to close them over each entity type.
+    private static readonly MethodInfo DeleteAllMethod = typeof(DatabaseMaintenanceExtensions)
+        .GetMethod(nameof(DeleteAllAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
+
+    private static readonly MethodInfo ClearSelfReferenceMethod = typeof(DatabaseMaintenanceExtensions)
+        .GetMethod(nameof(ClearSelfReferenceAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
+#pragma warning restore S3011
 }

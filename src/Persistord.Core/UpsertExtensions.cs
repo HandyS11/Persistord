@@ -53,6 +53,10 @@ public static class UpsertExtensions
     /// <param name="update">Applies the mutation, to created and existing rows alike.</param>
     /// <param name="cancellationToken">Cancels the read and the save.</param>
     /// <returns>The tracked row and whether it changed.</returns>
+    /// <remarks>
+    /// <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> flushes every pending change
+    /// tracked by the context, not only the natural-key row this method upserted.
+    /// </remarks>
     public static async Task<UpsertResult<TEntity>> UpsertIfChangedAsync<TEntity>(
         this DbSet<TEntity> set,
         Expression<Func<TEntity, bool>> naturalKey,

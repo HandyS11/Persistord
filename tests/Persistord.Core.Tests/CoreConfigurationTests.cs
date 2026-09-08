@@ -70,6 +70,26 @@ public class CoreConfigurationTests
     }
 
     [Fact]
+    public void ApplyCoreGraph_over_a_bare_DbContext_still_marks_keys_caller_supplied()
+    {
+        // No DiscordDbContext in the inheritance chain, so SnowflakeKeyConvention never runs. This
+        // is the sole justification for the explicit ValueGeneratedNever() call in each of the five
+        // skeleton entity configurations: without it, someone will "simplify" those calls away.
+        var (connection, context) = SqliteFixture.Create<BareGraphContext>(
+            o => new BareGraphContext(o), createSchema: false);
+        using (connection)
+        using (context)
+        {
+            var guildKey = context.Model.FindEntityType(typeof(GuildEntity))!.FindProperty(nameof(GuildEntity.Id))!;
+            var channelKey = context.Model.FindEntityType(typeof(ChannelEntity))!
+                .FindProperty(nameof(ChannelEntity.Id))!;
+
+            Assert.Equal(ValueGenerated.Never, guildKey.ValueGenerated);
+            Assert.Equal(ValueGenerated.Never, channelKey.ValueGenerated);
+        }
+    }
+
+    [Fact]
     public void ParentId_round_trips_through_the_nullable_converter()
     {
         var (connection, context) = SqliteFixture.Create();
@@ -90,6 +110,17 @@ public class CoreConfigurationTests
 
             var child = context.Channels.Single(c => c.Id == 1UL);
             Assert.Equal(ulong.MaxValue, child.ParentId);
+        }
+    }
+
+    /// <summary>A plain <see cref="DbContext"/> that opts into the skeleton graph without deriving
+    /// <see cref="Persistord.Core.DiscordDbContext"/>, so none of Persistord's conventions run.</summary>
+    private sealed class BareGraphContext(DbContextOptions<BareGraphContext> options) : DbContext(options)
+    {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.ApplyCoreGraph();
         }
     }
 }

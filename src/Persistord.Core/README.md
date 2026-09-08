@@ -54,8 +54,10 @@ built on EF Core 10.
   stamped by `TimestampInterceptor : SaveChangesInterceptor` from a
   `TimeProvider` on every save.
 - **`UpsertAsync` / `UpsertIfChangedAsync`** —
-  `Task<TEntity> UpsertAsync<TEntity>(this DbSet<TEntity> set, Expression<Func<TEntity, bool>> naturalKey, Func<TEntity> create, Action<TEntity> update, CancellationToken cancellationToken = default)`.
-  Natural-key create-or-update with lost-insert-race recovery.
+  `Task<TEntity> UpsertAsync<TEntity>(this DbSet<TEntity> set, Expression<Func<TEntity, bool>> naturalKey, Func<TEntity> create, Action<TEntity> update, CancellationToken cancellationToken = default)` /
+  `Task<UpsertResult<TEntity>> UpsertIfChangedAsync<TEntity>(this DbSet<TEntity> set, Expression<Func<TEntity, bool>> naturalKey, Func<TEntity> create, Action<TEntity> update, CancellationToken cancellationToken = default)`.
+  Natural-key create-or-update with lost-insert-race recovery; the latter also reports whether the
+  call actually wrote.
 - **`PurgeGuildAsync`** —
   `Task<int> PurgeGuildAsync(this DbContext context, ulong guildId, CancellationToken cancellationToken = default)`.
   Deletes every `IGuildScoped` row of one guild, plus its `GuildEntity` row,

@@ -36,10 +36,10 @@ public class SnowflakeKeyConventionTests
             ValueGeneratedFor(typeof(CompositeKeyed), nameof(CompositeKeyed.GuildId)));
 
     [Fact]
-    public void Non_key_ulong_property_is_left_alone() =>
+    public void Non_key_ulong_property_explicitly_generated_is_left_alone() =>
         Assert.Equal(
-            ValueGenerated.Never,
-            ValueGeneratedFor(typeof(SurrogateKeyed), nameof(SurrogateKeyed.OwnerId)));
+            ValueGenerated.OnAdd,
+            ValueGeneratedFor(typeof(SurrogateKeyed), nameof(SurrogateKeyed.ImportedId)));
 
     [Fact]
     public void Explicit_configuration_wins_over_the_convention() =>
@@ -59,6 +59,8 @@ public class SnowflakeKeyConventionTests
         public long Id { get; set; }
 
         public ulong OwnerId { get; set; }
+
+        public ulong ImportedId { get; set; }
     }
 
     [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
@@ -82,7 +84,7 @@ public class SnowflakeKeyConventionTests
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<SnowflakeKeyed>();
-            modelBuilder.Entity<SurrogateKeyed>();
+            modelBuilder.Entity<SurrogateKeyed>().Property(e => e.ImportedId).ValueGeneratedOnAdd();
             modelBuilder.Entity<CompositeKeyed>().HasKey(e => new
             {
                 e.GuildId, e.Key

@@ -118,6 +118,39 @@ public class TimestampTests
     [Fact]
     public void Interceptor_guards_its_time_provider() =>
         Assert.Throws<ArgumentNullException>(() => new TimestampInterceptor(null!));
+
+    [Fact]
+    public async Task Parameterless_constructor_stamps_from_the_system_clock()
+    {
+        var before = DateTimeOffset.UtcNow.AddSeconds(-5);
+        var (connection, context) = SqliteFixture.Create<DefaultClockContext>(o => new DefaultClockContext(o));
+        using (connection)
+        await using (context)
+        {
+            await context.Notes.AddAsync(new NoteEntity
+            {
+                Text = "hello"
+            });
+            await context.SaveChangesAsync();
+
+            var note = await context.Notes.SingleAsync();
+            Assert.InRange(note.CreatedAt, before, DateTimeOffset.UtcNow.AddSeconds(5));
+        }
+    }
+}
+
+/// <summary>Registers <see cref="TimestampInterceptor"/> via its parameterless constructor, which
+/// has no other caller in this test project.</summary>
+public sealed class DefaultClockContext(DbContextOptions<DefaultClockContext> options)
+    : Persistord.Core.DiscordDbContext(options)
+{
+    public DbSet<NoteEntity> Notes => Set<NoteEntity>();
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.AddInterceptors(new TimestampInterceptor());
+    }
 }
 
 public sealed class NoteEntity : ICreatedAt, IUpdatedAt

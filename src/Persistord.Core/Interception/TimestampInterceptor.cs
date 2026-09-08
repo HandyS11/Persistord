@@ -69,9 +69,9 @@ public sealed class TimestampInterceptor : SaveChangesInterceptor
                         created.CreatedAt = now;
                     }
 
-                    if (entry.Entity is IUpdatedAt inserted)
+                    if (entry.Entity is IUpdatedAt updatable)
                     {
-                        inserted.UpdatedAt = now;
+                        updatable.UpdatedAt = now;
                     }
 
                     break;

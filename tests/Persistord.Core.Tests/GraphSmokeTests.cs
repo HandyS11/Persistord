@@ -27,7 +27,11 @@ public class GraphSmokeTests
             },
             new ChannelEntity
             {
-                Id = 200UL, GuildId = 1UL, ParentId = 100UL, Type = ChannelType.Text, Name = "general"
+                Id = 200UL,
+                GuildId = 1UL,
+                ParentId = 100UL,
+                Type = ChannelType.Text,
+                Name = "general"
             });
         await context.Users.AddAsync(new UserEntity
         {
@@ -136,9 +140,9 @@ public class GraphSmokeTests
     {
         public long Id { get; set; }
 
-        public ulong GuildId { get; set; }
-
         public GuildEntity? Guild { get; set; }
+
+        public ulong GuildId { get; set; }
     }
 
     internal sealed class SmokeGraphContext(DbContextOptions<SmokeGraphContext> options)

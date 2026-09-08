@@ -39,6 +39,41 @@ public class ClearAllTablesTests
     }
 
     [Fact]
+    public async Task Clear_joins_an_ambient_transaction_so_a_rollback_undoes_it()
+    {
+        var (connection, context) =
+            SqliteFixture.Create<GuildPurgeTests.PurgeContext>(o => new GuildPurgeTests.PurgeContext(o));
+        using (connection)
+        await using (context)
+        {
+            await context.Guilds.AddAsync(new GuildEntity
+            {
+                Id = 1UL
+            });
+            await context.Parents.AddAsync(new GuildPurgeTests.ScopedParent
+            {
+                Id = 10, GuildId = 1UL
+            });
+            await context.Children.AddAsync(new GuildPurgeTests.ScopedChild
+            {
+                GuildId = 1UL, ParentId = 10
+            });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            await using (var transaction = await context.Database.BeginTransactionAsync())
+            {
+                await context.ClearAllTablesAsync();
+                await transaction.RollbackAsync();
+            }
+
+            Assert.Equal(1, await context.Guilds.CountAsync());
+            Assert.Equal(1, await context.Parents.CountAsync());
+            Assert.Equal(1, await context.Children.CountAsync());
+        }
+    }
+
+    [Fact]
     public async Task Clear_on_an_empty_database_deletes_nothing()
     {
         var (connection, context) =

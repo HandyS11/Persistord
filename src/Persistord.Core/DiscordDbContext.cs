@@ -28,7 +28,9 @@ public abstract class DiscordDbContext : DbContext
     /// Initializes the context with the given options and registers a
     /// <see cref="TimestampInterceptor"/> driven by <paramref name="timeProvider"/>, so
     /// <see cref="Abstractions.ICreatedAt"/> and <see cref="Abstractions.IUpdatedAt"/> entities
-    /// stamp themselves.
+    /// stamp themselves. The interceptor is registered from <see cref="OnConfiguring"/>: a derived
+    /// context that overrides <see cref="OnConfiguring"/> without calling <c>base.OnConfiguring</c>
+    /// silently loses it.
     /// </summary>
     /// <param name="options">The context options supplied by the consumer.</param>
     /// <param name="timeProvider">The clock to stamp from.</param>
