@@ -138,11 +138,6 @@ public class UpsertTests
     public async Task Upsert_recovers_when_another_writer_wins_the_insert_race()
     {
         await using var database = SqliteTestDatabase.Shared(schema: TestSchema.EnsureCreated);
-        await using (var schema = database.CreateContext<UpsertContext>(o => new UpsertContext(o)))
-        {
-            await schema.Database.EnsureCreatedAsync();
-        }
-
         var interference = new InterferingInsertInterceptor(database);
         await using var context = database.CreateContext<UpsertContext>(o => new UpsertContext(o), interference);
 
