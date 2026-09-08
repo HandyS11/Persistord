@@ -100,6 +100,39 @@ public class UpsertTests
     }
 
     [Fact]
+    public async Task UpsertIfChanged_persists_the_change_under_context_wide_NoTracking()
+    {
+        var (connection, context) = SqliteFixture.Create<UpsertContext>(
+            o => new UpsertContext(o),
+            configure: builder => builder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+        using (connection)
+        await using (context)
+        {
+            await context.Widgets.UpsertAsync(
+                w => w.GuildId == 1UL && w.Key == "dash",
+                () => NewWidget(1UL, "dash"),
+                w => w.DiscordId = 42UL);
+            context.ChangeTracker.Clear();
+
+            var result = await context.Widgets.UpsertIfChangedAsync(
+                w => w.GuildId == 1UL && w.Key == "dash",
+                () => NewWidget(1UL, "dash"),
+                w => w.DiscordId = 99UL);
+
+            // Before the fix, the natural-key read honoured the context-wide NoTracking default,
+            // so context.Entry(row) reported Detached, the dirty check read that as "no change",
+            // and SaveChangesAsync was never called: Changed came back false and the mutation was
+            // silently lost even though the returned entity showed the new value.
+            Assert.True(result.Changed);
+            Assert.Equal(99UL, result.Entity.DiscordId);
+
+            context.ChangeTracker.Clear();
+            var stored = await context.Widgets.SingleAsync(w => w.GuildId == 1UL && w.Key == "dash");
+            Assert.Equal(99UL, stored.DiscordId);
+        }
+    }
+
+    [Fact]
     public async Task Upsert_recovers_when_another_writer_wins_the_insert_race()
     {
         await using var database = new SharedSqliteDatabase();

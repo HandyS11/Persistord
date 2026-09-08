@@ -68,7 +68,9 @@ public static class UpsertExtensions
 
         var context = set.GetService<ICurrentDbContext>().Context;
 
-        var existing = await set.SingleOrDefaultAsync(naturalKey, cancellationToken).ConfigureAwait(false);
+        var existing = await set.AsTracking()
+            .SingleOrDefaultAsync(naturalKey, cancellationToken)
+            .ConfigureAwait(false);
         if (existing is not null)
         {
             return await ApplyAsync(context, existing, update, cancellationToken).ConfigureAwait(false);
@@ -92,7 +94,9 @@ public static class UpsertExtensions
             // it. If there is still no winner the failure was not a race and must surface.
             context.Entry(created).State = EntityState.Detached;
 
-            var winner = await set.SingleOrDefaultAsync(naturalKey, cancellationToken).ConfigureAwait(false);
+            var winner = await set.AsTracking()
+                .SingleOrDefaultAsync(naturalKey, cancellationToken)
+                .ConfigureAwait(false);
             if (winner is null)
             {
                 throw;
