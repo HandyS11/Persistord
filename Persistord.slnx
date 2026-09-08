@@ -11,6 +11,7 @@
     <Project Path="src/Persistord.Adapters.DiscordNet/Persistord.Adapters.DiscordNet.csproj" />
     <Project Path="src/Persistord.Core/Persistord.Core.csproj" />
     <Project Path="src/Persistord.History/Persistord.History.csproj" />
+    <Project Path="src/Persistord.Managed/Persistord.Managed.csproj" />
     <Project Path="src/Persistord.Messages/Persistord.Messages.csproj" />
     <Project Path="src/Persistord.Testing/Persistord.Testing.csproj" />
   </Folder>
@@ -18,6 +19,7 @@
     <Project Path="tests/Persistord.Adapters.DiscordNet.Tests/Persistord.Adapters.DiscordNet.Tests.csproj" />
     <Project Path="tests/Persistord.Core.Tests/Persistord.Core.Tests.csproj" />
     <Project Path="tests/Persistord.History.Tests/Persistord.History.Tests.csproj" />
+    <Project Path="tests/Persistord.Managed.Tests/Persistord.Managed.Tests.csproj" />
     <Project Path="tests/Persistord.Messages.Tests/Persistord.Messages.Tests.csproj" />
     <Project Path="tests/Persistord.Provider.Tests/Persistord.Provider.Tests.csproj" />
     <Project Path="tests/Persistord.Testing.Tests/Persistord.Testing.Tests.csproj" />

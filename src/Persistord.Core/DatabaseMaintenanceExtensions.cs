@@ -25,7 +25,11 @@ public static class DatabaseMaintenanceExtensions
     /// example a category channel's <c>ParentId</c> pointing at another row of the same table) is set
     /// to <c>null</c> across the whole table. A self-referencing foreign key with a non-nullable
     /// property is left as-is and can still make the delete pass fail; model self-references as
-    /// nullable if you need this method to clear them.
+    /// nullable if you need this method to clear them. A self-referencing foreign key backed by a
+    /// shadow property (no CLR member) is skipped rather than attempted, because
+    /// <see cref="Expression.Property(Expression, string)"/> throws <see cref="ArgumentException"/>
+    /// for a property name with no corresponding CLR property; no entity shipped by Persistord has
+    /// that shape today, but failing loudly there would be baffling.
     /// </remarks>
     public static async Task<int> ClearAllTablesAsync(
         this DbContext context,
@@ -79,6 +83,14 @@ public static class DatabaseMaintenanceExtensions
 
                 foreach (var property in foreignKey.Properties)
                 {
+                    // Expression.Property(parameter, propertyName) resolves the name against the
+                    // CLR type's public properties; a shadow property has no such member and would
+                    // throw ArgumentException, so skip it instead of clearing it.
+                    if (property.PropertyInfo is null)
+                    {
+                        continue;
+                    }
+
                     await ((Task)ClearSelfReferenceMethod
                             .MakeGenericMethod(entityType.ClrType, property.ClrType)
                             .Invoke(null, [context, property.Name, cancellationToken])!)
