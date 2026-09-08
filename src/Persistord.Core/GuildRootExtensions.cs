@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Persistord.Core.Abstractions;
 using Persistord.Core.Configurations;
 using Persistord.Core.Entities;
@@ -29,6 +30,16 @@ public static class GuildRootExtensions
     /// its guild from the interaction anyway.
     /// </param>
     /// <returns>The same <paramref name="modelBuilder"/> for chaining.</returns>
+    /// <remarks>
+    /// An <see cref="IGuildScoped"/> entity that already declares its own relationship to
+    /// <see cref="GuildEntity"/> — a <c>Guild</c> navigation with an explicit
+    /// <c>HasForeignKey(r =&gt; r.GuildId)</c>, for instance — keeps that relationship: this method
+    /// only sets its <see cref="IMutableForeignKey.DeleteBehavior"/> to
+    /// <see cref="DeleteBehavior.Cascade"/> rather than adding a second, navigation-less
+    /// relationship over the same <c>GuildId</c> column. Adding a second relationship would make EF
+    /// uniquify the consumer's own foreign key onto a shadow column, silently breaking their
+    /// navigation.
+    /// </remarks>
     public static ModelBuilder ApplyGuildRoot(
         this ModelBuilder modelBuilder,
         bool cascade = true,
@@ -55,6 +66,18 @@ public static class GuildRootExtensions
 
         foreach (var clrType in scoped)
         {
+            var entityType = modelBuilder.Model.FindEntityType(clrType)!;
+            var ownFk = entityType.GetForeignKeys().FirstOrDefault(fk =>
+                fk.PrincipalEntityType.ClrType == typeof(GuildEntity)
+                && fk.Properties.Count == 1
+                && string.Equals(fk.Properties[0].Name, nameof(IGuildScoped.GuildId), StringComparison.Ordinal));
+
+            if (ownFk is not null)
+            {
+                ownFk.DeleteBehavior = DeleteBehavior.Cascade;
+                continue;
+            }
+
             modelBuilder.Entity(clrType)
                 .HasOne(typeof(GuildEntity))
                 .WithMany()

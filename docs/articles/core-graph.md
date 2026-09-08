@@ -97,6 +97,14 @@ outlive their guild row. `filterLeftGuilds: true` adds a global query filter
 that hides guilds with a non-null `LeftAt` from ordinary queries (use
 `IgnoreQueryFilters()` to see them).
 
+**None of the five skeleton entities below implements `IGuildScoped`.** This is
+deliberate — marking them would move an existing consumer's migrations — and a
+consumer cannot retrofit the interface onto Persistord's own types. The
+practical effect: `ApplyGuildRoot` wires no cascading foreign key for
+`ChannelEntity`, `UserEntity`, `MemberEntity` or `RoleEntity`, and
+`PurgeGuildAsync` does not delete them. A consumer who mirrors Discord's graph
+and wants those rows purged with their guild must delete them itself.
+
 **Breaking change from `1.0.0-beta2`:** `Name` and `OwnerId` were required;
 they are now optional, and `JoinedAt`/`LeftAt` are new columns. A consumer
 with an existing `Guilds` table needs a migration — on SQLite, relaxing a

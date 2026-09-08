@@ -1,5 +1,7 @@
+using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Persistord.Core.Internal;
 
 namespace Persistord.Core;
@@ -7,9 +9,12 @@ namespace Persistord.Core;
 /// <summary>Whole-database helpers for tests and local tooling.</summary>
 public static class DatabaseMaintenanceExtensions
 {
-#pragma warning disable S3011 // Deliberate: reaches our own private generic helper to close it over each entity type.
+#pragma warning disable S3011 // Deliberate: reaches our own private generic helpers to close them over each entity type.
     private static readonly MethodInfo DeleteAllMethod = typeof(DatabaseMaintenanceExtensions)
         .GetMethod(nameof(DeleteAllAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
+
+    private static readonly MethodInfo ClearSelfReferenceMethod = typeof(DatabaseMaintenanceExtensions)
+        .GetMethod(nameof(ClearSelfReferenceAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
 #pragma warning restore S3011
 
     /// <summary>
@@ -23,6 +28,12 @@ public static class DatabaseMaintenanceExtensions
     /// <remarks>
     /// The deletes are executed as SQL and do not update the change tracker. Intended for test
     /// teardown and "reset my local database" tooling, not for production code paths.
+    /// <see cref="Internal.ModelDeleteOrder"/> deliberately does not order self-references, so before
+    /// deleting anything, every self-referencing foreign key whose properties are all nullable (for
+    /// example a category channel's <c>ParentId</c> pointing at another row of the same table) is set
+    /// to <c>null</c> across the whole table. A self-referencing foreign key with a non-nullable
+    /// property is left as-is and can still make the delete pass fail; model self-references as
+    /// nullable if you need this method to clear them.
     /// </remarks>
     public static async Task<int> ClearAllTablesAsync(
         this DbContext context,
@@ -39,6 +50,8 @@ public static class DatabaseMaintenanceExtensions
             ? await context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false)
             : null;
 #pragma warning restore CA2007
+
+        await ClearNullableSelfReferencesAsync(context, order, cancellationToken).ConfigureAwait(false);
 
         var deleted = 0;
         foreach (var entityType in order)
@@ -57,7 +70,51 @@ public static class DatabaseMaintenanceExtensions
         return deleted;
     }
 
+    private static async Task ClearNullableSelfReferencesAsync(
+        DbContext context,
+        IReadOnlyList<IEntityType> order,
+        CancellationToken cancellationToken)
+    {
+        foreach (var entityType in order)
+        {
+            foreach (var foreignKey in entityType.GetForeignKeys())
+            {
+                if (foreignKey.PrincipalEntityType != entityType
+                    || foreignKey.Properties.Any(property => !property.IsNullable))
+                {
+                    continue;
+                }
+
+                foreach (var property in foreignKey.Properties)
+                {
+                    await ((Task)ClearSelfReferenceMethod
+                            .MakeGenericMethod(entityType.ClrType, property.ClrType)
+                            .Invoke(null, [context, property.Name, cancellationToken])!)
+                        .ConfigureAwait(false);
+                }
+            }
+        }
+    }
+
     private static Task<int> DeleteAllAsync<TEntity>(DbContext context, CancellationToken cancellationToken)
         where TEntity : class =>
         context.Set<TEntity>().IgnoreQueryFilters().ExecuteDeleteAsync(cancellationToken);
+
+    private static Task<int> ClearSelfReferenceAsync<TEntity, TProperty>(
+        DbContext context,
+        string propertyName,
+        CancellationToken cancellationToken)
+        where TEntity : class
+    {
+        var parameter = Expression.Parameter(typeof(TEntity), "e");
+        var propertyAccess = Expression.Lambda<Func<TEntity, TProperty>>(
+            Expression.Property(parameter, propertyName),
+            parameter);
+
+        return context.Set<TEntity>()
+            .IgnoreQueryFilters()
+            .ExecuteUpdateAsync(
+                calls => calls.SetProperty(propertyAccess, default(TProperty)!),
+                cancellationToken);
+    }
 }
