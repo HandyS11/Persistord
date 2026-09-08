@@ -13,6 +13,7 @@
     <Project Path="src/Persistord.History/Persistord.History.csproj" />
     <Project Path="src/Persistord.Managed/Persistord.Managed.csproj" />
     <Project Path="src/Persistord.Messages/Persistord.Messages.csproj" />
+    <Project Path="src/Persistord.Protection/Persistord.Protection.csproj" />
     <Project Path="src/Persistord.Testing/Persistord.Testing.csproj" />
   </Folder>
   <Folder Name="/tests/">
@@ -21,6 +22,7 @@
     <Project Path="tests/Persistord.History.Tests/Persistord.History.Tests.csproj" />
     <Project Path="tests/Persistord.Managed.Tests/Persistord.Managed.Tests.csproj" />
     <Project Path="tests/Persistord.Messages.Tests/Persistord.Messages.Tests.csproj" />
+    <Project Path="tests/Persistord.Protection.Tests/Persistord.Protection.Tests.csproj" />
     <Project Path="tests/Persistord.Provider.Tests/Persistord.Provider.Tests.csproj" />
     <Project Path="tests/Persistord.Testing.Tests/Persistord.Testing.Tests.csproj" />
   </Folder>

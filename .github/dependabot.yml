@@ -27,6 +27,9 @@ updates:
       # pull EF Core in transitively at their own version.
       - dependency-name: "Microsoft.EntityFrameworkCore"
       - dependency-name: "Microsoft.EntityFrameworkCore.Relational"
+      # Published floor for Persistord.Protection, not a tested version — see the
+      # shipped-floors comment in Directory.Packages.props.
+      - dependency-name: "Microsoft.AspNetCore.DataProtection.Abstractions"
 
   - package-ecosystem: "github-actions"
     directory: "/"

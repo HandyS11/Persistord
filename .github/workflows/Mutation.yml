@@ -29,6 +29,8 @@ jobs:
             testdir: tests/Persistord.Adapters.DiscordNet.Tests
           - source: Persistord.Managed.csproj
             testdir: tests/Persistord.Managed.Tests
+          - source: Persistord.Protection.csproj
+            testdir: tests/Persistord.Protection.Tests
           - source: Persistord.Testing.csproj
             testdir: tests/Persistord.Testing.Tests
     steps:

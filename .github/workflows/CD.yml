@@ -73,6 +73,9 @@ jobs:
       - name: Pack NuGet Package Persistord.Managed
         run: cd ./src/Persistord.Managed/ && dotnet pack --configuration Release -p:Version=$VERSION
 
+      - name: Pack NuGet Package Persistord.Protection
+        run: cd ./src/Persistord.Protection/ && dotnet pack --configuration Release -p:Version=$VERSION
+
       - name: Pack NuGet Package Persistord.Testing
         run: cd ./src/Persistord.Testing/ && dotnet pack --configuration Release -p:Version=$VERSION
 
