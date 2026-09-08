@@ -42,9 +42,49 @@ public class ProtectionTests
         await context.SaveChangesAsync();
         context.ChangeTracker.Clear();
 
-        var stored = await ReadColumnAsync(context, "Token");
+        var stored = await ReadColumnAsync(context, "Secrets", "Token");
 
         Assert.NotEqual("super-secret", stored);
+    }
+
+    [Fact]
+    public async Task A_property_declared_only_on_an_implemented_interface_is_protected()
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context =
+            database.CreateContext<SecretContext>(o => new SecretContext(o, new ReversingProvider()));
+
+        await context.InterfaceSecrets.AddAsync(new InterfaceSecretRow
+        {
+            Token = "super-secret"
+        });
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var stored = await ReadColumnAsync(context, "InterfaceSecrets", "Token");
+        Assert.NotEqual("super-secret", stored);
+
+        var row = await context.InterfaceSecrets.SingleAsync();
+        Assert.Equal("super-secret", row.Token);
+    }
+
+    [Fact]
+    public async Task An_unrelated_same_named_property_that_does_not_implement_the_interface_is_left_alone()
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context =
+            database.CreateContext<SecretContext>(o => new SecretContext(o, new ReversingProvider()));
+
+        await context.UnrelatedTokens.AddAsync(new UnrelatedTokenRow
+        {
+            Token = "super-secret"
+        });
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var stored = await ReadColumnAsync(context, "UnrelatedTokens", "Token");
+
+        Assert.Equal("super-secret", stored);
     }
 
     [Fact]
@@ -61,7 +101,7 @@ public class ProtectionTests
         await context.SaveChangesAsync();
         context.ChangeTracker.Clear();
 
-        var stored = await ReadColumnAsync(context, "Label");
+        var stored = await ReadColumnAsync(context, "Secrets", "Label");
 
         Assert.Equal("public", stored);
     }
@@ -106,13 +146,12 @@ public class ProtectionTests
     [SuppressMessage(
         "Security",
         "CA2100",
-        Justification =
-            "column is always one of the two literal column names passed by tests below, never external input.")]
-    private static async Task<string?> ReadColumnAsync(SecretContext context, string column)
+        Justification = "table and column are always literal names passed by tests below, never external input.")]
+    private static async Task<string?> ReadColumnAsync(SecretContext context, string table, string column)
     {
         var connection = context.Database.GetDbConnection();
         await using var command = connection.CreateCommand();
-        command.CommandText = $"SELECT \"{column}\" FROM \"Secrets\"";
+        command.CommandText = $"SELECT \"{column}\" FROM \"{table}\"";
         var result = await command.ExecuteScalarAsync();
         return result as string;
     }
@@ -150,16 +189,48 @@ public sealed class SecretRow
     public string Label { get; set; } = string.Empty;
 }
 
+/// <summary>An interface that centralises the <see cref="ProtectedAttribute"/> annotation.</summary>
+public interface ISecretHolder
+{
+    /// <summary>The secret. Annotated here instead of on every implementer.</summary>
+    [Protected]
+    string Token { get; set; }
+}
+
+public sealed class InterfaceSecretRow : ISecretHolder
+{
+    public long Id { get; set; }
+
+    public string Token { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// A same-named <c>Token</c> property that does not implement <see cref="ISecretHolder"/>: it must
+/// not be swept up by a name match with the interface member above.
+/// </summary>
+public sealed class UnrelatedTokenRow
+{
+    public long Id { get; set; }
+
+    public string Token { get; set; } = string.Empty;
+}
+
 public sealed class SecretContext(
     DbContextOptions<SecretContext> options,
     IDataProtectionProvider dataProtectionProvider) : Persistord.Core.DiscordDbContext(options)
 {
     public DbSet<SecretRow> Secrets => Set<SecretRow>();
 
+    public DbSet<InterfaceSecretRow> InterfaceSecrets => Set<InterfaceSecretRow>();
+
+    public DbSet<UnrelatedTokenRow> UnrelatedTokens => Set<UnrelatedTokenRow>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<SecretRow>().ToTable("Secrets");
+        modelBuilder.Entity<InterfaceSecretRow>().ToTable("InterfaceSecrets");
+        modelBuilder.Entity<UnrelatedTokenRow>().ToTable("UnrelatedTokens");
         modelBuilder.ApplyProtection(dataProtectionProvider);
     }
 }
