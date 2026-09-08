@@ -56,9 +56,9 @@ public class GraphSmokeTests
     [Fact]
     public void ApplyGuildRoot_preserves_a_consumer_entitys_own_guild_relationship()
     {
-        var (connection, context) = SqliteFixture.Create<SmokeGraphContext>(
+        var (database, context) = SqliteFixture.Create<SmokeGraphContext>(
             o => new SmokeGraphContext(o), createSchema: false);
-        using (connection)
+        using (database)
         using (context)
         {
             var scopedType = context.Model.FindEntityType(typeof(ScopedWithOwnRelationship))!;
@@ -74,8 +74,8 @@ public class GraphSmokeTests
     [Fact]
     public async Task PurgeGuildAsync_deletes_the_guild_and_scoped_rows_but_leaves_the_skeleton_graph()
     {
-        var (connection, context) = SqliteFixture.Create<SmokeGraphContext>(o => new SmokeGraphContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<SmokeGraphContext>(o => new SmokeGraphContext(o));
+        using (database)
         await using (context)
         {
             await SeedSkeletonAsync(context);
@@ -97,8 +97,8 @@ public class GraphSmokeTests
     [Fact]
     public async Task ClearAllTablesAsync_empties_the_whole_graph_including_a_channel_hierarchy()
     {
-        var (connection, context) = SqliteFixture.Create<SmokeGraphContext>(o => new SmokeGraphContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<SmokeGraphContext>(o => new SmokeGraphContext(o));
+        using (database)
         await using (context)
         {
             await SeedSkeletonAsync(context);
@@ -115,8 +115,8 @@ public class GraphSmokeTests
     [Fact]
     public async Task ClearAllTablesAsync_reports_every_row_deleted_across_the_graph()
     {
-        var (connection, context) = SqliteFixture.Create<SmokeGraphContext>(o => new SmokeGraphContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<SmokeGraphContext>(o => new SmokeGraphContext(o));
+        using (database)
         await using (context)
         {
             await SeedSkeletonAsync(context);

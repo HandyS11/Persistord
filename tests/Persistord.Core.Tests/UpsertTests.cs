@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Persistord.Testing;
 using Xunit;
 
 namespace Persistord.Core.Tests;
@@ -14,8 +15,8 @@ public class UpsertTests
     [Fact]
     public async Task Upsert_inserts_when_the_natural_key_is_missing()
     {
-        var (connection, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
+        using (database)
         await using (context)
         {
             var row = await context.Widgets.UpsertAsync(
@@ -31,8 +32,8 @@ public class UpsertTests
     [Fact]
     public async Task Upsert_updates_the_existing_row_instead_of_inserting_a_second()
     {
-        var (connection, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
+        using (database)
         await using (context)
         {
             await context.Widgets.UpsertAsync(
@@ -54,8 +55,8 @@ public class UpsertTests
     [Fact]
     public async Task UpsertIfChanged_reports_no_change_and_writes_nothing_when_values_match()
     {
-        var (connection, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
+        using (database)
         await using (context)
         {
             await context.Widgets.AddAsync(NewWidget(1UL, "dash"));
@@ -79,8 +80,8 @@ public class UpsertTests
     [Fact]
     public async Task UpsertIfChanged_reports_a_change_when_a_value_differs()
     {
-        var (connection, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
+        using (database)
         await using (context)
         {
             await context.Widgets.UpsertAsync(
@@ -102,10 +103,11 @@ public class UpsertTests
     [Fact]
     public async Task UpsertIfChanged_persists_the_change_under_context_wide_NoTracking()
     {
-        var (connection, context) = SqliteFixture.Create<UpsertContext>(
+        var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        var context = database.CreateContext<UpsertContext>(
             o => new UpsertContext(o),
             configure: builder => builder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
-        using (connection)
+        using (database)
         await using (context)
         {
             await context.Widgets.UpsertAsync(
@@ -135,7 +137,7 @@ public class UpsertTests
     [Fact]
     public async Task Upsert_recovers_when_another_writer_wins_the_insert_race()
     {
-        await using var database = new SharedSqliteDatabase();
+        await using var database = SqliteTestDatabase.Shared(schema: TestSchema.EnsureCreated);
         await using (var schema = database.CreateContext<UpsertContext>(o => new UpsertContext(o)))
         {
             await schema.Database.EnsureCreatedAsync();
@@ -160,8 +162,8 @@ public class UpsertTests
     [Fact]
     public async Task Upsert_rethrows_when_the_failure_is_not_a_lost_race()
     {
-        var (connection, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
+        using (database)
         await using (context)
         {
             // Key is required in the store; a null value fails the insert and no row exists to
@@ -176,8 +178,8 @@ public class UpsertTests
     [Fact]
     public async Task Upsert_guards_its_arguments()
     {
-        var (connection, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
+        using (database)
         await using (context)
         {
             await Assert.ThrowsAsync<ArgumentNullException>(() =>
@@ -190,7 +192,7 @@ public class UpsertTests
     }
 
     /// <summary>Inserts the same natural key from a second context while the first one saves.</summary>
-    private sealed class InterferingInsertInterceptor(SharedSqliteDatabase database) : SaveChangesInterceptor
+    private sealed class InterferingInsertInterceptor(SqliteTestDatabase database) : SaveChangesInterceptor
     {
         private bool _fired;
 

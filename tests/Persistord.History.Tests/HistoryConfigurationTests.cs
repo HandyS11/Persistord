@@ -13,8 +13,8 @@ public class HistoryConfigurationTests
     [Fact]
     public void History_has_restricting_message_foreign_key()
     {
-        var (connection, context) = TestContext.Create();
-        using (connection)
+        var (database, context) = TestContext.Create();
+        using (database)
         using (context)
         {
             var history = context.Model.FindEntityType(typeof(MessageHistoryEntity))!;

@@ -10,8 +10,8 @@ public class GuildRootTests
     [Fact]
     public void Guild_name_and_owner_are_optional()
     {
-        var (connection, context) = SqliteFixture.Create();
-        using (connection)
+        var (database, context) = SqliteFixture.Create();
+        using (database)
         using (context)
         {
             var guild = context.Model.FindEntityType(typeof(GuildEntity))!;
@@ -25,8 +25,8 @@ public class GuildRootTests
     [Fact]
     public async Task An_id_only_guild_row_persists()
     {
-        var (connection, context) = SqliteFixture.Create();
-        using (connection)
+        var (database, context) = SqliteFixture.Create();
+        using (database)
         await using (context)
         {
             await context.Guilds.AddAsync(new GuildEntity
@@ -45,8 +45,8 @@ public class GuildRootTests
     [Fact]
     public void ApplyGuildRoot_adds_a_cascading_fk_to_every_scoped_entity()
     {
-        var (connection, context) = SqliteFixture.Create<RootContext>(o => new RootContext(o, cascade: true));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<RootContext>(o => new RootContext(o, cascade: true));
+        using (database)
         using (context)
         {
             var scoped = context.Model.FindEntityType(typeof(ScopedRow))!;
@@ -61,8 +61,8 @@ public class GuildRootTests
     [Fact]
     public void ApplyGuildRoot_without_cascade_registers_the_root_and_no_fk()
     {
-        var (connection, context) = SqliteFixture.Create<RootContext>(o => new RootContext(o, cascade: false));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<RootContext>(o => new RootContext(o, cascade: false));
+        using (database)
         using (context)
         {
             Assert.NotNull(context.Model.FindEntityType(typeof(GuildEntity)));
@@ -73,8 +73,8 @@ public class GuildRootTests
     [Fact]
     public async Task Deleting_a_guild_deletes_its_scoped_rows_in_the_database()
     {
-        var (connection, context) = SqliteFixture.Create<RootContext>(o => new RootContext(o, cascade: true));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<RootContext>(o => new RootContext(o, cascade: true));
+        using (database)
         await using (context)
         {
             await context.Guilds.AddAsync(new GuildEntity
@@ -104,9 +104,9 @@ public class GuildRootTests
     [Fact]
     public async Task The_left_guild_filter_hides_departed_guilds()
     {
-        var (connection, context) =
+        var (database, context) =
             SqliteFixture.Create<RootContext>(o => new RootContext(o, cascade: true, filterLeftGuilds: true));
-        using (connection)
+        using (database)
         await using (context)
         {
             await context.Guilds.AddRangeAsync(

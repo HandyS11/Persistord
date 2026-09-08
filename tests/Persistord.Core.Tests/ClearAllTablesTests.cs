@@ -9,9 +9,9 @@ public class ClearAllTablesTests
     [Fact]
     public async Task Clear_empties_every_table_dependents_first()
     {
-        var (connection, context) =
+        var (database, context) =
             SqliteFixture.Create<GuildPurgeTests.PurgeContext>(o => new GuildPurgeTests.PurgeContext(o));
-        using (connection)
+        using (database)
         await using (context)
         {
             await context.Guilds.AddAsync(new GuildEntity
@@ -41,9 +41,9 @@ public class ClearAllTablesTests
     [Fact]
     public async Task Clear_joins_an_ambient_transaction_so_a_rollback_undoes_it()
     {
-        var (connection, context) =
+        var (database, context) =
             SqliteFixture.Create<GuildPurgeTests.PurgeContext>(o => new GuildPurgeTests.PurgeContext(o));
-        using (connection)
+        using (database)
         await using (context)
         {
             await context.Guilds.AddAsync(new GuildEntity
@@ -76,9 +76,9 @@ public class ClearAllTablesTests
     [Fact]
     public async Task Clear_on_an_empty_database_deletes_nothing()
     {
-        var (connection, context) =
+        var (database, context) =
             SqliteFixture.Create<GuildPurgeTests.PurgeContext>(o => new GuildPurgeTests.PurgeContext(o));
-        using (connection)
+        using (database)
         await using (context)
         {
             Assert.Equal(0, await context.ClearAllTablesAsync());

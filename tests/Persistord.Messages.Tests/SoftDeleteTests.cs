@@ -9,8 +9,8 @@ public class SoftDeleteTests
     [Fact]
     public void DeletedMessage_IsHidden_ByDefaultFilter()
     {
-        var (connection, context) = TestContext.Create(filterDeleted: true);
-        using (connection)
+        var (database, context) = TestContext.Create(filterDeleted: true);
+        using (database)
         using (context)
         {
             context.Messages.Add(new MessageEntity
@@ -28,8 +28,8 @@ public class SoftDeleteTests
     [Fact]
     public void DeletedMessage_IsVisible_WhenFilterDisabled()
     {
-        var (connection, context) = TestContext.Create(filterDeleted: false);
-        using (connection)
+        var (database, context) = TestContext.Create(filterDeleted: false);
+        using (database)
         using (context)
         {
             context.Messages.Add(new MessageEntity

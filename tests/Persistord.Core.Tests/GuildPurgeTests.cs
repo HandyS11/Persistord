@@ -52,8 +52,8 @@ public class GuildPurgeTests
     [Fact]
     public async Task Purge_removes_every_scoped_row_of_one_guild_and_the_guild_itself()
     {
-        var (connection, context) = SqliteFixture.Create<PurgeContext>(o => new PurgeContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<PurgeContext>(o => new PurgeContext(o));
+        using (database)
         await using (context)
         {
             await SeedAsync(context);
@@ -71,8 +71,8 @@ public class GuildPurgeTests
     [Fact]
     public async Task Purge_leaves_other_guilds_alone()
     {
-        var (connection, context) = SqliteFixture.Create<PurgeContext>(o => new PurgeContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<PurgeContext>(o => new PurgeContext(o));
+        using (database)
         await using (context)
         {
             await SeedAsync(context);
@@ -90,8 +90,8 @@ public class GuildPurgeTests
     public async Task Purge_deletes_dependents_before_principals()
     {
         // ScopedChild -> ScopedParent is Restrict, so deleting the parent first would throw.
-        var (connection, context) = SqliteFixture.Create<PurgeContext>(o => new PurgeContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<PurgeContext>(o => new PurgeContext(o));
+        using (database)
         await using (context)
         {
             await SeedAsync(context);
@@ -105,9 +105,9 @@ public class GuildPurgeTests
     [Fact]
     public async Task Purge_reaches_a_guild_hidden_by_the_left_filter()
     {
-        var (connection, context) =
+        var (database, context) =
             SqliteFixture.Create<PurgeContext>(o => new PurgeContext(o, filterLeftGuilds: true));
-        using (connection)
+        using (database)
         await using (context)
         {
             await context.Guilds.AddAsync(new GuildEntity
@@ -131,8 +131,8 @@ public class GuildPurgeTests
     [Fact]
     public async Task Purge_joins_an_ambient_transaction_so_a_rollback_undoes_it()
     {
-        var (connection, context) = SqliteFixture.Create<PurgeContext>(o => new PurgeContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<PurgeContext>(o => new PurgeContext(o));
+        using (database)
         await using (context)
         {
             await SeedAsync(context);

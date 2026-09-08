@@ -9,8 +9,8 @@ public class GraphSplitTests
     [Fact]
     public void Conventions_only_context_maps_no_entity_types()
     {
-        var (connection, context) = SqliteFixture.Create<ConventionsOnlyContext>(o => new ConventionsOnlyContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<ConventionsOnlyContext>(o => new ConventionsOnlyContext(o));
+        using (database)
         using (context)
         {
             Assert.Empty(context.Model.GetEntityTypes());
@@ -20,8 +20,8 @@ public class GraphSplitTests
     [Fact]
     public void Graph_context_maps_the_five_skeleton_types()
     {
-        var (connection, context) = SqliteFixture.Create();
-        using (connection)
+        var (database, context) = SqliteFixture.Create();
+        using (database)
         using (context)
         {
             var mapped = context.Model.GetEntityTypes().Select(e => e.ClrType).ToList();
@@ -38,8 +38,8 @@ public class GraphSplitTests
     [Fact]
     public void Obsolete_ApplyCoreConfiguration_still_applies_the_graph()
     {
-        var (connection, context) = SqliteFixture.Create<LegacyGraphContext>(o => new LegacyGraphContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<LegacyGraphContext>(o => new LegacyGraphContext(o));
+        using (database)
         using (context)
         {
             Assert.Equal(5, context.Model.GetEntityTypes().Count());

@@ -16,8 +16,8 @@ public class CoreConfigurationTests
 {
     private static IModel BuildModel()
     {
-        var (connection, context) = SqliteFixture.Create();
-        using (connection)
+        var (database, context) = SqliteFixture.Create();
+        using (database)
         using (context)
         {
             return context.Model;
@@ -75,9 +75,9 @@ public class CoreConfigurationTests
         // No DiscordDbContext in the inheritance chain, so SnowflakeKeyConvention never runs. This
         // is the sole justification for the explicit ValueGeneratedNever() call in each of the five
         // skeleton entity configurations: without it, someone will "simplify" those calls away.
-        var (connection, context) = SqliteFixture.Create<BareGraphContext>(
+        var (database, context) = SqliteFixture.Create<BareGraphContext>(
             o => new BareGraphContext(o), createSchema: false);
-        using (connection)
+        using (database)
         using (context)
         {
             var guildKey = context.Model.FindEntityType(typeof(GuildEntity))!.FindProperty(nameof(GuildEntity.Id))!;
@@ -92,8 +92,8 @@ public class CoreConfigurationTests
     [Fact]
     public void ParentId_round_trips_through_the_nullable_converter()
     {
-        var (connection, context) = SqliteFixture.Create();
-        using (connection)
+        var (database, context) = SqliteFixture.Create();
+        using (database)
         using (context)
         {
             // The parent uses a high-bit id so the round-trip exercises the converter.

@@ -10,9 +10,9 @@ public class GuildScopeConventionTests
 {
     private static IModel BuildModel()
     {
-        var (connection, context) = SqliteFixture.Create<ScopeProbeContext>(
+        var (database, context) = SqliteFixture.Create<ScopeProbeContext>(
             o => new ScopeProbeContext(o), createSchema: false);
-        using (connection)
+        using (database)
         using (context)
         {
             return context.Model;

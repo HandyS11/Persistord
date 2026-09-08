@@ -9,9 +9,9 @@ public class SnowflakeKeyConventionTests
 {
     private static IModel BuildModel()
     {
-        var (connection, context) = SqliteFixture.Create<ConventionProbeContext>(
+        var (database, context) = SqliteFixture.Create<ConventionProbeContext>(
             o => new ConventionProbeContext(o), createSchema: false);
-        using (connection)
+        using (database)
         using (context)
         {
             return context.Model;

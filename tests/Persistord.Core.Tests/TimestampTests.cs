@@ -13,8 +13,8 @@ public class TimestampTests
     public async Task Insert_stamps_created_and_updated()
     {
         var clock = new TestTimeProvider(Start);
-        var (connection, context) = SqliteFixture.Create<StampContext>(o => new StampContext(o, clock));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<StampContext>(o => new StampContext(o, clock));
+        using (database)
         await using (context)
         {
             await context.Notes.AddAsync(new NoteEntity
@@ -33,8 +33,8 @@ public class TimestampTests
     public async Task Update_moves_only_updated_at()
     {
         var clock = new TestTimeProvider(Start);
-        var (connection, context) = SqliteFixture.Create<StampContext>(o => new StampContext(o, clock));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<StampContext>(o => new StampContext(o, clock));
+        using (database)
         await using (context)
         {
             await context.Notes.AddAsync(new NoteEntity
@@ -57,8 +57,8 @@ public class TimestampTests
     public async Task Caller_supplied_created_at_is_preserved()
     {
         var clock = new TestTimeProvider(Start);
-        var (connection, context) = SqliteFixture.Create<StampContext>(o => new StampContext(o, clock));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<StampContext>(o => new StampContext(o, clock));
+        using (database)
         await using (context)
         {
             var backfilled = Start.AddYears(-1);
@@ -78,8 +78,8 @@ public class TimestampTests
     public async Task A_no_op_upsert_leaves_updated_at_alone()
     {
         var clock = new TestTimeProvider(Start);
-        var (connection, context) = SqliteFixture.Create<StampContext>(o => new StampContext(o, clock));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<StampContext>(o => new StampContext(o, clock));
+        using (database)
         await using (context)
         {
             await context.Notes.UpsertAsync(n => n.Text == "hello", () => new NoteEntity(), n => n.Text = "hello");
@@ -100,8 +100,8 @@ public class TimestampTests
     public async Task Interceptor_defaults_to_the_system_clock()
     {
         var before = DateTimeOffset.UtcNow.AddSeconds(-5);
-        var (connection, context) = SqliteFixture.Create<StampContext>(o => new StampContext(o, timeProvider: null));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<StampContext>(o => new StampContext(o, timeProvider: null));
+        using (database)
         await using (context)
         {
             await context.Notes.AddAsync(new NoteEntity
@@ -123,8 +123,8 @@ public class TimestampTests
     public async Task Parameterless_constructor_stamps_from_the_system_clock()
     {
         var before = DateTimeOffset.UtcNow.AddSeconds(-5);
-        var (connection, context) = SqliteFixture.Create<DefaultClockContext>(o => new DefaultClockContext(o));
-        using (connection)
+        var (database, context) = SqliteFixture.Create<DefaultClockContext>(o => new DefaultClockContext(o));
+        using (database)
         await using (context)
         {
             await context.Notes.AddAsync(new NoteEntity

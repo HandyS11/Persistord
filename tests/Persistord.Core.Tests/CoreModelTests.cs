@@ -8,8 +8,8 @@ public class CoreModelTests
     [Fact]
     public void Snowflake_PersistsAndReadsBack_WithHighBitValue()
     {
-        var (connection, context) = SqliteFixture.Create();
-        using (connection)
+        var (database, context) = SqliteFixture.Create();
+        using (database)
         using (context)
         {
             context.Guilds.Add(new GuildEntity
@@ -27,8 +27,8 @@ public class CoreModelTests
     [Fact]
     public void Snowflake_IsStoredAsLongColumn()
     {
-        var (connection, context) = SqliteFixture.Create();
-        using (connection)
+        var (database, context) = SqliteFixture.Create();
+        using (database)
         using (context)
         {
             var column = context.Model.FindEntityType(typeof(GuildEntity))!
@@ -40,8 +40,8 @@ public class CoreModelTests
     [Fact]
     public void Member_HasCompositeKey()
     {
-        var (connection, context) = SqliteFixture.Create();
-        using (connection)
+        var (database, context) = SqliteFixture.Create();
+        using (database)
         using (context)
         {
             var key = context.Model.FindEntityType(typeof(MemberEntity))!.FindPrimaryKey()!;
