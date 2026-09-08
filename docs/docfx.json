@@ -8,7 +8,10 @@
             "Persistord.Core/**.csproj",
             "Persistord.Messages/**.csproj",
             "Persistord.History/**.csproj",
-            "Persistord.Adapters.DiscordNet/**.csproj"
+            "Persistord.Adapters.DiscordNet/**.csproj",
+            "Persistord.Managed/**.csproj",
+            "Persistord.Protection/**.csproj",
+            "Persistord.Testing/**.csproj"
           ]
         }
       ],
