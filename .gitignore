@@ -426,3 +426,6 @@ temp/
 *.db
 *.db-shm
 *.db-wal
+
+# Superpowers subagent-driven-development scratch (ledger, briefs, review packages)
+.superpowers/
