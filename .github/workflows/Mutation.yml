@@ -27,6 +27,8 @@ jobs:
             testdir: tests/Persistord.History.Tests
           - source: Persistord.Adapters.DiscordNet.csproj
             testdir: tests/Persistord.Adapters.DiscordNet.Tests
+          - source: Persistord.Testing.csproj
+            testdir: tests/Persistord.Testing.Tests
     steps:
       - uses: actions/checkout@v7
 
