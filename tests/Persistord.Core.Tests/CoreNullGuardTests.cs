@@ -14,6 +14,10 @@ public class CoreNullGuardTests
         Assert.Throws<ArgumentNullException>(() => ((ModelBuilder)null!).ApplyCoreGraph());
 
     [Fact]
+    public void ApplyGuildRoot_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>(() => ((ModelBuilder)null!).ApplyGuildRoot());
+
+    [Fact]
     public void ApplyCoreConfiguration_forwarder_throws_on_null() =>
 #pragma warning disable CS0618 // Guarding the obsolete forwarder is the point of this test.
         Assert.Throws<ArgumentNullException>(() => ((ModelBuilder)null!).ApplyCoreConfiguration());

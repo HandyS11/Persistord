@@ -80,8 +80,29 @@ All entities are plain POCOs. They carry no Discord client library types.
 | Property | Type | Notes |
 | --- | --- | --- |
 | `Id` | `ulong` | Primary key, snowflake |
-| `Name` | `string` | Guild name |
-| `OwnerId` | `ulong` | Snowflake of the guild owner |
+| `Name` | `string?` | Guild name, when the consumer mirrors it |
+| `OwnerId` | `ulong?` | Snowflake of the guild owner, when the consumer mirrors it |
+| `JoinedAt` | `DateTimeOffset?` | When the bot joined the guild, when the consumer records it |
+| `LeftAt` | `DateTimeOffset?` | When the bot left, or was removed from, the guild; `null` means still in it |
+
+`GuildEntity` is the tenant root every `IGuildScoped` row hangs off. `Name` and
+`OwnerId` are now optional — a bot that owns resources rather than mirroring
+Discord can store just an id and the lifecycle stamps. Call
+`ApplyGuildRoot(cascade, filterLeftGuilds)` last in `OnModelCreating` to
+register the root: with `cascade: true` (the default) it adds a cascading
+foreign key from every `IGuildScoped` entity's `GuildId` to the guild row, so
+deleting a guild deletes everything scoped to it and the guild row becomes a
+prerequisite for scoped rows; pass `cascade: false` when scoped rows may
+outlive their guild row. `filterLeftGuilds: true` adds a global query filter
+that hides guilds with a non-null `LeftAt` from ordinary queries (use
+`IgnoreQueryFilters()` to see them).
+
+**Breaking change from `1.0.0-beta2`:** `Name` and `OwnerId` were required;
+they are now optional, and `JoinedAt`/`LeftAt` are new columns. A consumer
+with an existing `Guilds` table needs a migration — on SQLite, relaxing a
+column to nullable is a table rebuild, which `dotnet ef migrations add` emits
+for you. Code reading `guild.Name` or `guild.OwnerId` now gets a nullable
+value and must handle `null`.
 
 ### ChannelEntity
 

@@ -7,8 +7,7 @@ namespace Persistord.Core.Tests;
 public class EntityDefaultsTests
 {
     [Fact]
-    public void GuildEntity_name_defaults_to_empty() =>
-        Assert.Equal(string.Empty, new GuildEntity().Name);
+    public void GuildEntity_name_defaults_to_null() => Assert.Null(new GuildEntity().Name);
 
     [Fact]
     public void UserEntity_username_defaults_to_empty() =>
