@@ -79,9 +79,12 @@ public class ManagedStoreTests
         await using var context = database.CreateContext<ManagedContext>(o => new ManagedContext(o));
 
         await context.UpsertManagedAsync<ManagedCategory>(1UL, "server-1", "rust", 1UL);
+        await context.UpsertManagedAsync<ManagedCategory>(1UL, "server-2", "rust", 10UL);
         await context.UpsertManagedAsync<ManagedChannel>(1UL, "server-1", "chat", 2UL);
         await context.UpsertManagedAsync<ManagedMessage>(1UL, "server-1", "dash", 3UL);
+        await context.UpsertManagedAsync<ManagedMessage>(1UL, "server-2", "dash", 11UL);
         await context.UpsertManagedAsync<ManagedWebhook>(1UL, "server-1", "bridge", 4UL, w => w.Token = "t");
+        await context.UpsertManagedAsync<ManagedWebhook>(1UL, "server-2", "bridge", 12UL, w => w.Token = "t2");
         await context.UpsertManagedAsync<ManagedChannel>(1UL, "server-2", "chat", 5UL);
         await context.UpsertManagedAsync<ManagedChannel>(1UL, null, "log", 6UL);
         await context.UpsertManagedAsync<ManagedChannel>(2UL, "server-1", "chat", 7UL);
@@ -90,9 +93,9 @@ public class ManagedStoreTests
         var deleted = await context.DeleteScopeAsync(1UL, "server-1");
 
         Assert.Equal(4, deleted);
-        Assert.Empty(await context.Categories.ToListAsync());
-        Assert.Empty(await context.Messages.ToListAsync());
-        Assert.Empty(await context.Webhooks.ToListAsync());
+        Assert.Equal("server-2", (await context.Categories.SingleAsync()).Scope);
+        Assert.Equal("server-2", (await context.Messages.SingleAsync()).Scope);
+        Assert.Equal("server-2", (await context.Webhooks.SingleAsync()).Scope);
         Assert.Equal(3, await context.Channels.CountAsync()); // server-2, global, other guild
     }
 
@@ -108,6 +111,24 @@ public class ManagedStoreTests
 
         Assert.Equal(1, await context.DeleteScopeAsync(1UL, null));
         Assert.Equal("server-1", (await context.Channels.SingleAsync()).Scope);
+    }
+
+    [Fact]
+    public async Task DeleteScope_joins_an_ambient_transaction_so_a_rollback_undoes_it()
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context = database.CreateContext<ManagedContext>(o => new ManagedContext(o));
+
+        await context.UpsertManagedAsync<ManagedChannel>(1UL, "server-1", "chat", 1UL);
+        context.ChangeTracker.Clear();
+
+        await using (var transaction = await context.Database.BeginTransactionAsync())
+        {
+            await context.DeleteScopeAsync(1UL, "server-1");
+            await transaction.RollbackAsync();
+        }
+
+        Assert.Equal(1, await context.Channels.CountAsync());
     }
 
     [Fact]
@@ -151,8 +172,19 @@ public class ManagedStoreTests
             ((DbContext)null!).UpsertManagedAsync<ManagedChannel>(1UL, null, "chat", 1UL));
         await Assert.ThrowsAsync<ArgumentException>(() =>
             context.UpsertManagedAsync<ManagedChannel>(1UL, null, string.Empty, 1UL));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            ((DbContext)null!).FindManagedAsync<ManagedChannel>(1UL, null, "chat"));
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            context.FindManagedAsync<ManagedChannel>(1UL, null, string.Empty));
         await Assert.ThrowsAsync<ArgumentNullException>(() => ((DbContext)null!).DeleteScopeAsync(1UL, null));
         await Assert.ThrowsAsync<ArgumentNullException>(() => ((DbContext)null!).ListScopesAsync(1UL));
+    }
+
+    [Fact]
+    public void Normalize_maps_null_to_global_and_passes_through_otherwise()
+    {
+        Assert.Equal(ManagedScope.Global, ManagedScope.Normalize(null));
+        Assert.Equal("server-1", ManagedScope.Normalize("server-1"));
     }
 
     private sealed class FakeClock(DateTimeOffset now) : TimeProvider
