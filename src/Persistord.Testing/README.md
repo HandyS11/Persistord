@@ -101,6 +101,10 @@ context.AssertCascade<Membership, GuildEntity>();
 context.AssertSnowflakeKey<GuildEntity>();
 ```
 
+`AssertCascade` throws if the child has more than one foreign key to the parent — it does not
+guess which one you mean by picking whichever one EF happens to return first. A type with two
+relationships to the same principal needs a more specific, hand-written assertion instead.
+
 ## `UniqueModelCacheKeyFactory`
 
 EF Core caches the compiled model per context type by default, so the model is

@@ -40,16 +40,21 @@ public static class ModelAssertions
     }
 
     /// <summary>
-    /// Asserts that the child has a foreign key to the parent that deletes with
+    /// Asserts that the child has exactly one foreign key to the parent, and that it deletes with
     /// <see cref="DeleteBehavior.Cascade"/> — the one-line replacement for an
-    /// insert-parent, insert-child, delete-parent, assert-empty test.
+    /// insert-parent, insert-child, delete-parent, assert-empty test. A child with more than one
+    /// foreign key to the same parent is ambiguous — this assertion does not guess which one the
+    /// caller means, so it throws instead of silently checking whichever one EF happens to return
+    /// first.
     /// </summary>
     /// <typeparam name="TChild">The dependent entity type.</typeparam>
     /// <typeparam name="TParent">The principal entity type.</typeparam>
     /// <param name="context">A context whose model to inspect.</param>
     /// <exception cref="InvalidOperationException">
-    /// <typeparamref name="TChild"/> is not part of the model, has no foreign key to
-    /// <typeparamref name="TParent"/>, or that foreign key does not cascade.
+    /// <typeparamref name="TChild"/> is not part of the model; has no foreign key to
+    /// <typeparamref name="TParent"/>; has more than one foreign key to
+    /// <typeparamref name="TParent"/>, which this assertion cannot disambiguate; or its one
+    /// foreign key to <typeparamref name="TParent"/> does not cascade.
     /// </exception>
     public static void AssertCascade<TChild, TParent>(this DbContext context)
         where TChild : class
@@ -58,11 +63,26 @@ public static class ModelAssertions
         ArgumentNullException.ThrowIfNull(context);
 
         var child = FindEntityType<TChild>(context);
-        var foreignKey = child.GetForeignKeys()
-                             .FirstOrDefault(fk => fk.PrincipalEntityType.ClrType == typeof(TParent))
-                         ?? throw new InvalidOperationException(
-                             $"{typeof(TChild).Name} has no foreign key to {typeof(TParent).Name}.");
+        var candidates = child.GetForeignKeys()
+            .Where(fk => fk.PrincipalEntityType.ClrType == typeof(TParent))
+            .ToList();
 
+        if (candidates.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"{typeof(TChild).Name} has no foreign key to {typeof(TParent).Name}.");
+        }
+
+        if (candidates.Count > 1)
+        {
+            throw new InvalidOperationException(
+                $"{typeof(TChild).Name} has {candidates.Count} foreign keys to {typeof(TParent).Name}, "
+                + $"so it is ambiguous which one to check: {DescribeForeignKeys(candidates)}. A type "
+                + "with two relationships to the same principal needs a more specific assertion than "
+                + $"{nameof(AssertCascade)}.");
+        }
+
+        var foreignKey = candidates[0];
         if (foreignKey.DeleteBehavior != DeleteBehavior.Cascade)
         {
             throw new InvalidOperationException(
@@ -125,6 +145,12 @@ public static class ModelAssertions
     private static IEntityType FindEntityType<TEntity>(DbContext context) =>
         context.Model.FindEntityType(typeof(TEntity))
         ?? throw new InvalidOperationException($"{typeof(TEntity).Name} is not part of the model.");
+
+    private static string DescribeForeignKeys(IEnumerable<IForeignKey> foreignKeys) =>
+        string.Join(
+            ", ",
+            foreignKeys.Select(fk =>
+                $"({string.Join(", ", fk.Properties.Select(p => p.Name))}) -> {fk.DeleteBehavior}"));
 
     private static string DescribeIndexes(IEntityType entityType)
     {
