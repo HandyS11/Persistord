@@ -83,7 +83,9 @@ The sharp edge: a consumer writing raw LINQ against a managed `DbSet` must compa
 var globalChannels = await context.Channels
     .Where(c => c.GuildId == guildId && c.Scope == null)
     .ToListAsync();
+```
 
+```csharp
 // Right.
 var globalChannels = await context.Channels
     .Where(c => c.GuildId == guildId && c.Scope == ManagedScope.Global)

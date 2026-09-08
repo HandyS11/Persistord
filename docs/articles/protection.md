@@ -99,12 +99,22 @@ explicitly revoked. That failure surfaces as
 materializes the entity**, not at the point you call `SaveChangesAsync` or
 `Protect`.
 
-`CryptographicException` alone does not tell you whether the key is truly lost or
-just missing from *this* key ring. The distinguishing step is operational: check
-whether the key ring folder — or a backup of it taken before whatever changed —
-still holds the key that encrypted the failing rows. If it does, even marked
-revoked, restoring that file fixes the read. If it does not exist anywhere, the
-value cannot be recovered.
+`CryptographicException` alone does not tell you whether the key was deleted or
+revoked, and the two do not recover the same way. `ProtectedStringConverter` calls
+plain `IDataProtector.Unprotect`, not `IPersistedDataProtector.DangerousUnprotect`,
+so it never bypasses revocation:
+
+- **Deleted.** If the key file itself is gone, restoring it from a backup of the
+  key ring folder — taken before the deletion — fixes the read: the key is no
+  longer missing, and `Unprotect` succeeds again.
+- **Revoked.** A revoked key throws `CryptographicException` even when its file is
+  present and intact in the ring; revocation is enforced regardless of whether the
+  key file exists, and restoring the file changes nothing. Reading data under a
+  revoked key requires `IPersistedDataProtector.DangerousUnprotect(...,
+  ignoreRevocationErrors: true, ...)`, which this package does not call and does
+  not expose. There is no supported way to recover a revoked key's data through
+  `Persistord.Protection` today — treat a deliberate revocation as permanent for
+  this package's purposes.
 
 ## One provider per application
 
