@@ -34,12 +34,28 @@ protected override void ConfigureConventions(ModelConfigurationBuilder builder)
 You never annotate individual IDs. Inherit `DiscordDbContext` and all snowflake
 properties in your model — including those in module entities — are handled.
 
+### Keys
+
+The conversion above covers *values*: it makes a `ulong` storable at all. It says
+nothing about whether EF should generate that value or expect the caller to supply
+it. A separate `SnowflakeKeyConvention`, also registered by `DiscordDbContext`,
+handles that half: it marks every `ulong` or `ulong?` property that is part of a
+primary key `ValueGeneratedNever()`, so EF never treats a snowflake key as a
+store-generated identity column. This runs for the skeleton entities and for the
+consumer's own entities alike — inherit `DiscordDbContext` (or
+`DiscordGraphDbContext`) and any `ulong` key you add gets the same treatment
+without a fluent call. Explicit configuration still wins: the convention writes at
+convention precedence, so a property you've configured yourself (with
+`ValueGeneratedOnAdd()`, for example) is left as you configured it.
+
 ## Storage note
 
 Snowflakes are stored as `long` in the database column. Discord snowflakes remain
 below `long.MaxValue` until roughly the year 2084, so signed storage is safe in
 practice. The converter is nevertheless bit-faithful and would round-trip correctly
-even past that point.
+even past that point. Both the conversion and the key convention operate on "all
+unsigned 64-bit", not specifically "Discord snowflakes" — a Steam64 id or any other
+`ulong` property in your model goes through them the same way, and that's intended.
 
 ## See also
 

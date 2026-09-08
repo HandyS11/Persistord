@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Persistord.Core.Conventions;
 using Persistord.Core.Conversions;
 
 namespace Persistord.Core;
@@ -21,5 +22,6 @@ public abstract class DiscordDbContext(DbContextOptions options) : DbContext(opt
         base.ConfigureConventions(configurationBuilder);
         configurationBuilder.Properties<ulong>().HaveConversion<UlongToLongConverter>();
         configurationBuilder.Properties<ulong?>().HaveConversion<NullableUlongToLongConverter>();
+        configurationBuilder.Conventions.Add(_ => new SnowflakeKeyConvention());
     }
 }
