@@ -59,5 +59,6 @@ unsigned 64-bit", not specifically "Discord snowflakes" — a Steam64 id or any 
 
 ## See also
 
-- [Core Graph](core-graph.md) — the base `DiscordDbContext` and the skeleton entities
-  whose `ulong` IDs this conversion covers.
+- [Core Graph](core-graph.md) — the conventions-only `DiscordDbContext`, the
+  opt-in `DiscordGraphDbContext`, and the skeleton entities whose `ulong` IDs
+  this conversion covers.

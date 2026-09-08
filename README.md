@@ -35,7 +35,7 @@ database or Discord library.
 | Package | Downloads | Adds | Depends on |
 | --- | --- | --- | --- |
 | [`Persistord`](src/Persistord) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.svg)](https://www.nuget.org/packages/Persistord) | meta package — bundles Core, Messages, and History | Core, Messages, History |
-| [`Persistord.Core`](src/Persistord.Core) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Core.svg)](https://www.nuget.org/packages/Persistord.Core) | snowflake conversion, base `DiscordDbContext`, core skeleton entities | — |
+| [`Persistord.Core`](src/Persistord.Core) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Core.svg)](https://www.nuget.org/packages/Persistord.Core) | snowflake conversion, base `DiscordDbContext`, opt-in skeleton graph (`DiscordGraphDbContext`), guild root, upsert, purge | — |
 | [`Persistord.Messages`](src/Persistord.Messages) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Messages.svg)](https://www.nuget.org/packages/Persistord.Messages) | `MessageEntity` (soft-delete), embeds, attachments, reactions | Core |
 | [`Persistord.History`](src/Persistord.History) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.History.svg)](https://www.nuget.org/packages/Persistord.History) | append-only `MessageHistoryEntity` with a real FK to messages | Messages |
 | [`Persistord.Adapters.DiscordNet`](src/Persistord.Adapters.DiscordNet) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Adapters.DiscordNet.svg)](https://www.nuget.org/packages/Persistord.Adapters.DiscordNet) | `.To*Entity()` mappers from [Discord.Net](https://github.com/discord-net/Discord.Net) types | Core, Messages, History |

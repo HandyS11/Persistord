@@ -38,8 +38,11 @@ The following are explicit non-goals in v1:
 
 - No gateway event handling, no automatic sync, no reconnect backfill, no
   reconciliation.
-- No upsert engine or conflict resolution (sidestepped by the "persist what you
-  choose" model).
+- No general conflict-resolution engine. `Persistord.Core` does ship a narrow
+  natural-key `UpsertAsync`/`UpsertIfChangedAsync` (create-or-update with
+  lost-insert-race recovery) for rows the bot owns — that is deliberately not
+  an engine, just the one write pattern the "persist what you choose" model
+  needs.
 - No caching layer.
 - No diff-based history (full content snapshot per change in v1).
 
@@ -55,9 +58,12 @@ Persistord is split into five NuGet packages:
 library-neutral stack (`Core`, `Messages`, and `History`) in one reference. This is
 the recommended starting point.
 
-**`Persistord.Core`** — the foundation: snowflake conversion, the abstract
-`DiscordDbContext` base class, and the core skeleton entities (`GuildEntity`,
-`ChannelEntity`, `UserEntity`, `MemberEntity`, `RoleEntity`).
+**`Persistord.Core`** — the foundation: snowflake conversion, the
+conventions-only `DiscordDbContext` base class, and the abstract
+`DiscordGraphDbContext` that adds the opt-in core skeleton entities
+(`GuildEntity`, `ChannelEntity`, `UserEntity`, `MemberEntity`, `RoleEntity`)
+for a bot that mirrors Discord's guild/channel/user/member/role graph rather
+than owning its own resources.
 
 **`Persistord.Messages`** — the optional message-persistence module. Adds
 `MessageEntity` (with soft-delete), owned embeds, and relational attachments and

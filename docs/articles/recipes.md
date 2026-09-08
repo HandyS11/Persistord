@@ -6,8 +6,9 @@ assumes you already have a short-lived `DbContext` obtained from
 
 ## Persist a guild
 
-Add a `GuildEntity` and save. `Id`, `Name`, and `OwnerId` are the three required
-fields.
+Add a `GuildEntity` and save. `Id` is the only required field — `Name` and
+`OwnerId` are optional, for a bot that owns resources rather than mirroring
+Discord.
 
 ```csharp
 db.Guilds.Add(new GuildEntity { Id = guildId, Name = name, OwnerId = ownerId });

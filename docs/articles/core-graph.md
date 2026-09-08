@@ -67,9 +67,14 @@ public DbSet<RoleEntity>    Roles    => Set<RoleEntity>();
 
 `DiscordDbContext` no longer maps the skeleton. If you use
 `Guilds`/`Channels`/`Users`/`Members`/`Roles`, change your base class to
-`DiscordGraphDbContext`; if you never did, you now get zero tables and no
-migration entries. `ApplyCoreConfiguration()` is renamed `ApplyCoreGraph()`; the
-old name forwards for one release.
+`DiscordGraphDbContext`. If you never did but your derived context's committed
+model snapshot still has those five tables in it (any `DiscordDbContext`
+consumer from beta2 does), your next `dotnet ef migrations add` diffs against
+that snapshot and emits `DropTable` for `Guilds`, `Channels`, `Users`,
+`Members` and `Roles` — usually what you want, but **review the generated
+migration before running `database update`**: this is the most likely way to
+lose data on this upgrade. `ApplyCoreConfiguration()` is renamed
+`ApplyCoreGraph()`; the old name forwards for one release.
 
 ## Entity shapes
 
