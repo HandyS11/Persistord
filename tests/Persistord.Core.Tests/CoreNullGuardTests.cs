@@ -47,6 +47,10 @@ public class CoreNullGuardTests
     public void ConfigureConventions_throws_on_null() =>
         Assert.Throws<ArgumentNullException>(() => new ProbeContext().ProbeConventions(null));
 
+    [Fact]
+    public void OnConfiguring_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>(() => new ProbeContext().ProbeConfiguring(null));
+
     /// <summary>Concrete context that exposes the protected overrides for null-guard testing.</summary>
     private sealed class ProbeContext()
         : DiscordGraphDbContext(new DbContextOptionsBuilder<ProbeContext>().UseSqlite("DataSource=:memory:").Options)
@@ -55,5 +59,7 @@ public class CoreNullGuardTests
 
         public void ProbeConventions(ModelConfigurationBuilder? configurationBuilder) =>
             ConfigureConventions(configurationBuilder!);
+
+        public void ProbeConfiguring(DbContextOptionsBuilder? optionsBuilder) => OnConfiguring(optionsBuilder!);
     }
 }

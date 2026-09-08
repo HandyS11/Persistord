@@ -8,10 +8,23 @@ namespace Persistord.Core;
 /// users, members and roles. Derive this when the context mirrors Discord objects; derive
 /// <see cref="DiscordDbContext"/> when it only needs the conventions.
 /// </summary>
-/// <remarks>Initializes the context with the given options.</remarks>
-/// <param name="options">The context options supplied by the consumer.</param>
-public abstract class DiscordGraphDbContext(DbContextOptions options) : DiscordDbContext(options)
+public abstract class DiscordGraphDbContext : DiscordDbContext
 {
+    /// <summary>Initializes the context with the given options.</summary>
+    /// <param name="options">The context options supplied by the consumer.</param>
+    protected DiscordGraphDbContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
+    /// <summary>Initializes the context with the given options and a clock for timestamp stamping.</summary>
+    /// <param name="options">The context options supplied by the consumer.</param>
+    /// <param name="timeProvider">The clock to stamp from.</param>
+    protected DiscordGraphDbContext(DbContextOptions options, TimeProvider timeProvider)
+        : base(options, timeProvider)
+    {
+    }
+
     /// <summary>Persisted guilds.</summary>
     public DbSet<GuildEntity> Guilds => Set<GuildEntity>();
 
