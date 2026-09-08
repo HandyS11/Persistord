@@ -10,11 +10,15 @@
 
 </div>
 
-Entities and model wiring for [Persistord](https://github.com/HandyS11/Persistord)
-that remember the Discord resources *your bot itself created and owns* — a
-category, a channel, a message it edits in place, a webhook — so it stops
-re-discovering them by name on every boot and hand-rolling bespoke tables to
-track what it made.
+Entities, model wiring, and store helpers for
+[Persistord](https://github.com/HandyS11/Persistord) that remember the Discord
+resources *your bot itself created and owns* — a category, a channel, a
+message it edits in place, a webhook — so it stops re-discovering them by name
+on every boot and hand-rolling bespoke tables to track what it made. This
+module is deliberately **not a mirror**: it does not shadow every channel or
+message in the guild the way `Persistord.Core`'s skeleton or
+`Persistord.Messages` do. It records only the handful of resources your bot
+itself created, keyed by a name *you* chose, not by Discord's own graph.
 
 ## The shared shape
 
@@ -41,25 +45,82 @@ Discord snowflake the bot got back:
 
 ## The four resources
 
-- **`ManagedCategory`** — a category the bot created.
-- **`ManagedChannel`** — a channel the bot created, with an optional
-  `ParentDiscordId` for the category or parent channel it was created under.
-- **`ManagedMessage`** — a message the bot posted and edits in place: a
-  dashboard, a per-item embed, a prompt whose buttons must survive a restart.
-  Carries `ChannelDiscordId` and an optional `ContentHash` for render gating —
-  hash the next payload, compare, and skip the edit when it matches. Also
-  indexed by `DiscordId` alone, because a `MessageDeleted` gateway event
-  carries only the message id.
-- **`ManagedWebhook`** — a webhook the bot created, with `ChannelDiscordId`
-  and a `Token`. `Token` is annotated `[Protected]`
-  (`Persistord.Core.Abstractions.ProtectedAttribute`), which is inert on its
-  own — reference `Persistord.Protection` and call `ApplyProtection` to
-  encrypt it at rest. **Without that, the token is stored in plaintext.**
+All four are keyed by the same natural key and derive from the abstract
+`ManagedResource`, which also carries the surrogate `Id`, `CreatedAt`, and
+`UpdatedAt` (stamped by `Persistord.Core`'s `TimestampInterceptor` when your
+context is constructed with a `TimeProvider`).
 
-All four derive from the abstract `ManagedResource`, which also carries the
-surrogate `Id`, `CreatedAt`, and `UpdatedAt` (stamped by
-`Persistord.Core`'s `TimestampInterceptor` when your context is constructed
-with a `TimeProvider`).
+| Entity            | Natural key              | Extra columns                                   |
+| ----------------- | ------------------------- | ------------------------------------------------ |
+| `ManagedCategory` | `(GuildId, Scope, Key)`   | —                                                  |
+| `ManagedChannel`  | `(GuildId, Scope, Key)`   | `ParentDiscordId?` — the parent it was created under, if any. |
+| `ManagedMessage`  | `(GuildId, Scope, Key)`   | `ChannelDiscordId`, `ContentHash?` — see [ContentHash and render gating](#contenthash-and-render-gating). Also indexed on `DiscordId` alone, because a `MessageDeleted` gateway event carries only the message id. |
+| `ManagedWebhook`  | `(GuildId, Scope, Key)`   | `ChannelDiscordId`, `Token` — see the warning below. |
+
+`ManagedWebhook.Token` is annotated `[Protected]`
+(`Persistord.Core.Abstractions.ProtectedAttribute`), which is inert on its
+own — reference `Persistord.Protection` and call `ApplyProtection` to encrypt
+it at rest. **Without that, the token is stored in plaintext.**
+
+## Store helpers
+
+`ManagedStoreExtensions` adds four `DbContext` extension methods. They are
+thin wrappers over `Persistord.Core`'s `UpsertAsync`, not a repository layer:
+you keep your own `DbContext` and your own reconciler, and nothing here ever
+talks to Discord.
+
+- `Task<TResource> UpsertManagedAsync<TResource>(this DbContext context, ulong guildId, string? scope, string key, ulong discordId, Action<TResource>? configure = null, CancellationToken cancellationToken = default) where TResource : ManagedResource, new()` —
+  creates or updates the record for `(guildId, scope, key)`. `configure` sets
+  the type-specific columns (a channel's parent, a message's channel and
+  content hash, a webhook's token) and runs on created and existing rows
+  alike.
+- `Task<TResource?> FindManagedAsync<TResource>(this DbContext context, ulong guildId, string? scope, string key, CancellationToken cancellationToken = default) where TResource : ManagedResource` —
+  reads one record by its natural key, or `null` when there is none.
+- `Task<int> DeleteScopeAsync(this DbContext context, ulong guildId, string? scope, CancellationToken cancellationToken = default)` —
+  deletes every managed record of one scope, across all four tables, in one
+  transaction. Use it when the thing the scope stood for is gone — a game
+  server was unpaired, a playlist was deleted. This deletes *records*, never
+  Discord objects: tear those down in Discord first.
+- `Task<IReadOnlyList<string>> ListScopesAsync(this DbContext context, ulong guildId, CancellationToken cancellationToken = default)` —
+  lists the distinct scopes that still have records in the guild, sorted,
+  excluding `ManagedScope.Global`. For a bot that scopes by game server, this
+  answers "which servers do I still hold resources for?".
+
+## Reconciling with Discord
+
+The module never talks to Discord — "does the resource still exist, and does
+it still look right" is your reconciler's loop. `FindManagedAsync` and
+`UpsertManagedAsync` are what make the record side of that loop trivial:
+
+```csharp
+var record = await context.FindManagedAsync<ManagedMessage>(guildId, scope: "server-7", key: "dashboard");
+
+IUserMessage? message = record is null
+    ? null
+    : await TryGetMessageAsync(channel, record.DiscordId); // null on a 404
+
+message ??= await channel.SendMessageAsync(embed: BuildDashboardEmbed());
+
+await context.UpsertManagedAsync<ManagedMessage>(
+    guildId,
+    scope: "server-7",
+    key: "dashboard",
+    discordId: message.Id,
+    configure: m => m.ChannelDiscordId = channel.Id);
+```
+
+`FindManagedAsync`, the Discord round trip, and `UpsertManagedAsync` are three
+separate steps on purpose: this module owns none of the middle one.
+
+## ContentHash and render gating
+
+`ManagedMessage.ContentHash` exists to skip needless edits. The module never
+computes it — the payload is yours — but the pattern is: hash the payload you
+are about to render, compare it against the stored `ContentHash`, and only
+call Discord's edit endpoint (and write the new hash back via
+`UpsertManagedAsync`'s `configure` callback) when the hash changed. A bot that
+redraws a dashboard on every gateway event, but only actually edits the
+message when its content changed, is what this column is for.
 
 ## Wiring it up
 
