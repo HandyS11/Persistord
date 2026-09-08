@@ -10,7 +10,7 @@ using Xunit;
 namespace Persistord.Provider.Tests;
 
 public sealed class PgContext(DbContextOptions<PgContext> options)
-    : Persistord.Core.DiscordDbContext(options)
+    : Persistord.Core.DiscordGraphDbContext(options)
 {
     public DbSet<MessageEntity> Messages => Set<MessageEntity>();
 

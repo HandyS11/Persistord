@@ -1,15 +1,40 @@
 # Core Graph
 
-`Persistord.Core` ships an abstract `DiscordDbContext` and five skeleton entity
-types that mirror the core Discord object graph. Every derived context inherits
-these automatically — you only declare the module `DbSet`s your bot needs.
+`Persistord.Core` ships an abstract `DiscordDbContext` with the global snowflake
+convention, and an abstract `DiscordGraphDbContext` that adds five skeleton entity
+types mirroring the core Discord object graph. Derive whichever base class matches
+your context: conventions only, or conventions plus the skeleton.
 
 ## DiscordDbContext
 
-`DiscordDbContext` is the base class you inherit:
+`DiscordDbContext` applies only Persistord's conventions and maps no entity types.
+Derive it when your context owns its own resources and never mirrors Discord's
+guild/channel/user/member/role graph:
 
 ```csharp
 public sealed class MyBotContext : DiscordDbContext
+{
+    public MyBotContext(DbContextOptions<MyBotContext> options) : base(options) { }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);   // snowflake convention only
+        // apply optional modules here
+    }
+}
+```
+
+`ConfigureConventions()` registers the `ulong ↔ long` snowflake converters
+globally. See [Snowflake Conversion](snowflake-conversion.md).
+
+## DiscordGraphDbContext
+
+`DiscordGraphDbContext` derives from `DiscordDbContext` and adds the five
+skeleton `DbSet`s. Derive it when your context mirrors Discord's guild, channel,
+user, member and role objects:
+
+```csharp
+public sealed class MyBotContext : DiscordGraphDbContext
 {
     public MyBotContext(DbContextOptions<MyBotContext> options) : base(options) { }
 
@@ -21,14 +46,14 @@ public sealed class MyBotContext : DiscordDbContext
 }
 ```
 
-The base implementation calls `ApplyCoreConfiguration()` (which wires the core
-entity type configurations) and `ConfigureConventions()` (which registers the
-snowflake converters globally). See [Snowflake Conversion](snowflake-conversion.md).
+The base implementation calls `ApplyCoreGraph()` (which wires the core entity
+type configurations). Call `ApplyCoreGraph()` yourself from a plain
+`DiscordDbContext` if you'd rather opt in without the extra base class.
 
 ## Skeleton DbSets
 
-The base context exposes these `DbSet`s directly — no declaration needed in your
-derived class:
+`DiscordGraphDbContext` exposes these `DbSet`s directly — no declaration needed
+in your derived class:
 
 ```csharp
 public DbSet<GuildEntity>   Guilds   => Set<GuildEntity>();
@@ -37,6 +62,14 @@ public DbSet<UserEntity>    Users    => Set<UserEntity>();
 public DbSet<MemberEntity>  Members  => Set<MemberEntity>();
 public DbSet<RoleEntity>    Roles    => Set<RoleEntity>();
 ```
+
+## Upgrading from 1.0.0-beta2
+
+`DiscordDbContext` no longer maps the skeleton. If you use
+`Guilds`/`Channels`/`Users`/`Members`/`Roles`, change your base class to
+`DiscordGraphDbContext`; if you never did, you now get zero tables and no
+migration entries. `ApplyCoreConfiguration()` is renamed `ApplyCoreGraph()`; the
+old name forwards for one release.
 
 ## Entity shapes
 

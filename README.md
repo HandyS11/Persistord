@@ -59,8 +59,8 @@ dotnet add package Persistord.Adapters.DiscordNet   # optional: Discord.Net mapp
 
 ### 1. Derive a context
 
-Inherit `DiscordDbContext`, expose the module `DbSet`s you want, and apply the
-module configurations in `OnModelCreating`:
+`DiscordDbContext` applies only the snowflake conventions and maps nothing —
+derive it and apply the module configurations you want in `OnModelCreating`:
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
@@ -79,15 +79,17 @@ public sealed class MyBotContext : DiscordDbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);   // core skeleton + snowflake convention
+        base.OnModelCreating(modelBuilder);   // snowflake convention only
         modelBuilder.ApplyMessagesModule();   // omit if you don't persist messages
         modelBuilder.ApplyHistoryModule();    // requires ApplyMessagesModule()
     }
 }
 ```
 
-Core entities (`Guilds`, `Channels`, `Users`, `Members`, `Roles`) are already
-exposed by the base context — you only declare the module `DbSet`s.
+If your bot also mirrors guilds, channels, users, members or roles, derive
+`DiscordGraphDbContext` instead — it exposes those `DbSet`s (`Guilds`,
+`Channels`, `Users`, `Members`, `Roles`) automatically, on top of the same
+conventions.
 
 ### 2. Choose a provider
 

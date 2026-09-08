@@ -10,8 +10,14 @@ namespace Persistord.Core.Tests;
 public class CoreNullGuardTests
 {
     [Fact]
-    public void ApplyCoreConfiguration_throws_on_null() =>
+    public void ApplyCoreGraph_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>(() => ((ModelBuilder)null!).ApplyCoreGraph());
+
+    [Fact]
+    public void ApplyCoreConfiguration_forwarder_throws_on_null() =>
+#pragma warning disable CS0618 // Guarding the obsolete forwarder is the point of this test.
         Assert.Throws<ArgumentNullException>(() => ((ModelBuilder)null!).ApplyCoreConfiguration());
+#pragma warning restore CS0618
 
     [Fact]
     public void GuildConfiguration_throws_on_null() =>
@@ -43,7 +49,7 @@ public class CoreNullGuardTests
 
     /// <summary>Concrete context that exposes the protected overrides for null-guard testing.</summary>
     private sealed class ProbeContext()
-        : DiscordDbContext(new DbContextOptionsBuilder<ProbeContext>().UseSqlite("DataSource=:memory:").Options)
+        : DiscordGraphDbContext(new DbContextOptionsBuilder<ProbeContext>().UseSqlite("DataSource=:memory:").Options)
     {
         public void ProbeModel(ModelBuilder? modelBuilder) => OnModelCreating(modelBuilder!);
 

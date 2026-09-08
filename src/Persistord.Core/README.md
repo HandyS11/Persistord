@@ -21,12 +21,15 @@ built on EF Core 10.
   bit-faithful `unchecked` round-trip, so every value (including ids with the high
   bit set) survives storage exactly. The conversion is registered globally in
   `DiscordDbContext.ConfigureConventions`, so you never annotate individual ids.
-- **`DiscordDbContext`** — an abstract base context that maps the core skeleton
-  entities (`GuildEntity`, `ChannelEntity`, `UserEntity`, `MemberEntity`,
-  `RoleEntity`) and applies the snowflake convention. Inherit it, add the module
-  `DbSet`s you want, and apply module configurations in `OnModelCreating`.
-- **`ApplyCoreConfiguration()`** — a `ModelBuilder` extension that wires the core
-  entity configurations. `DiscordDbContext` calls it for you.
+- **`DiscordDbContext`** — an abstract base context that applies the snowflake
+  convention and maps no entity types. Inherit it, add the module `DbSet`s you
+  want, and apply module configurations in `OnModelCreating`.
+- **`DiscordGraphDbContext`** — derives from `DiscordDbContext` and adds the
+  opt-in core skeleton entities (`GuildEntity`, `ChannelEntity`, `UserEntity`,
+  `MemberEntity`, `RoleEntity`). Inherit it instead when your context mirrors
+  Discord's guild/channel/user/member/role graph.
+- **`ApplyCoreGraph()`** — a `ModelBuilder` extension that wires the core
+  entity configurations. `DiscordGraphDbContext` calls it for you.
 
 ## Provider-agnostic by design
 
