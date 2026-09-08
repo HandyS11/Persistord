@@ -80,6 +80,27 @@ await using var context = database.CreateContext<MyContext>(
 There are two overloads rather than one optional `configure` parameter, because an
 optional parameter cannot precede a `params` array without call-site ambiguity.
 
+## Model assertions
+
+`ModelAssertions` are three `DbContext` extension methods about the *shape* of the model,
+so a schema test is one line instead of a seed-mutate-assert round trip against the
+database. Every failure throws a plain `InvalidOperationException` naming the entity and
+what was expected — the package takes no dependency on any test framework, so these work
+from xunit, NUnit and MSTest alike.
+
+```csharp
+// A unique index over exactly these properties, in order.
+context.AssertUniqueIndex<Membership>(nameof(Membership.GuildId), nameof(Membership.UserId));
+
+// The child cascades from the parent: the one-line replacement for an
+// insert-parent, insert-child, delete-parent, assert-empty test.
+context.AssertCascade<Membership, GuildEntity>();
+
+// The entity's primary key is a caller-supplied ulong, never store-generated, and
+// stored as a long — the shape ApplyGuildRoot and DiscordDbContext expect.
+context.AssertSnowflakeKey<GuildEntity>();
+```
+
 ## `UniqueModelCacheKeyFactory`
 
 EF Core caches the compiled model per context type by default, so the model is
