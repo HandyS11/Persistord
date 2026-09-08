@@ -76,7 +76,9 @@ public static class UpsertExtensions
 
         var created = create();
         update(created);
-        await set.AddAsync(created, cancellationToken).ConfigureAwait(false);
+#pragma warning disable VSTHRD103 // AddAsync is for generators needing DB access; our keys never do.
+        set.Add(created);
+#pragma warning restore VSTHRD103
 
         try
         {
