@@ -61,6 +61,46 @@ modelBuilder.Entity<MessageEntity>().OwnsMany(m => m.Embeds, e =>
 `ToJson()` is not the default because owned-collection JSON support varies by
 provider. See [Messages](messages.md).
 
+## My unique index accepts duplicates
+
+**Cause:** A nullable column is part of the natural key the index covers. SQL
+unique indexes treat `NULL` as distinct from every other `NULL`, so two rows
+that both have `NULL` in that column don't count as a conflict — the index
+never rejects the second insert.
+
+**Fix:** Use a non-nullable sentinel value instead of `null` for "no value here".
+`ManagedResource.Scope` is a non-nullable `string`, `""` for "global", for
+exactly this reason. See [Providers](providers.md#unique-indexes-treat-null-as-distinct)
+and [Scope](managed-resources.md#scope).
+
+## `ORDER BY` on a `DateTimeOffset` fails on SQLite
+
+**Cause:** EF Core's SQLite provider cannot translate an `OrderBy`/`OrderByDescending`
+over a `DateTimeOffset` column — it throws `System.NotSupportedException: SQLite
+does not support expressions of type 'DateTimeOffset' in ORDER BY clauses.`
+
+**Fix:** Order by a surrogate key instead. Every `ManagedResource` carries a
+`long Id` for this reason:
+
+```csharp
+var recent = await db.Set<ManagedMessage>().OrderByDescending(m => m.Id).ToListAsync();
+```
+
+See [Providers](providers.md#order-by-on-a-datetimeoffset-column-fails).
+
+## `CryptographicException` when reading a token
+
+**Cause:** `Persistord.Protection` decrypts a `[Protected]` column while EF
+materializes the row. A read only fails this way when the specific Data
+Protection key that encrypted the value is gone from the key ring — deleted, or
+explicitly revoked.
+
+**Fix:** Restoring a deleted key from a backup of the key ring folder fixes a
+read broken by deletion. A revoked key has no supported recovery through
+`Persistord.Protection` — treat revocation as permanent, and back up the key
+ring on the same schedule as the database itself. See
+[Protection](protection.md#what-a-failure-looks-like).
+
 ## History foreign-key violation when deleting a message
 
 **Cause:** `MessageHistoryEntity` holds a real foreign key to `MessageEntity`

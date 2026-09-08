@@ -128,3 +128,9 @@ await db.SaveChangesAsync();
   filters.
 - [DbContext Lifetime](dbcontext-lifetime.md) — patterns for `IDbContextFactory`
   in a concurrent bot.
+- [Guild Lifecycle](guild-lifecycle.md) — upserting the guild root on
+  `JoinedGuild` and soft-marking or purging it on `LeftGuild`.
+- [Upsert](upsert.md) — the natural-key upsert behind that recipe and its own
+  gotchas.
+- [Providers](providers.md) — the SQLite and PostgreSQL caveats worth knowing
+  before you pick one.
