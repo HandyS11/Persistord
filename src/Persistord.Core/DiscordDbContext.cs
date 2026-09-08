@@ -59,5 +59,6 @@ public abstract class DiscordDbContext : DbContext
         configurationBuilder.Properties<ulong>().HaveConversion<UlongToLongConverter>();
         configurationBuilder.Properties<ulong?>().HaveConversion<NullableUlongToLongConverter>();
         configurationBuilder.Conventions.Add(_ => new SnowflakeKeyConvention());
+        configurationBuilder.Conventions.Add(_ => new GuildScopeConvention());
     }
 }
