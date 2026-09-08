@@ -94,4 +94,16 @@ public class SqliteTestDatabaseTests
         Assert.Single(await context.Widgets.ToListAsync());
         Assert.NotEmpty(await context.Database.GetAppliedMigrationsAsync());
     }
+
+    [Fact]
+    public async Task CreateContext_configure_overrides_the_base_setup()
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+
+        await using var context = database.CreateContext<FixtureContext>(
+            o => new FixtureContext(o),
+            configure: builder => builder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+
+        Assert.Equal(QueryTrackingBehavior.NoTracking, context.ChangeTracker.QueryTrackingBehavior);
+    }
 }

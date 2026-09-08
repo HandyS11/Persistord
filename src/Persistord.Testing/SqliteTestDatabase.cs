@@ -39,7 +39,16 @@ public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
         _connection.Open();
     }
 
-    /// <summary>The connection string this database was opened with.</summary>
+    /// <summary>
+    /// The connection string this database was opened with. In <see cref="Shared"/> mode this is
+    /// how independent connections reach the same database. In <see cref="Private"/> mode it is
+    /// informational only: <c>DataSource=:memory:</c> opens a distinct, empty database on every
+    /// connection, so a second context built with <c>UseSqlite(database.ConnectionString)</c>
+    /// silently does not see the first context's data. To share a private database, go through
+    /// <see cref="Options{TContext}(IInterceptor[])"/> or
+    /// <see cref="CreateContext{TContext}(Func{DbContextOptions{TContext},TContext},IInterceptor[])"/>,
+    /// which reuse the held-open connection object instead of the string.
+    /// </summary>
     public string ConnectionString { get; }
 
     /// <summary>How the schema is built the first time a context asks for it.</summary>
@@ -72,7 +81,14 @@ public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
 
     /// <summary>
     /// Builds options for a context over this database, with
-    /// <see cref="UniqueModelCacheKeyFactory"/> installed.
+    /// <see cref="UniqueModelCacheKeyFactory"/> installed. Unlike
+    /// <see cref="CreateContext{TContext}(Func{DbContextOptions{TContext},TContext},IInterceptor[])"/>,
+    /// this method never builds the schema: it does not call <c>Migrate</c> or
+    /// <c>EnsureCreated</c>. Use it only for a context whose schema another context already built
+    /// (for example, a second connection into a <see cref="Shared"/> database) — otherwise the
+    /// first query against it fails with a raw <c>SqliteException: no such table</c>. Reach for
+    /// <see cref="CreateContext{TContext}(Func{DbContextOptions{TContext},TContext},IInterceptor[])"/>
+    /// when you need the schema built too.
     /// </summary>
     /// <typeparam name="TContext">The context type.</typeparam>
     /// <param name="interceptors">Interceptors to register, if any.</param>
@@ -93,6 +109,9 @@ public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
     /// database.Options&lt;MyContext&gt;(builder =&gt;
     ///     builder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
     /// </code>
+    /// Like the other <c>Options</c> overload, this never builds the schema — use
+    /// <see cref="CreateContext{TContext}(Func{DbContextOptions{TContext},TContext},Action{DbContextOptionsBuilder{TContext}},IInterceptor[])"/>
+    /// when you need that too.
     /// </summary>
     /// <typeparam name="TContext">The context type.</typeparam>
     /// <param name="configure">Applied after the base setup, so it can override anything.</param>

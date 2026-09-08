@@ -47,7 +47,10 @@ await using (var writer = database.CreateContext<MyContext>(o => new MyContext(o
 }
 
 // A second, independent connection — built from the connection string, not the
-// connection object — still sees the row the first one wrote.
+// connection object — still sees the row the first one wrote. This only works
+// because `writer`, above, came from `CreateContext` and already built the schema:
+// `Options` itself never calls Migrate/EnsureCreated, so a `Shared` database needs
+// at least one `CreateContext` call before any `Options`-only reader can query it.
 await using var reader = new MyContext(database.Options<MyContext>());
 ```
 
