@@ -31,6 +31,40 @@ built on EF Core 10.
 - **`ApplyCoreGraph()`** — a `ModelBuilder` extension that wires the core
   entity configurations. `DiscordGraphDbContext` calls it for you.
 
+## What's in the box
+
+- **`DiscordDbContext`** (conventions) —
+  `abstract class DiscordDbContext : DbContext`. Applies the snowflake and
+  guild-scope conventions and maps no entity types.
+- **`DiscordGraphDbContext`** (skeleton) —
+  `abstract class DiscordGraphDbContext : DiscordDbContext`. Adds the opt-in
+  guild/channel/user/member/role skeleton entities.
+- **`ApplyCoreGraph`** —
+  `ModelBuilder ApplyCoreGraph(this ModelBuilder modelBuilder)`. Wires the
+  skeleton entity configurations.
+- **`ApplyGuildRoot`** —
+  `ModelBuilder ApplyGuildRoot(this ModelBuilder modelBuilder, bool cascade = true, bool filterLeftGuilds = false)`.
+  Registers `GuildEntity` as the tenant root, optionally cascading deletes to
+  every `IGuildScoped` entity and filtering guilds that have left.
+- **`IGuildScoped`** —
+  `interface IGuildScoped { ulong GuildId { get; } }`. Marks a row as
+  belonging to exactly one guild.
+- **`ICreatedAt` / `IUpdatedAt` + `TimestampInterceptor`** —
+  `DateTimeOffset CreatedAt { get; set; }` / `DateTimeOffset UpdatedAt { get; set; }`,
+  stamped by `TimestampInterceptor : SaveChangesInterceptor` from a
+  `TimeProvider` on every save.
+- **`UpsertAsync` / `UpsertIfChangedAsync`** —
+  `Task<TEntity> UpsertAsync<TEntity>(this DbSet<TEntity> set, Expression<Func<TEntity, bool>> naturalKey, Func<TEntity> create, Action<TEntity> update, CancellationToken cancellationToken = default)`.
+  Natural-key create-or-update with lost-insert-race recovery.
+- **`PurgeGuildAsync`** —
+  `Task<int> PurgeGuildAsync(this DbContext context, ulong guildId, CancellationToken cancellationToken = default)`.
+  Deletes every `IGuildScoped` row of one guild, plus its `GuildEntity` row,
+  dependents before principals, in one transaction.
+- **`ClearAllTablesAsync`** —
+  `Task<int> ClearAllTablesAsync(this DbContext context, CancellationToken cancellationToken = default)`.
+  Deletes every row of every mapped table, dependents before principals, for
+  test teardown and local database resets.
+
 ## Provider-agnostic by design
 
 The library **never** selects a database provider. It defines the model only. You
