@@ -104,7 +104,8 @@ public class GuildRootTests
     [Fact]
     public async Task The_left_guild_filter_hides_departed_guilds()
     {
-        var (connection, context) = SqliteFixture.Create<RootContext>(o => new RootContext(o, cascade: true, filterLeftGuilds: true));
+        var (connection, context) =
+            SqliteFixture.Create<RootContext>(o => new RootContext(o, cascade: true, filterLeftGuilds: true));
         using (connection)
         await using (context)
         {
@@ -129,9 +130,9 @@ public class GuildRootTests
     {
         public long Id { get; set; }
 
-        public ulong GuildId { get; set; }
-
         public string Label { get; set; } = string.Empty;
+
+        public ulong GuildId { get; set; }
     }
 
     internal sealed class RootContext(

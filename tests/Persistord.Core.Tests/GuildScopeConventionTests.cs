@@ -20,9 +20,11 @@ public class GuildScopeConventionTests
     }
 
     private static IReadOnlyList<string[]> IndexesOf(Type entity) =>
-        [.. BuildModel().FindEntityType(entity)!
+    [
+        .. BuildModel().FindEntityType(entity)!
             .GetIndexes()
-            .Select(i => i.Properties.Select(p => p.Name).ToArray())];
+            .Select(i => i.Properties.Select(p => p.Name).ToArray())
+    ];
 
     [Fact]
     public void Scoped_entity_gets_a_guild_id_index() =>
@@ -57,9 +59,8 @@ public class GuildScopeConventionTests
     [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
     internal sealed class GuildFirstKeyRow : IGuildScoped
     {
-        public ulong GuildId { get; set; }
-
         public string Key { get; set; } = string.Empty;
+        public ulong GuildId { get; set; }
     }
 
     [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
@@ -75,9 +76,9 @@ public class GuildScopeConventionTests
     {
         public long Id { get; set; }
 
-        public ulong GuildId { get; set; }
-
         public string Key { get; set; } = string.Empty;
+
+        public ulong GuildId { get; set; }
     }
 
     [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]

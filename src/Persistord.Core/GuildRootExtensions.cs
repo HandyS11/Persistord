@@ -11,8 +11,9 @@ public static class GuildRootExtensions
     /// <summary>
     /// Registers <see cref="GuildEntity"/> as the guild root and, when <paramref name="cascade"/>
     /// is true, adds a cascading foreign key from every <see cref="IGuildScoped"/> entity's
-    /// <c>GuildId</c> to it. Call it last in <c>OnModelCreating</c>: it wires the entity types the
-    /// model knows about at that point.
+    /// <c>GuildId</c> to it. Call it last in <c>OnModelCreating</c>: it only wires entity types the
+    /// model already knows about, so an <see cref="IGuildScoped"/> entity registered by a
+    /// <c>modelBuilder.Entity&lt;T&gt;()</c> call placed after this one silently gets no foreign key.
     /// </summary>
     /// <param name="modelBuilder">The model builder to configure.</param>
     /// <param name="cascade">
