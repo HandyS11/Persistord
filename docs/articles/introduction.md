@@ -52,7 +52,7 @@ package provides ready-made mappers if you use Discord.Net.
 
 ## Packages
 
-Persistord is split into five NuGet packages:
+Persistord is split into eight NuGet packages:
 
 **`Persistord`** — the convenience meta package. Installing it pulls in the full
 library-neutral stack (`Core`, `Messages`, and `History`) in one reference. This is
@@ -67,7 +67,7 @@ than owning its own resources.
 
 **`Persistord.Messages`** — the optional message-persistence module. Adds
 `MessageEntity` (with soft-delete), owned embeds, and relational attachments and
-reactions, wired in via `ApplyMessagesModule()`.
+reactions, wired in via `ApplyMessagesModule()`. Depends on `Persistord.Core`.
 
 **`Persistord.History`** — the optional append-only history module. Adds
 `MessageHistoryEntity` with a real foreign key to `MessageEntity`, wired in via
@@ -78,7 +78,27 @@ interface types (`IGuild`, `IMessage`, etc.) to Persistord entities via `.To*Ent
 extension methods. Install only if you use Discord.Net; the core packages never
 reference a Discord client library.
 
-The dependency graph is linear: `Core ← Messages ← History`. Each module is a
-separate NuGet package you opt into explicitly.
+**`Persistord.Managed`** — records of the categories, channels, anchored
+messages, and webhooks a bot creates and owns, keyed by a name you chose. See
+[Managed Resources](managed-resources.md). Depends on `Persistord.Core`.
+
+**`Persistord.Protection`** — encrypts `[Protected]` string columns of a
+context at rest via ASP.NET Core Data Protection. See
+[Protection](protection.md). Depends on `Persistord.Core`.
+
+**`Persistord.Testing`** — in-memory SQLite fixtures and EF Core model
+assertions for testing a Persistord-based context. See
+[Testing](testing.md). Depends on `Persistord.Core`.
+
+`Persistord.Managed`, `Persistord.Protection`, and `Persistord.Testing` are
+opt-in and **not** part of the `Persistord` meta package: a bot that only
+mirrors Discord never owns resources, encrypts a column, or needs the test
+fixtures, so the meta package stays the library-neutral mirror stack (`Core`,
+`Messages`, `History`) and nothing more.
+
+The dependency graph is not linear: `Messages` depends on `Core`, `History` depends
+on `Messages`, and `Adapters.DiscordNet` depends on all three — that chain is the
+one the meta package bundles. `Managed`, `Protection`, and `Testing` each depend
+on `Core` alone, independently of that chain and of each other.
 
 To get started, see [Getting Started](getting-started.md).

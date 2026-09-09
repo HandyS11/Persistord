@@ -23,6 +23,13 @@ dotnet add package Persistord.History       # optional: requires Messages
 dotnet add package Persistord.Adapters.DiscordNet   # optional: Discord.Net mappers
 ```
 
+This is the library-neutral mirror stack the meta package bundles. Three more
+packages exist outside it, opt in and installed separately when you need them:
+`Persistord.Managed` (records of resources your bot creates and owns),
+`Persistord.Protection` (encrypts `[Protected]` columns at rest), and
+`Persistord.Testing` (in-memory SQLite fixtures for tests). See
+[Introduction](introduction.md#packages) for the full package list.
+
 ## 1. Derive a context
 
 `Persistord.Core` splits the base context in two: `DiscordDbContext` applies
