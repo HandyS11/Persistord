@@ -82,10 +82,22 @@ public static Task<UpsertResult<TEntity>> UpsertIfChangedAsync<TEntity>(
 
 `UpsertResult<TEntity>` is a `readonly record struct` of `(TEntity Entity, bool
 Changed)`. For an *existing* row, after `update` runs, `UpsertIfChangedAsync`
-checks `context.Entry(row).State`: if change detection finds nothing actually
-different, the row stays `Unchanged`, `SaveChangesAsync` is never called, and
-`Changed` comes back `false`. A freshly created row skips this check entirely —
-`create` + `update` always inserts and always reports `Changed: true`.
+checks `context.ChangeTracker.HasChanges()` — the whole change tracker, not
+just the upserted row's own entry: `context.Entry(row).State` only reflects
+that entry's own scalars, so a mutation that lands on an owned type, an EF
+complex type, or a collection navigation would leave the principal entry
+`Unchanged` and silently drop the write if the check stopped there. If change
+detection finds nothing pending anywhere in the context, `SaveChangesAsync` is
+never called and `Changed` comes back `false`. A freshly created row skips
+this check entirely — `create` + `update` always inserts and always reports
+`Changed: true`.
+
+`Changed` therefore reports whether the call issued a write, not whether the
+upserted row specifically changed: an unrelated pending change already staged
+on the same context makes it `true` too, because the `SaveChangesAsync` call
+below flushes those alongside the upserted row (see
+[`SaveChangesAsync` flushes the whole context](#savechangesasync-flushes-the-whole-context)).
+That is the honest reading, and it never loses a write.
 
 This interacts with `UpdatedAt`: `Persistord.Core`'s `TimestampInterceptor`
 only stamps `IUpdatedAt.UpdatedAt` on rows in the `Added` or `Modified` state

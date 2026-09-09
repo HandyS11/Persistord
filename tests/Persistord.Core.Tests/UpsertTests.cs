@@ -101,6 +101,88 @@ public class UpsertTests
     }
 
     [Fact]
+    public async Task UpsertIfChanged_reports_a_change_and_persists_when_only_an_owned_type_mutates()
+    {
+        var (database, context) = SqliteFixture.Create<PartedWidgetContext>(o => new PartedWidgetContext(o));
+        using (database)
+        await using (context)
+        {
+            // Before the fix, the dirty check read context.Entry(row).State, which only reflects
+            // the principal entry's own scalars. Mutating only Settings.Prefix left that entry
+            // Unchanged, so SaveChangesAsync was never called: Changed came back false and the
+            // mutation was silently dropped even though the in-memory entity showed the new value.
+            await context.PartedWidgets.UpsertAsync(
+                w => w.GuildId == 1UL && w.Key == "dash",
+                () => new PartedWidgetEntity
+                {
+                    GuildId = 1UL, Key = "dash", Settings = new WidgetSettings
+                    {
+                        Prefix = "original"
+                    }
+                },
+                _ => { });
+            context.ChangeTracker.Clear();
+
+            var result = await context.PartedWidgets.UpsertIfChangedAsync(
+                w => w.GuildId == 1UL && w.Key == "dash",
+                () => new PartedWidgetEntity
+                {
+                    GuildId = 1UL, Key = "dash"
+                },
+                w => w.Settings.Prefix = "updated");
+
+            Assert.True(result.Changed);
+            Assert.Equal("updated", result.Entity.Settings.Prefix);
+
+            context.ChangeTracker.Clear();
+            var stored = await context.PartedWidgets.SingleAsync(w => w.GuildId == 1UL && w.Key == "dash");
+            Assert.Equal("updated", stored.Settings.Prefix);
+        }
+    }
+
+    [Fact]
+    public async Task UpsertIfChanged_reports_a_change_and_persists_when_a_child_is_added_to_a_collection()
+    {
+        var (database, context) = SqliteFixture.Create<PartedWidgetContext>(o => new PartedWidgetContext(o));
+        using (database)
+        await using (context)
+        {
+            // Same hole as the owned-type case, for a collection navigation: EF tracks the added
+            // child as its own Added entry, never touching the principal's State, so the old check
+            // reported Changed: false and children persisted = 0.
+            await context.PartedWidgets.UpsertAsync(
+                w => w.GuildId == 1UL && w.Key == "dash",
+                () => new PartedWidgetEntity
+                {
+                    GuildId = 1UL, Key = "dash"
+                },
+                _ => { });
+            context.ChangeTracker.Clear();
+
+            var result = await context.PartedWidgets.UpsertIfChangedAsync(
+                w => w.GuildId == 1UL && w.Key == "dash",
+                () => new PartedWidgetEntity
+                {
+                    GuildId = 1UL, Key = "dash"
+                },
+                w => w.Children.Add(new PartedWidgetChild
+                {
+                    Name = "child-a"
+                }));
+
+            Assert.True(result.Changed);
+            Assert.Single(result.Entity.Children);
+
+            context.ChangeTracker.Clear();
+            var stored = await context.PartedWidgets
+                .Include(w => w.Children)
+                .SingleAsync(w => w.GuildId == 1UL && w.Key == "dash");
+            Assert.Single(stored.Children);
+            Assert.Equal("child-a", stored.Children[0].Name);
+        }
+    }
+
+    [Fact]
     public async Task UpsertIfChanged_persists_the_change_under_context_wide_NoTracking()
     {
         var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
@@ -238,5 +320,58 @@ public sealed class UpsertContext(DbContextOptions<UpsertContext> options)
         {
             w.GuildId, w.Key
         }).IsUnique();
+    }
+}
+
+/// <summary>An owned value object hung off <see cref="PartedWidgetEntity.Settings"/>.</summary>
+public sealed class WidgetSettings
+{
+    public string Prefix { get; set; } = string.Empty;
+}
+
+public sealed class PartedWidgetChild
+{
+    public long Id { get; set; }
+
+    public long PartedWidgetEntityId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// A natural-key entity with an owned type and a collection navigation — the two graph shapes
+/// <see cref="UpsertExtensions"/>'s dirty check must see beyond its own principal entry.
+/// </summary>
+public sealed class PartedWidgetEntity
+{
+    public long Id { get; set; }
+
+    public ulong GuildId { get; set; }
+
+    public string Key { get; set; } = string.Empty;
+
+    public WidgetSettings Settings { get; set; } = new();
+
+    public List<PartedWidgetChild> Children { get; } = [];
+}
+
+public sealed class PartedWidgetContext(DbContextOptions<PartedWidgetContext> options)
+    : Persistord.Core.DiscordDbContext(options)
+{
+    public DbSet<PartedWidgetEntity> PartedWidgets => Set<PartedWidgetEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<PartedWidgetEntity>(builder =>
+        {
+            builder.Property(w => w.Key).IsRequired();
+            builder.HasIndex(w => new
+            {
+                w.GuildId, w.Key
+            }).IsUnique();
+            builder.OwnsOne(w => w.Settings);
+            builder.HasMany(w => w.Children).WithOne().HasForeignKey(c => c.PartedWidgetEntityId);
+        });
     }
 }

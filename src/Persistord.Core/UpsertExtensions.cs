@@ -52,10 +52,18 @@ public static class UpsertExtensions
     /// <param name="create">Builds the row when none matches.</param>
     /// <param name="update">Applies the mutation, to created and existing rows alike.</param>
     /// <param name="cancellationToken">Cancels the read and the save.</param>
-    /// <returns>The tracked row and whether it changed.</returns>
+    /// <returns>The tracked row and whether the call issued a write.</returns>
     /// <remarks>
     /// <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> flushes every pending change
-    /// tracked by the context, not only the natural-key row this method upserted.
+    /// tracked by the context, not only the natural-key row this method upserted. The dirty check
+    /// behind <see cref="UpsertResult{TEntity}.Changed"/> is <see cref="ChangeTracker.HasChanges"/>
+    /// over the whole context, for the same reason: <c>context.Entry(row).State</c> only reflects
+    /// that entry's own scalars, so a mutation that lands on an owned type, an EF complex type, or
+    /// a collection navigation would leave the principal entry <see cref="EntityState.Unchanged"/>
+    /// and the write would be silently dropped if the check stopped there. The trade-off is that an
+    /// unrelated pending change already in the context also reports <c>Changed: true</c> — which is
+    /// the honest reading, since <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> writes
+    /// it regardless.
     /// </remarks>
     public static async Task<UpsertResult<TEntity>> UpsertIfChangedAsync<TEntity>(
         this DbSet<TEntity> set,
@@ -119,10 +127,13 @@ public static class UpsertExtensions
     {
         update(row);
 
-        // DbContext.Entry runs change detection for this entity, so the state below reflects the
-        // mutation. Assigning identical values leaves the row Unchanged, which is the whole
-        // dirty-check: no write, and no UpdatedAt stamp from the timestamp interceptor.
-        if (context.Entry(row).State is not EntityState.Modified)
+        // The dirty check has to see the whole graph. context.Entry(row).State only reflects that
+        // entry's own scalars: a mutation that lands on an owned type, a complex type or a
+        // collection navigation leaves the principal entry Unchanged, and returning early on that
+        // would drop the write. ChangeTracker.HasChanges() runs change detection across every
+        // tracked entry, so it also catches an unrelated pending change already in the context —
+        // which is honest, because the save below flushes those too.
+        if (!context.ChangeTracker.HasChanges())
         {
             return new UpsertResult<TEntity>(row, false);
         }
