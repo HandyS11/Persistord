@@ -55,13 +55,23 @@ public sealed class MyBotContext(DbContextOptions<MyBotContext> options)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyManagedModule();
-        modelBuilder.ApplyGuildRoot(); // optional: cascade deletes from GuildEntity
+        modelBuilder.ApplyGuildRoot(cascade: false); // optional: see the note below
     }
 }
 ```
 
 `ApplyManagedModule()` maps all four resource types regardless of which `DbSet`s you
 declare — an unused one just costs an empty table.
+
+`ApplyGuildRoot()`'s default is `cascade: true`, which wires a cascading foreign
+key from every managed resource's `GuildId` to `GuildEntity` — deleting a guild
+row then deletes every managed resource scoped to it for free, but it also makes
+the guild row a **prerequisite**: a managed resource written before its guild's
+row exists fails with a foreign-key violation, which is exactly what the
+reconcile loop below would hit if it ran against a `cascade: true` root with no
+guild row present. Pass `cascade: true` once your bot always creates the
+`GuildEntity` row on `JoinedGuild` before reconciling anything scoped to that
+guild — see [Guild Lifecycle](guild-lifecycle.md#on-joinedguild-upsert-the-root-row).
 
 ## Scope
 

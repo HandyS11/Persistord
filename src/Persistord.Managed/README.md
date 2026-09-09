@@ -143,13 +143,22 @@ public sealed class MyBotContext(DbContextOptions<MyBotContext> options)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyManagedModule();
-        modelBuilder.ApplyGuildRoot(); // optional: cascade deletes from GuildEntity
+        modelBuilder.ApplyGuildRoot(cascade: false); // optional: see the note below
     }
 }
 ```
 
 `ApplyManagedModule` maps all four resource types regardless of which `DbSet`s
 you declare — an unused one just costs an empty table.
+
+`ApplyGuildRoot()`'s default is `cascade: true`, which wires a cascading
+foreign key from every managed resource's `GuildId` to `GuildEntity` and makes
+the guild row a **prerequisite**: a managed resource written before its
+guild's row exists fails with a foreign-key violation. Pass `cascade: true`
+once your bot always creates the `GuildEntity` row on `JoinedGuild` before
+reconciling anything scoped to that guild — see the
+[Guild Lifecycle](https://handys11.github.io/Persistord/articles/guild-lifecycle.html)
+article on the documentation site.
 
 ## Table names are pinned
 
