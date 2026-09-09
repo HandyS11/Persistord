@@ -27,8 +27,8 @@ public enum TestSchema
 public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
 {
     private readonly SqliteConnection _connection;
-    private readonly bool _sharedCache;
     private readonly Lock _schemaLock = new();
+    private readonly bool _sharedCache;
     private bool _schemaCreated;
 
     private SqliteTestDatabase(string connectionString, bool sharedCache, TestSchema schema)

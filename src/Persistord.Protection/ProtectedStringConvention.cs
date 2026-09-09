@@ -29,7 +29,8 @@ namespace Persistord.Protection;
 /// the model per context type, so the first context's protector is the one baked into the cached
 /// model.
 /// </param>
-public sealed class ProtectedStringConvention(IDataProtectionProvider dataProtectionProvider) : IModelFinalizingConvention
+public sealed class ProtectedStringConvention(IDataProtectionProvider dataProtectionProvider)
+    : IModelFinalizingConvention
 {
     private readonly ProtectedStringConverter _converter = BuildConverter(dataProtectionProvider);
 

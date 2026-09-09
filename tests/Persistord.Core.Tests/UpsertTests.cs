@@ -115,7 +115,9 @@ public class UpsertTests
                 w => w.GuildId == 1UL && w.Key == "dash",
                 () => new PartedWidgetEntity
                 {
-                    GuildId = 1UL, Key = "dash", Settings = new WidgetSettings
+                    GuildId = 1UL,
+                    Key = "dash",
+                    Settings = new WidgetSettings
                     {
                         Prefix = "original"
                     }

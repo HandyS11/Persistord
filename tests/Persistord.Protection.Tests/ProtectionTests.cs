@@ -130,11 +130,11 @@ public class ProtectionTests
         // since EF's default complex-type flattening ("Credentials_Token") is a naming detail
         // this test does not need to assert on.
         var columnName = context.Model
-            .FindEntityType(typeof(ComplexSecretRow))!
-            .FindComplexProperty(nameof(ComplexSecretRow.Credentials))!
-            .ComplexType.FindProperty(nameof(Credentials.Token))!
-            .GetColumnName(StoreObjectIdentifier.Table("ComplexSecrets"))
-            ?? throw new InvalidOperationException("Credentials.Token has no column mapping.");
+                             .FindEntityType(typeof(ComplexSecretRow))!
+                             .FindComplexProperty(nameof(ComplexSecretRow.Credentials))!
+                             .ComplexType.FindProperty(nameof(Credentials.Token))!
+                             .GetColumnName(StoreObjectIdentifier.Table("ComplexSecrets"))
+                         ?? throw new InvalidOperationException("Credentials.Token has no column mapping.");
 
         var stored = await ReadColumnAsync(context, "ComplexSecrets", columnName);
 
@@ -149,7 +149,8 @@ public class ProtectionTests
     {
         await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
         await using var context =
-            database.CreateContext<ConventionSecretContext>(o => new ConventionSecretContext(o, new ReversingProvider()));
+            database.CreateContext<ConventionSecretContext>(o =>
+                new ConventionSecretContext(o, new ReversingProvider()));
 
         await context.Secrets.AddAsync(new SecretRow
         {
@@ -169,8 +170,9 @@ public class ProtectionTests
     public async Task The_convention_covers_an_entity_type_registered_after_the_point_ApplyProtection_ran()
     {
         await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
-        await using var context = database.CreateContext<LateRegistrationContext>(
-            o => new LateRegistrationContext(o, new ReversingProvider()));
+        await using var context =
+            database.CreateContext<LateRegistrationContext>(o =>
+                new LateRegistrationContext(o, new ReversingProvider()));
 
         // LateRegistrationContext.OnModelCreating calls ApplyProtection before registering
         // LateSecretRow, so the explicit route never sees this property. Only the convention,
