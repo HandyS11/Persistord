@@ -22,7 +22,7 @@
 - **Central package management** is on. Versions live in `Directory.Packages.props`; `PackageReference` in a csproj carries **no** `Version` attribute.
 - **NetCord version range:** `[1.0.0-beta.19, 2.0.0)` — floor plus major ceiling, matching the existing `Discord.Net` entry `[3.20.1, 4.0.0)`. See "Spec drift" §3 below.
 - **Method names are identical across all three adapters:** `ToGuildEntity`, `ToChannelEntity`, `ToUserEntity`, `ToMemberEntity`, `ToRoleEntity`, `ToMessageEntity`, `ToHistoryEntity`. Only the `this` parameter type differs.
-- **No changes to `Persistord.Core` / `.Messages` / `.History`.** They stay Discord-library-agnostic. This plan adds files under `src/Persistord.Adapters.NetCord`, `tests/Persistord.Adapters.NetCord.Tests`, and edits only `Directory.Packages.props`, `Persistord.slnx`, `README.md`, `docs/articles/introduction.md`.
+- **No changes to `Persistord.Core` / `.Messages` / `.History`.** They stay Discord-library-agnostic. This plan adds files under `src/Persistord.Adapters.NetCord`, `tests/Persistord.Adapters.NetCord.Tests`, and edits only `Directory.Packages.props`, `Persistord.slnx`, `README.md`, `docs/articles/introduction.md`, `.github/workflows/CD.yml`, `docs/docfx.json`, `.github/workflows/Mutation.yml`, and `.github/dependabot.yml`.
 - **Mapping contract (spec §3):** map only data fields the source provides; never set `IsDeleted`/`DeletedAt`; leave DB-generated surrogate keys (`Embed.Id`, `EmbedField.Id`, `ReactionEntity.Id`) at `0`; add children to navigation collections and let EF fill their FKs; unknown channel types map to a documented default rather than throwing; the one throwing case is a null source (`ArgumentNullException`).
 - **Author/licence metadata:** `Authors` = `HandyS11`, `PackageLicenseExpression` = `MIT`, packed `README.md`.
 
@@ -142,7 +142,7 @@ using NetCordEmbed = global::NetCord.Embed;
    DSharpPlus is for that sibling plan to establish the same way — by building a spike,
    not by trusting this sentence.
 
-**One risk the spec never anticipated:** NetCord has **no stable release** — 509 published versions, all prerelease, latest `1.0.0-beta.19`. Persistord currently ships as `1.0.0-beta4`, so a prerelease dependency raises no NuGet warning today. The moment Persistord publishes a stable `1.0.0`, `dotnet pack` on this project will emit **NU5104** ("a stable release should not have a prerelease dependency"), and `TreatWarningsAsErrors` will turn that into a hard pack failure. Task 6 records this in the README so it is not discovered during a release. Do not suppress NU5104 pre-emptively; there is nothing to suppress yet.
+**One risk the spec never anticipated:** NetCord has **no stable release** — 509 published versions, all prerelease, latest `1.0.0-beta.19`. `Directory.Build.props` sets a local-build placeholder `<Version>1.0.0</Version>`, which NuGet reads as stable, so a local `dotnet pack` with no version override fails **today** with **NU5104** ("a stable release should not have a prerelease dependency") once `TreatWarningsAsErrors` turns that mismatch into a hard pack failure. Prerelease releases are unaffected — `CD.yml` packs with `-p:Version=$VERSION`, and release tags are themselves prerelease (`1.0.0-beta4` and the like), so the stable/prerelease mismatch never arises there; the day Persistord tags a stable `v1.0.0`, the same failure hits the release pipeline. Task 5 records this in the README so it is not discovered during a release. Do not suppress NU5104 pre-emptively; there is nothing to suppress yet.
 
 ---
 
@@ -198,6 +198,10 @@ it and the package is already centrally versioned; this project's tests do not m
 - `Persistord.slnx` — add the two new projects
 - `README.md` — package table row, install line, adapter prose, per-package README link
 - `docs/articles/introduction.md` — adapter availability sentence and package count
+- `.github/workflows/CD.yml` — add the Pack NuGet Package Persistord.Adapters.NetCord step
+- `docs/docfx.json` — add the `Persistord.Adapters.NetCord` csproj glob to API-reference generation
+- `.github/workflows/Mutation.yml` — add the `Persistord.Adapters.NetCord` matrix entry
+- `.github/dependabot.yml` — ignore `NetCord` prerelease bumps
 
 One source file holds all seven mappers, matching `DiscordNetMappingExtensions.cs` (225 lines). The mappers share the alias header and the private helpers; splitting them across files would duplicate the header block and scatter one cohesive responsibility.
 
@@ -220,7 +224,7 @@ One source file holds all seven mappers, matching `DiscordNetMappingExtensions.c
 
 - [ ] **Step 1: Add the NetCord version range**
 
-In `Directory.Packages.props`, in the first `<ItemGroup>` (the "Packages" group, whose comment explains floors-not-pins), add immediately above the `Discord.Net` line so the group stays alphabetical:
+In `Directory.Packages.props`, in the first `<ItemGroup>` (the "Packages" group, whose comment explains floors-not-pins), add directly after the `Discord.Net` line, before `Microsoft.AspNetCore.DataProtection.Abstractions`:
 
 ```xml
     <PackageVersion Include="Discord.Net" Version="[3.20.1, 4.0.0)" />
@@ -1343,12 +1347,18 @@ shipped assembly is compiled against `1.0.0-beta.19`; NuGet resolves a range to 
 lowest satisfying version, and a consumer's newer direct reference wins.
 
 **NetCord has no stable release.** Every published version is a prerelease, so this
-adapter carries a prerelease dependency. That is invisible today because Persistord
-itself ships as a prerelease. When Persistord publishes a stable `1.0.0`, packing this
-project will raise **NU5104** (stable package with a prerelease dependency), which the
-repo's `TreatWarningsAsErrors` turns into a pack failure. Resolve it then — either by
-waiting for NetCord 1.0.0 stable or by shipping this adapter on its own prerelease
-track — rather than by suppressing the warning.
+adapter carries a prerelease dependency. A local `dotnet pack` with no version
+override fails **today** with **NU5104** (stable package with a prerelease
+dependency): `Directory.Build.props` sets a local-build placeholder
+`<Version>1.0.0</Version>`, which NuGet reads as stable, and the repo's
+`TreatWarningsAsErrors` turns that mismatch into a hard pack failure. Prerelease
+releases are unaffected — `CD.yml` packs with `-p:Version=$VERSION`, and release
+tags are themselves prerelease (`1.0.0-beta4` and the like), so the stable/prerelease
+mismatch never arises there. To pack locally, pass a prerelease version explicitly:
+`dotnet pack -p:Version=1.0.0-beta.1`. When Persistord genuinely publishes a stable
+`1.0.0`, this becomes a real release blocker to resolve then — either by waiting for
+NetCord 1.0.0 stable or by shipping this adapter on its own prerelease track —
+rather than by suppressing the warning.
 ````
 
 - [ ] **Step 2: Add the package to the root README table**
@@ -1417,14 +1427,16 @@ Expected: PASS — 242 tests (the 200-test baseline plus this adapter's 42).
 
 - [ ] **Step 6: Verify the package packs with its readme**
 
-Run: `dtk dotnet pack src/Persistord.Adapters.NetCord/Persistord.Adapters.NetCord.csproj -o artifacts/packtest`
-Expected: PASS, producing `artifacts/packtest/Persistord.Adapters.NetCord.1.0.0.nupkg`.
+Run: `dtk dotnet pack src/Persistord.Adapters.NetCord/Persistord.Adapters.NetCord.csproj -o artifacts/packtest -p:Version=1.0.0-beta.1`
+Expected: PASS, producing `artifacts/packtest/Persistord.Adapters.NetCord.1.0.0-beta.1.nupkg`. A
+version-less pack fails locally with NU5104 — see the Versioning section of the package
+README — because `Directory.Build.props`'s local placeholder version reads as stable.
 
 Confirm the readme and the NetCord dependency range are both in the package:
 
 ```bash
-unzip -p artifacts/packtest/Persistord.Adapters.NetCord.1.0.0.nupkg Persistord.Adapters.NetCord.nuspec | grep -A6 '<dependencies>'
-unzip -l artifacts/packtest/Persistord.Adapters.NetCord.1.0.0.nupkg | grep README
+unzip -p artifacts/packtest/Persistord.Adapters.NetCord.1.0.0-beta.1.nupkg Persistord.Adapters.NetCord.nuspec | grep -A6 '<dependencies>'
+unzip -l artifacts/packtest/Persistord.Adapters.NetCord.1.0.0-beta.1.nupkg | grep README
 ```
 
 Expected: a `NetCord` dependency with `version="[1.0.0-beta.19, 2.0.0)"`, and `README.md` present. Then clean up: `rm -rf artifacts/packtest`.

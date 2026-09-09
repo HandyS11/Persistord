@@ -30,6 +30,11 @@ updates:
       # Published floor for Persistord.Protection, not a tested version — see the
       # shipped-floors comment in Directory.Packages.props.
       - dependency-name: "Microsoft.AspNetCore.DataProtection.Abstractions"
+      # Published floor for Persistord.Adapters.NetCord, not a tested version — see the
+      # shipped-floors comment in Directory.Packages.props. NetCord's current version is
+      # already a prerelease, so leaving this unignored would let Dependabot offer
+      # prerelease bumps and silently raise the published floor.
+      - dependency-name: "NetCord"
 
   - package-ecosystem: "github-actions"
     directory: "/"

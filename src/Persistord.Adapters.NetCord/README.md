@@ -1,5 +1,15 @@
 # Persistord.Adapters.NetCord
 
+<div align="center">
+
+[![NuGet](https://img.shields.io/nuget/v/Persistord.Adapters.NetCord.svg?label=Persistord.Adapters.NetCord)](https://www.nuget.org/packages/Persistord.Adapters.NetCord)
+[![Downloads](https://img.shields.io/nuget/dt/Persistord.Adapters.NetCord.svg)](https://www.nuget.org/packages/Persistord.Adapters.NetCord)
+
+[← Persistord docs](https://github.com/HandyS11/Persistord#readme) ·
+[Documentation site](https://handys11.github.io/Persistord/)
+
+</div>
+
 Opt-in [NetCord](https://netcord.dev) adapter for [Persistord](https://github.com/HandyS11/Persistord):
 extension methods mapping NetCord model types to Persistord entities.
 
@@ -72,9 +82,9 @@ adapter carries a prerelease dependency. A local `dotnet pack` with no version
 override fails **today** with **NU5104** (stable package with a prerelease
 dependency): `Directory.Build.props` sets a local-build placeholder
 `<Version>1.0.0</Version>`, which NuGet reads as stable, and the repo's
-`TreatWarningsAsErrors` turns that mismatch into a hard pack failure. Real releases
-are unaffected — `CD.yml` packs with `-p:Version=$VERSION`, and release tags are
-themselves prerelease (`1.0.0-beta4` and the like), so the stable/prerelease
+`TreatWarningsAsErrors` turns that mismatch into a hard pack failure. Prerelease
+releases are unaffected — `CD.yml` packs with `-p:Version=$VERSION`, and release
+tags are themselves prerelease (`1.0.0-beta4` and the like), so the stable/prerelease
 mismatch never arises there. To pack locally, pass a prerelease version explicitly:
 `dotnet pack -p:Version=1.0.0-beta.1`. When Persistord genuinely publishes a stable
 `1.0.0`, this becomes a real release blocker to resolve then — either by waiting for

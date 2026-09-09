@@ -79,6 +79,11 @@ interface types (`IGuild`, `IMessage`, etc.) to Persistord entities via `.To*Ent
 extension methods. Install only if you use Discord.Net; the core packages never
 reference a Discord client library.
 
+**`Persistord.Adapters.NetCord`** — an optional adapter that maps NetCord model
+types (`RestGuild`, `RestMessage`, etc.) to Persistord entities via `.To*Entity()`
+extension methods. Install only if you use NetCord; the core packages never
+reference a Discord client library.
+
 **`Persistord.Managed`** — records of the categories, channels, anchored
 messages, and webhooks a bot creates and owns, keyed by a name you chose. See
 [Managed Resources](managed-resources.md). Depends on `Persistord.Core`.
@@ -98,8 +103,8 @@ fixtures, so the meta package stays the library-neutral mirror stack (`Core`,
 `Messages`, `History`) and nothing more.
 
 The dependency graph is not linear: `Messages` depends on `Core`, `History` depends
-on `Messages`, and `Adapters.DiscordNet` depends on all three — that chain is the
-one the meta package bundles. `Managed`, `Protection`, and `Testing` each depend
-on `Core` alone, independently of that chain and of each other.
+on `Messages`, and both `Adapters.DiscordNet` and `Adapters.NetCord` depend on all
+three — that chain is the one the meta package bundles. `Managed`, `Protection`, and
+`Testing` each depend on `Core` alone, independently of that chain and of each other.
 
 To get started, see [Getting Started](getting-started.md).

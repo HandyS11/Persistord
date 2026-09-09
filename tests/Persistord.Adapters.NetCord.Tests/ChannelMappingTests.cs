@@ -17,6 +17,7 @@ public class ChannelMappingTests
     [InlineData(NetCordChannelType.AnnouncementGuildThread, ChannelType.Thread)]
     [InlineData(NetCordChannelType.ForumGuildChannel, ChannelType.Text)]
     [InlineData(NetCordChannelType.MediaForumGuildChannel, ChannelType.Text)]
+    [InlineData(NetCordChannelType.DirectoryGuildChannel, ChannelType.Text)]
     public void Maps_channel_class_to_type(NetCordChannelType source, ChannelType expected) =>
         Assert.Equal(expected, NetCordFakes.MakeChannel(source).ToChannelEntity().Type);
 

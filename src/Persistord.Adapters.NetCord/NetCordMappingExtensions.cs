@@ -25,7 +25,9 @@ public static class NetCordMappingExtensions
     /// a parent nor a channel kind, so both are recovered from the concrete class:
     /// <c>ParentId</c> lives on <c>TextGuildChannel</c> (and so on its voice, stage,
     /// announcement and thread subclasses) and separately on <c>ForumGuildChannel</c>;
-    /// categories have no parent by definition.
+    /// categories have no parent by definition, and <c>DirectoryGuildChannel</c> — which
+    /// derives from <c>TextChannel</c>, not <c>TextGuildChannel</c> — exposes no
+    /// <c>ParentId</c> either.
     /// </remarks>
     /// <param name="channel">The guild channel to map.</param>
     /// <exception cref="ArgumentNullException"><paramref name="channel"/> is <see langword="null"/>.</exception>
