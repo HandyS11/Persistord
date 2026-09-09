@@ -19,20 +19,33 @@ internal static class NetCordFakes
         string name = "general",
         ulong? parentId = null) =>
         (IGuildChannel)Channel.CreateFromJson(
-            new JsonChannel { Id = id, GuildId = guildId, Name = name, Type = type, ParentId = parentId },
+            new JsonChannel
+            {
+                Id = id,
+                GuildId = guildId,
+                Name = name,
+                Type = type,
+                ParentId = parentId
+            },
             Client);
 
     internal static RestGuild MakeGuild(
         ulong id = 100UL,
         string name = "a-guild",
         ulong ownerId = 101UL) =>
-        new(new JsonGuild { Id = id, Name = name, OwnerId = ownerId }, Client);
+        new(new JsonGuild
+        {
+            Id = id, Name = name, OwnerId = ownerId
+        }, Client);
 
     internal static User MakeUser(
         ulong id = 789UL,
         string username = "someone",
         string? globalName = "Someone") =>
-        new(new JsonUser { Id = id, Username = username, GlobalName = globalName }, Client);
+        new(new JsonUser
+        {
+            Id = id, Username = username, GlobalName = globalName
+        }, Client);
 
     internal static GuildUser MakeMember(
         ulong guildId = 222UL,
@@ -42,7 +55,10 @@ internal static class NetCordFakes
         new(
             new JsonGuildUser
             {
-                User = new JsonUser { Id = userId, Username = "someone" },
+                User = new JsonUser
+                {
+                    Id = userId, Username = "someone"
+                },
                 Nickname = nickname,
                 JoinedAt = joinedAt,
             },
@@ -61,7 +77,10 @@ internal static class NetCordFakes
                 Id = id,
                 Name = name,
                 Permissions = permissions,
-                Colors = new JsonRoleColors { PrimaryColor = new Color(color) },
+                Colors = new JsonRoleColors
+                {
+                    PrimaryColor = new Color(color)
+                },
             },
             guildId,
             Client);
@@ -70,13 +89,23 @@ internal static class NetCordFakes
         ulong id = 900UL,
         string fileName = "shot.png",
         string url = "https://cdn.example/shot.png") =>
-        new() { Id = id, FileName = fileName, Url = url };
+        new()
+        {
+            Id = id, FileName = fileName, Url = url
+        };
 
     internal static JsonMessageReaction MakeReaction(
         int count = 3,
         ulong? emojiId = null,
         string? emojiName = "\U0001F44D") =>
-        new() { Count = count, Emoji = new JsonEmoji { Id = emojiId, Name = emojiName } };
+        new()
+        {
+            Count = count,
+            Emoji = new JsonEmoji
+            {
+                Id = emojiId, Name = emojiName
+            }
+        };
 
     internal static JsonEmbed MakeEmbed(
         string? title = "a title",
@@ -89,9 +118,25 @@ internal static class NetCordFakes
             Title = title,
             Description = description,
             Color = color is { } raw ? new Color(raw) : null,
-            Footer = footerText is null ? null : new JsonEmbedFooter { Text = footerText, IconUrl = "https://cdn.example/i.png" },
-            Author = authorName is null ? null : new JsonEmbedAuthor { Name = authorName, Url = "https://example/a" },
-            Fields = [new JsonEmbedField { Name = "fname", Value = "fvalue", Inline = true }],
+            Footer = footerText is null
+                ? null
+                : new JsonEmbedFooter
+                {
+                    Text = footerText, IconUrl = "https://cdn.example/i.png"
+                },
+            Author = authorName is null
+                ? null
+                : new JsonEmbedAuthor
+                {
+                    Name = authorName, Url = "https://example/a"
+                },
+            Fields =
+            [
+                new JsonEmbedField
+                {
+                    Name = "fname", Value = "fvalue", Inline = true
+                }
+            ],
         };
 
     internal static RestMessage MakeMessage(
@@ -109,7 +154,10 @@ internal static class NetCordFakes
                 Id = id,
                 ChannelId = channelId,
                 Content = content,
-                Author = new JsonUser { Id = authorId, Username = "author" },
+                Author = new JsonUser
+                {
+                    Id = authorId, Username = "author"
+                },
                 EditedAt = editedAt,
                 Attachments = attachments ?? [],
                 Reactions = reactions ?? [],

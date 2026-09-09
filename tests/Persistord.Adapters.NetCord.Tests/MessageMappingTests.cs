@@ -32,7 +32,8 @@ public class MessageMappingTests
     public void Maps_attachments()
     {
         var entity = NetCordFakes.MakeMessage(
-            attachments: [NetCordFakes.MakeAttachment(id: 900UL, fileName: "shot.png", url: "https://cdn.example/shot.png")])
+                attachments:
+                [NetCordFakes.MakeAttachment(id: 900UL, fileName: "shot.png", url: "https://cdn.example/shot.png")])
             .ToMessageEntity();
 
         var attachment = Assert.Single(entity.Attachments);

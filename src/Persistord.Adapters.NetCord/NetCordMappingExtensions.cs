@@ -230,9 +230,7 @@ public static class NetCordMappingExtensions
     {
         var mapped = new Embed
         {
-            Title = embed.Title,
-            Description = embed.Description,
-            Color = embed.Color?.RawValue,
+            Title = embed.Title, Description = embed.Description, Color = embed.Color?.RawValue,
         };
 
         if (embed.Footer is { } footer)
