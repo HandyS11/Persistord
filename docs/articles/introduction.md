@@ -48,11 +48,12 @@ The following are explicit non-goals in v1:
 
 Mapping from Discord.Net / DSharpPlus / NetCord model types to Persistord entities
 is the user's responsibility — though the optional `Persistord.Adapters.DiscordNet`
-package provides ready-made mappers if you use Discord.Net.
+and `Persistord.Adapters.NetCord` packages provide ready-made mappers for those two
+libraries. A DSharpPlus adapter is not yet available.
 
 ## Packages
 
-Persistord is split into eight NuGet packages:
+Persistord is split into nine NuGet packages:
 
 **`Persistord`** — the convenience meta package. Installing it pulls in the full
 library-neutral stack (`Core`, `Messages`, and `History`) in one reference. This is
