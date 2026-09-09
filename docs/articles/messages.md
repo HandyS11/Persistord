@@ -6,7 +6,7 @@ Apply the module in `OnModelCreating`:
 ```csharp
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
-    base.OnModelCreating(modelBuilder);   // snowflake convention only
+    base.OnModelCreating(modelBuilder);   // DiscordDbContext maps nothing; see ConfigureConventions
     modelBuilder.ApplyMessagesModule();   // messages, embeds, attachments, reactions
 }
 ```
