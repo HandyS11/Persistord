@@ -1,7 +1,14 @@
 using NetCord;
 using NetCord.Rest;
 using Persistord.Core.Entities;
+using Persistord.History.Entities;
+using Persistord.Messages.Entities;
 using ChannelType = Persistord.Core.Entities.ChannelType;
+using Embed = Persistord.Messages.Owned.Embed;
+using EmbedAuthor = Persistord.Messages.Owned.EmbedAuthor;
+using EmbedField = Persistord.Messages.Owned.EmbedField;
+using EmbedFooter = Persistord.Messages.Owned.EmbedFooter;
+using NetCordEmbed = global::NetCord.Embed;
 
 namespace Persistord.Adapters.NetCord;
 
@@ -116,6 +123,76 @@ public static class NetCordMappingExtensions
     }
 
     /// <summary>
+    /// Maps a NetCord message to a <see cref="MessageEntity"/>, including embeds,
+    /// attachments, and reactions. Soft-delete state and EF-generated keys are left
+    /// at their defaults; child foreign keys are filled by EF from the navigation
+    /// collections on save.
+    /// </summary>
+    /// <remarks>
+    /// Binds <c>RestMessage</c> so the gateway <c>Message</c>, which derives from it,
+    /// maps through the same method.
+    /// </remarks>
+    /// <param name="message">The message to map.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="message"/> is <see langword="null"/>.</exception>
+    public static MessageEntity ToMessageEntity(this RestMessage message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        var entity = new MessageEntity
+        {
+            Id = message.Id,
+            ChannelId = message.ChannelId,
+            AuthorId = message.Author.Id,
+            Content = message.Content,
+            EditedAt = message.EditedAt,
+        };
+
+        foreach (var attachment in message.Attachments)
+        {
+            entity.Attachments.Add(new AttachmentEntity
+            {
+                Id = attachment.Id, FileName = attachment.FileName, Url = attachment.Url,
+            });
+        }
+
+        foreach (var reaction in message.Reactions)
+        {
+            entity.Reactions.Add(new ReactionEntity
+            {
+                Emoji = FormatEmoji(reaction.Emoji.Id, reaction.Emoji.Name), Count = reaction.Count,
+            });
+        }
+
+        foreach (var embed in message.Embeds)
+        {
+            entity.Embeds.Add(MapEmbed(embed));
+        }
+
+        return entity;
+    }
+
+    /// <summary>
+    /// Builds a <see cref="MessageHistoryEntity"/> snapshot of a message for the given
+    /// change type. <see cref="MessageHistoryEntity.RecordedAt"/> is stamped with the
+    /// current UTC time; the surrogate key is left for EF to assign.
+    /// </summary>
+    /// <param name="message">The message to snapshot.</param>
+    /// <param name="changeType">The kind of change this snapshot records.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="message"/> is <see langword="null"/>.</exception>
+    public static MessageHistoryEntity ToHistoryEntity(this RestMessage message, HistoryChangeType changeType)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        return new MessageHistoryEntity
+        {
+            MessageId = message.Id,
+            Content = message.Content,
+            RecordedAt = DateTimeOffset.UtcNow,
+            ChangeType = changeType,
+        };
+    }
+
+    /// <summary>
     /// Maps a NetCord channel to a <see cref="ChannelType"/>.
     /// <para>
     /// NetCord carries no channel-type property: the kind is the class itself. Arm order
@@ -134,4 +211,52 @@ public static class NetCordMappingExtensions
         // directory, and any channel class NetCord adds later
         _ => ChannelType.Text,
     };
+
+    /// <summary>
+    /// Formats a reaction emoji for storage: custom emoji become <c>name:id</c>
+    /// (preserving the snowflake), while unicode emoji are stored as their raw name.
+    /// Matches the Discord.Net adapter's format so stored values are portable.
+    /// </summary>
+    /// <param name="id">The custom emoji's snowflake, or <see langword="null"/> for a unicode emoji.</param>
+    /// <param name="name">The emoji name, or the unicode character itself.</param>
+    private static string FormatEmoji(ulong? id, string? name) =>
+        id is { } emojiId ? $"{name}:{emojiId}" : name ?? string.Empty;
+
+    /// <summary>Maps a NetCord embed to a Persistord <see cref="Embed"/>.</summary>
+    /// <param name="embed">The NetCord embed to map.</param>
+    private static Embed MapEmbed(NetCordEmbed embed)
+    {
+        var mapped = new Embed
+        {
+            Title = embed.Title,
+            Description = embed.Description,
+            Color = embed.Color?.RawValue,
+        };
+
+        if (embed.Footer is { } footer)
+        {
+            mapped.Footer = new EmbedFooter
+            {
+                Text = footer.Text, IconUrl = footer.IconUrl,
+            };
+        }
+
+        if (embed.Author is { } author)
+        {
+            mapped.Author = new EmbedAuthor
+            {
+                Name = author.Name, Url = author.Url,
+            };
+        }
+
+        foreach (var field in embed.Fields)
+        {
+            mapped.Fields.Add(new EmbedField
+            {
+                Name = field.Name, Value = field.Value, Inline = field.Inline,
+            });
+        }
+
+        return mapped;
+    }
 }
