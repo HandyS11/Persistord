@@ -76,6 +76,23 @@ migration before running `database update`**: this is the most likely way to
 lose data on this upgrade. `ApplyCoreConfiguration()` is renamed
 `ApplyCoreGraph()`; the old name forwards for one release.
 
+**Third break: a bare `ulong` primary key is no longer store-generated.** On
+`1.0.0-beta2`, a consumer's own `public ulong Id { get; set; }` primary key
+was `ValueGenerated.OnAdd` by EF's own convention — SQLite emitted `"Id"
+INTEGER NOT NULL ... PRIMARY KEY AUTOINCREMENT` for it. `SnowflakeKeyConvention`
+(see [Snowflake Conversion](snowflake-conversion.md)) now marks every `ulong`
+or `ulong?` primary-key property `ValueGenerated.Never`, because a Discord
+snowflake, a Steam64 id, or any other unsigned 64-bit key is a value the
+caller already owns, never one the database should assign — which is the
+[spec](https://github.com/HandyS11/Persistord)'s intended behaviour, not a
+regression. Two things follow for an upgrading consumer: your next
+`dotnet ef migrations add` drops the identity/autoincrement from that column,
+and code that relied on EF assigning the key (leaving `Id` as `0` on a new
+row before `SaveChangesAsync`) now inserts a literal `0` and collides on the
+second such row. If you genuinely want a store-generated `ulong` key, call
+`.Property(e => e.Id).ValueGeneratedOnAdd()` explicitly on that entity —
+explicit fluent configuration wins over the convention.
+
 ## Entity shapes
 
 All entities are plain POCOs. They carry no Discord client library types.
@@ -122,7 +139,7 @@ value and must handle `null`.
 | Property | Type | Notes |
 | --- | --- | --- |
 | `Id` | `ulong` | Primary key, snowflake |
-| `GuildId` | `ulong` | Foreign key to `GuildEntity` |
+| `GuildId` | `ulong` | Indexed, not a foreign key — see [GuildEntity](#guildentity) above |
 | `ParentId` | `ulong?` | Nullable self-referencing FK — categories own channels, channels own threads |
 | `Type` | enum | Channel type discriminator (text, voice, category, thread, …) |
 | `Name` | `string` | Channel name |
@@ -155,7 +172,7 @@ channel → thread hierarchy.
 | Property | Type | Notes |
 | --- | --- | --- |
 | `Id` | `ulong` | Primary key, snowflake |
-| `GuildId` | `ulong` | Foreign key to `GuildEntity` |
+| `GuildId` | `ulong` | Indexed, not a foreign key — see [GuildEntity](#guildentity) above |
 | `Name` | `string` | Role name |
 | `Permissions` | `ulong` | Discord permission bitfield |
 | `Color` | `int` | Role color as an integer |
