@@ -127,7 +127,7 @@ using NetCordEmbed = global::NetCord.Embed;
 
 ---
 
-## Spec drift — three places this plan overrides the 2026-06-14 spec
+## Spec drift — four places this plan overrides the 2026-06-14 spec
 
 1. **§2 "NetCord binds to concrete model types because they do not expose comparable mapping interfaces."** Partly wrong. `IGuildChannel` exists and is the right binding for `ToChannelEntity`. The other six mappers do bind to concrete types — but to *base classes* (`RestGuild`, `User`, `RestMessage`) that cover both the gateway and REST variants, which is the same "works for `Socket*` and `Rest*`" property the spec credits to Discord.Net's interfaces.
 
@@ -135,38 +135,61 @@ using NetCordEmbed = global::NetCord.Embed;
 
 3. **§1 "Versioning policy: minimum-version floor, no upper ceiling."** The repo did not adopt this. `Directory.Packages.props` uses floor-plus-major-ceiling ranges for every shipped dependency, with a comment explaining that these are the versions baked into the published nupkgs. Follow the repo. The NetCord README must document the range that is actually shipped, not the spec's policy.
 
+4. **§4 "these libraries' concrete model types are hard or impossible to construct in
+   isolation, so full field-by-field unit coverage is not feasible."** False for NetCord,
+   as the Testability section above documents. The spec's "documented asymmetry" between
+   Discord.Net and the other two adapters does not apply here. Whether it applies to
+   DSharpPlus is for that sibling plan to establish the same way — by building a spike,
+   not by trusting this sentence.
+
 **One risk the spec never anticipated:** NetCord has **no stable release** — 509 published versions, all prerelease, latest `1.0.0-beta.19`. Persistord currently ships as `1.0.0-beta4`, so a prerelease dependency raises no NuGet warning today. The moment Persistord publishes a stable `1.0.0`, `dotnet pack` on this project will emit **NU5104** ("a stable release should not have a prerelease dependency"), and `TreatWarningsAsErrors` will turn that into a hard pack failure. Task 6 records this in the README so it is not discovered during a release. Do not suppress NU5104 pre-emptively; there is nothing to suppress yet.
 
 ---
 
-## Testability — what is and is not covered, and why
+## Testability — NetCord models are constructible, so coverage is full
 
-Spec §4 predicted that NetCord's concrete types would be "hard or impossible to construct in isolation" so that full field-by-field coverage is not feasible. That prediction is correct and worth stating precisely, because it drives the task structure:
+Spec §4 predicted that NetCord's concrete types would be "hard or impossible to
+construct in isolation", limiting this adapter to partial coverage. **That prediction is
+wrong**, and this plan does not inherit it. Verified by building and running a spike
+against `NetCord 1.0.0-beta.19`, not by reading docs:
 
-- NetCord model types have non-public constructors taking `(JsonModel, RestClient)`, and **their properties are not `virtual`**. So they can neither be `new`-ed nor proxied by NSubstitute. `ToGuildEntity`, `ToUserEntity`, `ToMemberEntity`, `ToRoleEntity`, `ToMessageEntity` and `ToHistoryEntity` therefore have **no unit-testable happy path**.
-- `IGuildChannel` *is* an interface, so `ToChannelEntity` is unit-testable — but only down the default arm, since the type switch keys off concrete classes a substitute can never be.
+- `new RestClient()` works — the constructor's only parameter is optional.
+- `RestGuild`, `User`, `Role`, `GuildUser` and `RestMessage` each expose a **public**
+  constructor taking a JSON model (plus a guild id, for the two guild-scoped types) and
+  a `RestClient`. The `NetCord.JsonModels.Json*` types have public parameterless
+  constructors and settable properties.
+- `Channel.CreateFromJson(JsonChannel, RestClient)` is public and static, and dispatches
+  to the correct concrete class for all nine guild channel kinds. Every one implements
+  `IGuildChannel`, and `ParentId` populates (`CategoryGuildChannel` correctly has none).
 
-This plan claws back the two pieces of logic that would otherwise ship untested, by shaping them so they take **primitives instead of NetCord objects**:
+So this adapter gets the same field-by-field rigor as the Discord.Net one, built on real
+objects rather than mocks. `MapChannelType`, `FormatEmoji` and `MapEmbed` are therefore
+all `private` and exercised through the public mappers — no `InternalsVisibleTo`, no
+widened API surface.
 
-- `MapChannelType(Type)` takes a `System.Type` rather than a channel instance, so every arm of the translation table is provable with `typeof(PublicGuildThread)` and friends — no instance required. This is strictly better coverage than the Discord.Net adapter achieves.
-- `FormatEmoji(ulong?, string?)` takes the two fields it needs rather than a `MessageReaction`, so the custom-vs-unicode branch is provable.
+**The one gotcha, found by running the spike rather than reading the docs:**
+`RestMessage`'s constructor LINQ-projects `MentionedUsers`, `MentionedRoleIds`,
+`MentionedChannels`, `Components`, `Stickers` and `MessageSnapshots`, and throws
+`ArgumentNullException` if any is left `null`. The shared test builder sets all six to
+empty arrays. Omitting them produces a confusing failure inside NetCord's constructor
+that looks nothing like a mapping bug.
 
-Both are `internal`, exposed to the test assembly via `InternalsVisibleTo`. Everything else is covered by null-argument tests plus, ultimately, the flagship NetCord bot sample (spec's sub-project ③). **Say this in the README** rather than letting a reader assume the mappers are unverified by oversight.
-
----
+NSubstitute stays a dependency only because the repo's other adapter test project uses
+it and the package is already centrally versioned; this project's tests do not mock.
 
 ## File Structure
 
 **Created:**
 
-- `src/Persistord.Adapters.NetCord/Persistord.Adapters.NetCord.csproj` — packable project, refs Core+Messages+History+NetCord, declares `InternalsVisibleTo`
+- `src/Persistord.Adapters.NetCord/Persistord.Adapters.NetCord.csproj` — packable project, refs Core+Messages+History+NetCord
 - `src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs` — all seven `.To*Entity()` methods plus the private/internal helpers
 - `src/Persistord.Adapters.NetCord/README.md` — packed readme (API, versioning, coverage note)
 - `tests/Persistord.Adapters.NetCord.Tests/Persistord.Adapters.NetCord.Tests.csproj` — xunit + NSubstitute
 - `tests/Persistord.Adapters.NetCord.Tests/stryker-config.json` — mutation-testing config, mirrors the Discord.Net one
-- `tests/Persistord.Adapters.NetCord.Tests/ChannelTypeMappingTests.cs` — the full translation table
-- `tests/Persistord.Adapters.NetCord.Tests/ChannelEntityMappingTests.cs` — field mapping via `IGuildChannel` substitute
-- `tests/Persistord.Adapters.NetCord.Tests/EmojiFormattingTests.cs` — custom vs unicode emoji
+- `tests/Persistord.Adapters.NetCord.Tests/NetCordFakes.cs` — shared builders for real NetCord instances
+- `tests/Persistord.Adapters.NetCord.Tests/ChannelMappingTests.cs` — the translation table and channel fields
+- `tests/Persistord.Adapters.NetCord.Tests/CoreEntityMappingTests.cs` — guild, user, member, role
+- `tests/Persistord.Adapters.NetCord.Tests/MessageMappingTests.cs` — message, children, history
 - `tests/Persistord.Adapters.NetCord.Tests/NullArgumentTests.cs` — all seven guards
 
 **Modified:**
@@ -239,12 +262,6 @@ Create `src/Persistord.Adapters.NetCord/Persistord.Adapters.NetCord.csproj`:
     <ProjectReference Include="../Persistord.Core/Persistord.Core.csproj" />
     <ProjectReference Include="../Persistord.Messages/Persistord.Messages.csproj" />
     <ProjectReference Include="../Persistord.History/Persistord.History.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <!-- MapChannelType and FormatEmoji are internal so they stay out of the public API
-         while remaining unit-testable; NetCord model types cannot be constructed or
-         mocked, so these two helpers carry the adapter's real test coverage. -->
-    <InternalsVisibleTo Include="Persistord.Adapters.NetCord.Tests" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildProjectDirectory)/README.md" Pack="true" PackagePath="\" Condition="Exists('README.md')" />
@@ -333,99 +350,247 @@ git commit -m "feat(adapters): scaffold Persistord.Adapters.NetCord package and 
 
 ---
 
-## Task 2: Channel-type translation table
+## Task 2: Channel mapper and the channel-type table
 
-NetCord encodes channel kind in the **class**, not in a property — there is no `Type` member anywhere on `Channel` or `IGuildChannel`. This helper centralises the translation to Persistord's four-member `ChannelType`.
-
-It takes a `System.Type` rather than a channel instance. That is deliberate: NetCord channels cannot be constructed or mocked, so an instance-keyed switch would be entirely untestable, while a `Type`-keyed one is fully provable with `typeof(...)`. `ToChannelEntity` (Task 3) calls it as `MapChannelType(channel.GetType())`, which is semantically identical to a type-pattern switch on the instance.
+NetCord encodes channel kind in the **class**, not a property — there is no `Type` member
+anywhere on `Channel` or `IGuildChannel`. This task adds `ToChannelEntity` together with
+the private type-translation helper it needs, and proves the whole table with real
+channel instances.
 
 **Files:**
 
 - Create: `src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs`
-- Test: `tests/Persistord.Adapters.NetCord.Tests/ChannelTypeMappingTests.cs`
+- Create: `tests/Persistord.Adapters.NetCord.Tests/NetCordFakes.cs`
+- Test: `tests/Persistord.Adapters.NetCord.Tests/ChannelMappingTests.cs`
 
 **Interfaces:**
 
 - Consumes: Task 1's projects.
-- Produces: `internal static ChannelType MapChannelType(Type channelType)`.
+- Produces: `public static ChannelEntity ToChannelEntity(this IGuildChannel channel)`, and
+  the `NetCordFakes` builders that Tasks 3 and 4 also use.
 
-- [ ] **Step 1: Write the failing tests**
+- [ ] **Step 1: Write the shared test builders**
 
-Create `tests/Persistord.Adapters.NetCord.Tests/ChannelTypeMappingTests.cs`:
+Create `tests/Persistord.Adapters.NetCord.Tests/NetCordFakes.cs`:
 
 ```csharp
 using NetCord;
-using Persistord.Adapters.NetCord;
-using Xunit;
-using ChannelType = Persistord.Core.Entities.ChannelType;
+using NetCord.JsonModels;
+using NetCord.Rest;
 
 namespace Persistord.Adapters.NetCord.Tests;
 
 /// <summary>
-/// Covers every arm of the class-to-ChannelType table. These use typeof(...) rather
-/// than instances because NetCord channels have non-public constructors and
-/// non-virtual properties, so they can be neither constructed nor substituted.
+/// Builders for real NetCord model instances. NetCord exposes public constructors over
+/// its JSON models, so these tests use genuine objects rather than mocks.
 /// </summary>
-public class ChannelTypeMappingTests
+internal static class NetCordFakes
 {
-    [Fact]
-    public void TextGuildChannel_maps_to_Text() =>
-        Assert.Equal(ChannelType.Text, NetCordMappingExtensions.MapChannelType(typeof(TextGuildChannel)));
+    private static readonly RestClient Client = new();
 
-    [Fact]
-    public void AnnouncementGuildChannel_maps_to_Text() =>
-        Assert.Equal(ChannelType.Text, NetCordMappingExtensions.MapChannelType(typeof(AnnouncementGuildChannel)));
+    internal static IGuildChannel MakeChannel(
+        ChannelType type,
+        ulong id = 111UL,
+        ulong guildId = 222UL,
+        string name = "general",
+        ulong? parentId = null) =>
+        (IGuildChannel)Channel.CreateFromJson(
+            new JsonChannel { Id = id, GuildId = guildId, Name = name, Type = type, ParentId = parentId },
+            Client);
 
-    [Fact]
-    public void VoiceGuildChannel_maps_to_Voice() =>
-        Assert.Equal(ChannelType.Voice, NetCordMappingExtensions.MapChannelType(typeof(VoiceGuildChannel)));
+    internal static RestGuild MakeGuild(
+        ulong id = 100UL,
+        string name = "a-guild",
+        ulong ownerId = 101UL) =>
+        new(new JsonGuild { Id = id, Name = name, OwnerId = ownerId }, Client);
 
-    [Fact]
-    public void StageGuildChannel_maps_to_Voice() =>
-        Assert.Equal(ChannelType.Voice, NetCordMappingExtensions.MapChannelType(typeof(StageGuildChannel)));
+    internal static User MakeUser(
+        ulong id = 789UL,
+        string username = "someone",
+        string? globalName = "Someone") =>
+        new(new JsonUser { Id = id, Username = username, GlobalName = globalName }, Client);
 
-    [Fact]
-    public void CategoryGuildChannel_maps_to_Category() =>
-        Assert.Equal(ChannelType.Category, NetCordMappingExtensions.MapChannelType(typeof(CategoryGuildChannel)));
+    internal static GuildUser MakeMember(
+        ulong guildId = 222UL,
+        ulong userId = 789UL,
+        string? nickname = "nick",
+        DateTimeOffset? joinedAt = null) =>
+        new(
+            new JsonGuildUser
+            {
+                User = new JsonUser { Id = userId, Username = "someone" },
+                Nickname = nickname,
+                JoinedAt = joinedAt,
+            },
+            guildId,
+            Client);
 
-    [Fact]
-    public void PublicGuildThread_maps_to_Thread() =>
-        Assert.Equal(ChannelType.Thread, NetCordMappingExtensions.MapChannelType(typeof(PublicGuildThread)));
+    internal static Role MakeRole(
+        ulong id = 333UL,
+        ulong guildId = 222UL,
+        string name = "admin",
+        Permissions permissions = Permissions.Administrator,
+        int color = 0xFF00FF) =>
+        new(
+            new JsonRole
+            {
+                Id = id,
+                Name = name,
+                Permissions = permissions,
+                Colors = new JsonRoleColors { PrimaryColor = new Color(color) },
+            },
+            guildId,
+            Client);
 
-    [Fact]
-    public void PrivateGuildThread_maps_to_Thread() =>
-        Assert.Equal(ChannelType.Thread, NetCordMappingExtensions.MapChannelType(typeof(PrivateGuildThread)));
+    internal static JsonAttachment MakeAttachment(
+        ulong id = 900UL,
+        string fileName = "shot.png",
+        string url = "https://cdn.example/shot.png") =>
+        new() { Id = id, FileName = fileName, Url = url };
 
-    [Fact]
-    public void AnnouncementGuildThread_maps_to_Thread() =>
-        Assert.Equal(ChannelType.Thread, NetCordMappingExtensions.MapChannelType(typeof(AnnouncementGuildThread)));
+    internal static JsonMessageReaction MakeReaction(
+        int count = 3,
+        ulong? emojiId = null,
+        string? emojiName = "\U0001F44D") =>
+        new() { Count = count, Emoji = new JsonEmoji { Id = emojiId, Name = emojiName } };
 
-    [Fact]
-    public void GuildThread_base_maps_to_Thread() =>
-        Assert.Equal(ChannelType.Thread, NetCordMappingExtensions.MapChannelType(typeof(GuildThread)));
+    internal static JsonEmbed MakeEmbed(
+        string? title = "a title",
+        string? description = "a description",
+        int? color = 0x112233,
+        string? footerText = "a footer",
+        string? authorName = "an author") =>
+        new()
+        {
+            Title = title,
+            Description = description,
+            Color = color is { } raw ? new Color(raw) : null,
+            Footer = footerText is null ? null : new JsonEmbedFooter { Text = footerText, IconUrl = "https://cdn.example/i.png" },
+            Author = authorName is null ? null : new JsonEmbedAuthor { Name = authorName, Url = "https://example/a" },
+            Fields = [new JsonEmbedField { Name = "fname", Value = "fvalue", Inline = true }],
+        };
 
-    [Fact]
-    public void ForumGuildChannel_falls_back_to_Text() =>
-        Assert.Equal(ChannelType.Text, NetCordMappingExtensions.MapChannelType(typeof(ForumGuildChannel)));
+    internal static RestMessage MakeMessage(
+        ulong id = 555UL,
+        ulong channelId = 111UL,
+        ulong authorId = 789UL,
+        string content = "hello",
+        DateTimeOffset? editedAt = null,
+        JsonAttachment[]? attachments = null,
+        JsonMessageReaction[]? reactions = null,
+        JsonEmbed[]? embeds = null) =>
+        new(
+            new JsonMessage
+            {
+                Id = id,
+                ChannelId = channelId,
+                Content = content,
+                Author = new JsonUser { Id = authorId, Username = "author" },
+                EditedAt = editedAt,
+                Attachments = attachments ?? [],
+                Reactions = reactions ?? [],
+                Embeds = embeds ?? [],
 
-    [Fact]
-    public void MediaForumGuildChannel_falls_back_to_Text() =>
-        Assert.Equal(ChannelType.Text, NetCordMappingExtensions.MapChannelType(typeof(MediaForumGuildChannel)));
-
-    [Fact]
-    public void Bare_IGuildChannel_falls_back_to_Text() =>
-        Assert.Equal(ChannelType.Text, NetCordMappingExtensions.MapChannelType(typeof(IGuildChannel)));
+                // RestMessage's constructor LINQ-projects each of these and throws
+                // ArgumentNullException if any is left null. Do not remove.
+                MentionedUsers = [],
+                MentionedRoleIds = [],
+                MentionedChannels = [],
+                Components = [],
+                Stickers = [],
+                MessageSnapshots = [],
+            },
+            Client);
 }
 ```
 
-The threads matter most here. `GuildThread` derives from `TextGuildChannel`, and `VoiceGuildChannel`/`StageGuildChannel` do too — so if the arms are ordered wrong, threads and voice channels silently become `Text` and these tests are the only thing that catches it.
+If the build reports **CA1001** ("type owns disposable fields") against the static
+`RestClient`, the fix is one line — `[SuppressMessage("Design", "CA1001", Justification =
+"Static test builder; the client is never disposed because the test process owns it.")]`
+on the class. `CA2000` is already disabled repo-wide in `.editorconfig`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [ ] **Step 2: Write the failing tests**
 
-Run: `dotnet test tests/Persistord.Adapters.NetCord.Tests --filter ChannelTypeMappingTests`
+Create `tests/Persistord.Adapters.NetCord.Tests/ChannelMappingTests.cs`:
+
+```csharp
+using Xunit;
+using ChannelType = Persistord.Core.Entities.ChannelType;
+using NetCordChannelType = global::NetCord.ChannelType;
+
+namespace Persistord.Adapters.NetCord.Tests;
+
+public class ChannelMappingTests
+{
+    [Theory]
+    [InlineData(NetCordChannelType.TextGuildChannel, ChannelType.Text)]
+    [InlineData(NetCordChannelType.AnnouncementGuildChannel, ChannelType.Text)]
+    [InlineData(NetCordChannelType.VoiceGuildChannel, ChannelType.Voice)]
+    [InlineData(NetCordChannelType.StageGuildChannel, ChannelType.Voice)]
+    [InlineData(NetCordChannelType.CategoryChannel, ChannelType.Category)]
+    [InlineData(NetCordChannelType.PublicGuildThread, ChannelType.Thread)]
+    [InlineData(NetCordChannelType.PrivateGuildThread, ChannelType.Thread)]
+    [InlineData(NetCordChannelType.AnnouncementGuildThread, ChannelType.Thread)]
+    [InlineData(NetCordChannelType.ForumGuildChannel, ChannelType.Text)]
+    [InlineData(NetCordChannelType.MediaForumGuildChannel, ChannelType.Text)]
+    public void Maps_channel_class_to_type(NetCordChannelType source, ChannelType expected) =>
+        Assert.Equal(expected, NetCordFakes.MakeChannel(source).ToChannelEntity().Type);
+
+    [Fact]
+    public void Maps_id_guild_and_name()
+    {
+        var entity = NetCordFakes.MakeChannel(
+            NetCordChannelType.TextGuildChannel, id: 915UL, guildId: 842UL, name: "general").ToChannelEntity();
+
+        Assert.Equal(915UL, entity.Id);
+        Assert.Equal(842UL, entity.GuildId);
+        Assert.Equal("general", entity.Name);
+    }
+
+    [Fact]
+    public void Maps_parent_id_on_a_text_channel() =>
+        Assert.Equal(
+            777UL,
+            NetCordFakes.MakeChannel(NetCordChannelType.TextGuildChannel, parentId: 777UL).ToChannelEntity().ParentId);
+
+    [Fact]
+    public void Maps_parent_id_on_a_thread() =>
+        Assert.Equal(
+            777UL,
+            NetCordFakes.MakeChannel(NetCordChannelType.PublicGuildThread, parentId: 777UL).ToChannelEntity().ParentId);
+
+    [Fact]
+    public void Maps_parent_id_on_a_forum() =>
+        Assert.Equal(
+            777UL,
+            NetCordFakes.MakeChannel(NetCordChannelType.ForumGuildChannel, parentId: 777UL).ToChannelEntity().ParentId);
+
+    [Fact]
+    public void Leaves_parent_id_null_on_a_category() =>
+        Assert.Null(
+            NetCordFakes.MakeChannel(NetCordChannelType.CategoryChannel, parentId: 777UL).ToChannelEntity().ParentId);
+
+    [Fact]
+    public void Round_trips_a_snowflake_near_ulong_MaxValue()
+    {
+        var entity = NetCordFakes.MakeChannel(
+            NetCordChannelType.TextGuildChannel, id: ulong.MaxValue - 1, guildId: ulong.MaxValue - 2).ToChannelEntity();
+
+        Assert.Equal(ulong.MaxValue - 1, entity.Id);
+        Assert.Equal(ulong.MaxValue - 2, entity.GuildId);
+    }
+}
+```
+
+The category case is the one worth reading twice: a category genuinely has no parent, so
+the mapper must return `null` even though the source JSON carried a `ParentId`.
+
+- [ ] **Step 3: Run the tests to verify they fail**
+
+Run: `dtk dtk dotnet test tests/Persistord.Adapters.NetCord.Tests`
 Expected: FAIL to compile — `NetCordMappingExtensions` does not exist.
 
-- [ ] **Step 3: Create the extensions file with the type helper**
+- [ ] **Step 4: Create the extensions file**
 
 Create `src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs`:
 
@@ -443,154 +608,6 @@ namespace Persistord.Adapters.NetCord;
 /// </summary>
 public static class NetCordMappingExtensions
 {
-    /// <summary>
-    /// Maps a NetCord channel class to a <see cref="ChannelType"/>.
-    /// <para>
-    /// NetCord carries no channel-type property: the kind is the class itself. Order
-    /// matters, because <c>GuildThread</c>, <c>VoiceGuildChannel</c> and
-    /// <c>StageGuildChannel</c> all derive from <c>TextGuildChannel</c> — the more
-    /// derived arms must be tested first or they fall through to the text fallback.
-    /// </para>
-    /// <para>
-    /// Takes a <see cref="Type"/> rather than a channel instance so the table stays
-    /// unit-testable: NetCord channels have non-public constructors and non-virtual
-    /// properties, so no test can build or mock one.
-    /// </para>
-    /// </summary>
-    /// <param name="channelType">The runtime type of the channel to classify.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="channelType"/> is <see langword="null"/>.</exception>
-    internal static ChannelType MapChannelType(Type channelType)
-    {
-        ArgumentNullException.ThrowIfNull(channelType);
-
-        if (channelType.IsAssignableTo(typeof(GuildThread)))
-        {
-            return ChannelType.Thread;
-        }
-
-        if (channelType.IsAssignableTo(typeof(IVoiceGuildChannel)))
-        {
-            return ChannelType.Voice;
-        }
-
-        if (channelType.IsAssignableTo(typeof(CategoryGuildChannel)))
-        {
-            return ChannelType.Category;
-        }
-
-        // covers TextGuildChannel, AnnouncementGuildChannel, forum, media forum,
-        // directory, and any channel class NetCord adds later
-        return ChannelType.Text;
-    }
-}
-```
-
-`IVoiceGuildChannel` is used rather than the concrete `VoiceGuildChannel` because `StageGuildChannel` implements that interface while deriving from `TextGuildChannel` — matching on the interface catches both audio kinds in one arm.
-
-Written as a sequence of `if` statements rather than a ternary chain on purpose. The
-repo runs `SonarAnalyzer.CSharp` at `AnalysisLevel=latest-all` with
-`TreatWarningsAsErrors`, and **S3358 (nested ternary operators) is not suppressed** in
-`.editorconfig` — a chained ternary here fails the build rather than merely warning.
-
-- [ ] **Step 4: Run the tests to verify they pass**
-
-Run: `dotnet test tests/Persistord.Adapters.NetCord.Tests --filter ChannelTypeMappingTests`
-Expected: PASS, 12 tests.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs tests/Persistord.Adapters.NetCord.Tests/ChannelTypeMappingTests.cs
-git commit -m "feat(adapters): map NetCord channel classes to Persistord ChannelType"
-```
-
----
-
-## Task 3: Channel entity mapper
-
-**Files:**
-
-- Modify: `src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs`
-- Test: `tests/Persistord.Adapters.NetCord.Tests/ChannelEntityMappingTests.cs`
-
-**Interfaces:**
-
-- Consumes: `MapChannelType(Type)` from Task 2.
-- Produces: `public static ChannelEntity ToChannelEntity(this IGuildChannel channel)`.
-
-- [ ] **Step 1: Write the failing tests**
-
-Create `tests/Persistord.Adapters.NetCord.Tests/ChannelEntityMappingTests.cs`:
-
-```csharp
-using NetCord;
-using NSubstitute;
-using Persistord.Adapters.NetCord;
-using Xunit;
-using ChannelType = Persistord.Core.Entities.ChannelType;
-
-namespace Persistord.Adapters.NetCord.Tests;
-
-/// <summary>
-/// Field-level coverage for <c>ToChannelEntity</c>. IGuildChannel is the one NetCord
-/// binding that is an interface, so it is the one mapper NSubstitute can drive — but
-/// only down the fallback arm, since a substitute is never a concrete channel class.
-/// The concrete arms are covered by <see cref="ChannelTypeMappingTests"/>.
-/// </summary>
-public class ChannelEntityMappingTests
-{
-    private static IGuildChannel CreateChannel()
-    {
-        var channel = Substitute.For<IGuildChannel>();
-        channel.Id.Returns(915_000_000_000_000_001UL);
-        channel.GuildId.Returns(842_000_000_000_000_002UL);
-        channel.Name.Returns("general");
-        return channel;
-    }
-
-    [Fact]
-    public void Maps_id() => Assert.Equal(915_000_000_000_000_001UL, CreateChannel().ToChannelEntity().Id);
-
-    [Fact]
-    public void Maps_guild_id() => Assert.Equal(842_000_000_000_000_002UL, CreateChannel().ToChannelEntity().GuildId);
-
-    [Fact]
-    public void Maps_name() => Assert.Equal("general", CreateChannel().ToChannelEntity().Name);
-
-    [Fact]
-    public void Falls_back_to_Text_for_a_bare_guild_channel() =>
-        Assert.Equal(ChannelType.Text, CreateChannel().ToChannelEntity().Type);
-
-    [Fact]
-    public void Leaves_parent_id_null_when_the_channel_exposes_none() =>
-        Assert.Null(CreateChannel().ToChannelEntity().ParentId);
-
-    [Fact]
-    public void Round_trips_a_snowflake_near_ulong_MaxValue()
-    {
-        var channel = Substitute.For<IGuildChannel>();
-        channel.Id.Returns(ulong.MaxValue - 1);
-        channel.GuildId.Returns(ulong.MaxValue - 2);
-        channel.Name.Returns("edge");
-
-        var entity = channel.ToChannelEntity();
-
-        Assert.Equal(ulong.MaxValue - 1, entity.Id);
-        Assert.Equal(ulong.MaxValue - 2, entity.GuildId);
-    }
-}
-```
-
-- [ ] **Step 2: Run the tests to verify they fail**
-
-Run: `dotnet test tests/Persistord.Adapters.NetCord.Tests --filter ChannelEntityMappingTests`
-Expected: FAIL to compile — `ToChannelEntity` does not exist.
-
-- [ ] **Step 3: Add the mapper**
-
-In `NetCordMappingExtensions.cs`, add this method **above** `MapChannelType` (public API first, helpers last):
-
-```csharp
     /// <summary>Maps a NetCord guild channel to a <see cref="ChannelEntity"/>.</summary>
     /// <remarks>
     /// <c>IGuildChannel</c> carries <c>Id</c>, <c>GuildId</c> and <c>Name</c> but neither
@@ -615,48 +632,167 @@ In `NetCordMappingExtensions.cs`, add this method **above** `MapChannelType` (pu
                 ForumGuildChannel forum => forum.ParentId,
                 _ => null,
             },
-            Type = MapChannelType(channel.GetType()),
+            Type = MapChannelType(channel),
             Name = channel.Name,
         };
     }
+
+    /// <summary>
+    /// Maps a NetCord channel to a <see cref="ChannelType"/>.
+    /// <para>
+    /// NetCord carries no channel-type property: the kind is the class itself. Arm order
+    /// matters, because <c>GuildThread</c>, <c>VoiceGuildChannel</c> and
+    /// <c>StageGuildChannel</c> all derive from <c>TextGuildChannel</c> — the more
+    /// derived arms must be matched first or they fall into the text fallback.
+    /// </para>
+    /// </summary>
+    /// <param name="channel">The channel to classify.</param>
+    private static ChannelType MapChannelType(IGuildChannel channel) => channel switch
+    {
+        GuildThread => ChannelType.Thread,
+        IVoiceGuildChannel => ChannelType.Voice,
+        CategoryGuildChannel => ChannelType.Category,
+        // covers TextGuildChannel, AnnouncementGuildChannel, forum, media forum,
+        // directory, and any channel class NetCord adds later
+        _ => ChannelType.Text,
+    };
+}
 ```
 
-`channel.Name` is assigned directly: NetCord declares `INamedChannel.Name` as non-nullable `string`, unlike Discord.Net's nullable one, so the `?? string.Empty` used in the Discord.Net adapter would be dead code here.
+`IVoiceGuildChannel` is matched rather than the concrete `VoiceGuildChannel` because
+`StageGuildChannel` implements that interface while deriving from `TextGuildChannel` —
+the interface arm catches both audio kinds at once.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+`channel.Name` is assigned directly: NetCord declares `INamedChannel.Name` as
+non-nullable `string`, unlike Discord.Net's nullable one, so the `?? string.Empty` used
+in the Discord.Net adapter would be dead code here.
 
-Run: `dtk dotnet test tests/Persistord.Adapters.NetCord.Tests --filter ChannelEntityMappingTests`
-Expected: PASS, 6 tests.
+- [ ] **Step 5: Run the tests to verify they pass**
 
-- [ ] **Step 5: Commit**
+Run: `dtk dotnet test tests/Persistord.Adapters.NetCord.Tests`
+Expected: PASS, 16 tests (10 theory cases + 6 facts).
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git add src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs tests/Persistord.Adapters.NetCord.Tests/ChannelEntityMappingTests.cs
+git add src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs tests/Persistord.Adapters.NetCord.Tests/NetCordFakes.cs tests/Persistord.Adapters.NetCord.Tests/ChannelMappingTests.cs
 git commit -m "feat(adapters): map NetCord guild channels to ChannelEntity"
 ```
 
 ---
 
-## Task 4: Guild, user, member and role mappers
-
-These four have no unit-testable happy path — `RestGuild`, `User`, `GuildUser` and `Role` can be neither constructed nor mocked. They are grouped into one task because they are four near-identical field copies that a reviewer will assess as a single unit, and because their only automated coverage (the null guards, Task 6's build, and eventually the sample bot) is shared.
+## Task 3: Guild, user, member and role mappers
 
 **Files:**
 
 - Modify: `src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs`
+- Test: `tests/Persistord.Adapters.NetCord.Tests/CoreEntityMappingTests.cs`
 
 **Interfaces:**
 
-- Consumes: Task 1's project references.
+- Consumes: `NetCordFakes` from Task 2.
 - Produces:
   - `public static GuildEntity ToGuildEntity(this RestGuild guild)`
   - `public static UserEntity ToUserEntity(this User user)`
   - `public static MemberEntity ToMemberEntity(this GuildUser member)`
   - `public static RoleEntity ToRoleEntity(this Role role)`
 
-- [ ] **Step 1: Extend the using block**
+- [ ] **Step 1: Write the failing tests**
 
-At the top of `NetCordMappingExtensions.cs`, replace the three-line using block from Task 2 with:
+Create `tests/Persistord.Adapters.NetCord.Tests/CoreEntityMappingTests.cs`:
+
+```csharp
+using Xunit;
+
+namespace Persistord.Adapters.NetCord.Tests;
+
+public class CoreEntityMappingTests
+{
+    [Fact]
+    public void Guild_maps_id_name_and_owner()
+    {
+        var entity = NetCordFakes.MakeGuild(id: 100UL, name: "a-guild", ownerId: 101UL).ToGuildEntity();
+
+        Assert.Equal(100UL, entity.Id);
+        Assert.Equal("a-guild", entity.Name);
+        Assert.Equal(101UL, entity.OwnerId);
+    }
+
+    [Fact]
+    public void Guild_leaves_bot_lifecycle_fields_unset()
+    {
+        var entity = NetCordFakes.MakeGuild().ToGuildEntity();
+
+        Assert.Null(entity.JoinedAt);
+        Assert.Null(entity.LeftAt);
+    }
+
+    [Fact]
+    public void User_maps_id_username_and_global_name()
+    {
+        var entity = NetCordFakes.MakeUser(id: 789UL, username: "someone", globalName: "Someone").ToUserEntity();
+
+        Assert.Equal(789UL, entity.Id);
+        Assert.Equal("someone", entity.Username);
+        Assert.Equal("Someone", entity.GlobalName);
+    }
+
+    [Fact]
+    public void User_tolerates_a_missing_global_name() =>
+        Assert.Null(NetCordFakes.MakeUser(globalName: null).ToUserEntity().GlobalName);
+
+    [Fact]
+    public void Member_maps_composite_key_nickname_and_joined_at()
+    {
+        var joined = new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero);
+        var entity = NetCordFakes.MakeMember(guildId: 222UL, userId: 789UL, nickname: "nick", joinedAt: joined)
+            .ToMemberEntity();
+
+        Assert.Equal(222UL, entity.GuildId);
+        Assert.Equal(789UL, entity.UserId);
+        Assert.Equal("nick", entity.Nickname);
+        Assert.Equal(joined, entity.JoinedAt);
+    }
+
+    [Fact]
+    public void Member_tolerates_a_missing_nickname_and_join_date()
+    {
+        var entity = NetCordFakes.MakeMember(nickname: null, joinedAt: null).ToMemberEntity();
+
+        Assert.Null(entity.Nickname);
+        Assert.Null(entity.JoinedAt);
+    }
+
+    [Fact]
+    public void Role_maps_id_guild_and_name()
+    {
+        var entity = NetCordFakes.MakeRole(id: 333UL, guildId: 222UL, name: "admin").ToRoleEntity();
+
+        Assert.Equal(333UL, entity.Id);
+        Assert.Equal(222UL, entity.GuildId);
+        Assert.Equal("admin", entity.Name);
+    }
+
+    [Fact]
+    public void Role_maps_permissions_losslessly() =>
+        Assert.Equal(
+            (ulong)global::NetCord.Permissions.Administrator,
+            NetCordFakes.MakeRole(permissions: global::NetCord.Permissions.Administrator).ToRoleEntity().Permissions);
+
+    [Fact]
+    public void Role_maps_the_primary_colour() =>
+        Assert.Equal(0xFF00FF, NetCordFakes.MakeRole(color: 0xFF00FF).ToRoleEntity().Color);
+}
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `dtk dotnet test tests/Persistord.Adapters.NetCord.Tests --filter CoreEntityMappingTests`
+Expected: FAIL to compile — the four mappers do not exist.
+
+- [ ] **Step 3: Extend the using block**
+
+At the top of `NetCordMappingExtensions.cs`, replace the three-line using block with:
 
 ```csharp
 using NetCord;
@@ -665,9 +801,10 @@ using Persistord.Core.Entities;
 using ChannelType = Persistord.Core.Entities.ChannelType;
 ```
 
-`NetCord.Rest` brings in `RestGuild`. The remaining aliases arrive in Task 5, when the embed types collide.
+`NetCord.Rest` brings in `RestGuild`. The remaining aliases arrive in Task 4, when the
+embed types collide.
 
-- [ ] **Step 2: Add the four mappers**
+- [ ] **Step 4: Add the four mappers**
 
 Add below `ToChannelEntity`, above `MapChannelType`:
 
@@ -747,86 +884,224 @@ Add below `ToChannelEntity`, above `MapChannelType`:
     }
 ```
 
-- [ ] **Step 3: Verify the project still builds**
+- [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `dotnet build Persistord.slnx`
-Expected: PASS. A CS0234 here almost certainly means a qualified `NetCord.X` crept into the namespace body — see the namespace-collision section.
+Run: `dtk dtk dotnet test tests/Persistord.Adapters.NetCord.Tests`
+Expected: PASS, 25 tests (16 from Task 2, 9 new).
 
-- [ ] **Step 4: Run the existing tests to confirm nothing regressed**
-
-Run: `dotnet test tests/Persistord.Adapters.NetCord.Tests`
-Expected: PASS, 18 tests (12 from Task 2, 6 from Task 3).
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs
+git add src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs tests/Persistord.Adapters.NetCord.Tests/CoreEntityMappingTests.cs
 git commit -m "feat(adapters): map NetCord guild, user, member, role to Persistord entities"
 ```
 
 ---
 
-## Task 5: Message, emoji and history mappers
+## Task 4: Message, reactions, embeds and history
 
 **Files:**
 
 - Modify: `src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs`
-- Test: `tests/Persistord.Adapters.NetCord.Tests/EmojiFormattingTests.cs`
+- Test: `tests/Persistord.Adapters.NetCord.Tests/MessageMappingTests.cs`
 - Test: `tests/Persistord.Adapters.NetCord.Tests/NullArgumentTests.cs`
 
 **Interfaces:**
 
-- Consumes: everything above.
+- Consumes: `NetCordFakes` from Task 2.
 - Produces:
   - `public static MessageEntity ToMessageEntity(this RestMessage message)`
   - `public static MessageHistoryEntity ToHistoryEntity(this RestMessage message, HistoryChangeType changeType)`
-  - `internal static string FormatEmoji(ulong? id, string? name)`
-  - `private static Embed MapEmbed(NetCordEmbed embed)`
 
-- [ ] **Step 1: Write the failing emoji tests**
+- [ ] **Step 1: Write the failing tests**
 
-Create `tests/Persistord.Adapters.NetCord.Tests/EmojiFormattingTests.cs`:
+Create `tests/Persistord.Adapters.NetCord.Tests/MessageMappingTests.cs`:
 
 ```csharp
-using Persistord.Adapters.NetCord;
+using Persistord.History.Entities;
+using Xunit;
+
+namespace Persistord.Adapters.NetCord.Tests;
+
+public class MessageMappingTests
+{
+    [Fact]
+    public void Maps_scalar_fields()
+    {
+        var edited = new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero);
+        var entity = NetCordFakes.MakeMessage(
+            id: 555UL, channelId: 111UL, authorId: 789UL, content: "hello", editedAt: edited).ToMessageEntity();
+
+        Assert.Equal(555UL, entity.Id);
+        Assert.Equal(111UL, entity.ChannelId);
+        Assert.Equal(789UL, entity.AuthorId);
+        Assert.Equal("hello", entity.Content);
+        Assert.Equal(edited, entity.EditedAt);
+    }
+
+    [Fact]
+    public void Leaves_soft_delete_state_at_its_default()
+    {
+        var entity = NetCordFakes.MakeMessage().ToMessageEntity();
+
+        Assert.False(entity.IsDeleted);
+        Assert.Null(entity.DeletedAt);
+    }
+
+    [Fact]
+    public void Maps_attachments()
+    {
+        var entity = NetCordFakes.MakeMessage(
+            attachments: [NetCordFakes.MakeAttachment(id: 900UL, fileName: "shot.png", url: "https://cdn.example/shot.png")])
+            .ToMessageEntity();
+
+        var attachment = Assert.Single(entity.Attachments);
+        Assert.Equal(900UL, attachment.Id);
+        Assert.Equal("shot.png", attachment.FileName);
+        Assert.Equal("https://cdn.example/shot.png", attachment.Url);
+        Assert.Equal(0UL, attachment.MessageId); // EF fills the FK on save
+    }
+
+    [Fact]
+    public void Maps_a_unicode_reaction()
+    {
+        var entity = NetCordFakes.MakeMessage(
+            reactions: [NetCordFakes.MakeReaction(count: 3, emojiId: null, emojiName: "\U0001F44D")]).ToMessageEntity();
+
+        var reaction = Assert.Single(entity.Reactions);
+        Assert.Equal("\U0001F44D", reaction.Emoji);
+        Assert.Equal(3, reaction.Count);
+        Assert.Equal(0L, reaction.Id); // EF assigns the surrogate key
+    }
+
+    [Fact]
+    public void Maps_a_custom_reaction_as_name_colon_id()
+    {
+        var entity = NetCordFakes.MakeMessage(
+            reactions: [NetCordFakes.MakeReaction(count: 2, emojiId: 42UL, emojiName: "blobwave")]).ToMessageEntity();
+
+        Assert.Equal("blobwave:42", Assert.Single(entity.Reactions).Emoji);
+    }
+
+    [Fact]
+    public void Maps_an_embed_with_footer_author_and_fields()
+    {
+        var entity = NetCordFakes.MakeMessage(embeds: [NetCordFakes.MakeEmbed()]).ToMessageEntity();
+
+        var embed = Assert.Single(entity.Embeds);
+        Assert.Equal("a title", embed.Title);
+        Assert.Equal("a description", embed.Description);
+        Assert.Equal(0x112233, embed.Color);
+        Assert.Equal("a footer", embed.Footer?.Text);
+        Assert.Equal("an author", embed.Author?.Name);
+
+        var field = Assert.Single(embed.Fields);
+        Assert.Equal("fname", field.Name);
+        Assert.Equal("fvalue", field.Value);
+        Assert.True(field.Inline);
+        Assert.Equal(0L, embed.Id); // EF assigns the surrogate key
+    }
+
+    [Fact]
+    public void Tolerates_an_embed_without_colour_footer_or_author()
+    {
+        var entity = NetCordFakes.MakeMessage(
+            embeds: [NetCordFakes.MakeEmbed(color: null, footerText: null, authorName: null)]).ToMessageEntity();
+
+        var embed = Assert.Single(entity.Embeds);
+        Assert.Null(embed.Color);
+        Assert.Null(embed.Footer);
+        Assert.Null(embed.Author);
+    }
+
+    [Fact]
+    public void Maps_an_empty_message_to_empty_collections()
+    {
+        var entity = NetCordFakes.MakeMessage().ToMessageEntity();
+
+        Assert.Empty(entity.Embeds);
+        Assert.Empty(entity.Attachments);
+        Assert.Empty(entity.Reactions);
+    }
+
+    [Fact]
+    public void History_snapshot_carries_message_id_content_and_change_type()
+    {
+        var entity = NetCordFakes.MakeMessage(id: 555UL, content: "hello")
+            .ToHistoryEntity(HistoryChangeType.Edited);
+
+        Assert.Equal(555UL, entity.MessageId);
+        Assert.Equal("hello", entity.Content);
+        Assert.Equal(HistoryChangeType.Edited, entity.ChangeType);
+    }
+
+    [Fact]
+    public void History_snapshot_stamps_recorded_at_with_now()
+    {
+        var before = DateTimeOffset.UtcNow;
+        var entity = NetCordFakes.MakeMessage().ToHistoryEntity(HistoryChangeType.Created);
+        var after = DateTimeOffset.UtcNow;
+
+        Assert.InRange(entity.RecordedAt, before, after);
+    }
+}
+```
+
+Create `tests/Persistord.Adapters.NetCord.Tests/NullArgumentTests.cs`:
+
+```csharp
+using NetCord;
+using NetCord.Rest;
+using Persistord.History.Entities;
 using Xunit;
 
 namespace Persistord.Adapters.NetCord.Tests;
 
 /// <summary>
-/// Covers reaction-emoji formatting. Takes the two fields rather than a
-/// MessageReaction so the branch is testable — NetCord reactions cannot be built.
+/// Verifies every public mapper rejects a null source. These pin the
+/// <c>ArgumentNullException.ThrowIfNull</c> guards against mutation.
 /// </summary>
-public class EmojiFormattingTests
+public class NullArgumentTests
 {
     [Fact]
-    public void Custom_emoji_keeps_name_and_snowflake() =>
-        Assert.Equal("blobwave:842000000000000003", NetCordMappingExtensions.FormatEmoji(842_000_000_000_000_003UL, "blobwave"));
+    public void ToChannelEntity_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>(() => ((IGuildChannel)null!).ToChannelEntity());
 
     [Fact]
-    public void Unicode_emoji_is_stored_raw() =>
-        Assert.Equal("👍", NetCordMappingExtensions.FormatEmoji(null, "👍"));
+    public void ToGuildEntity_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>(() => ((RestGuild)null!).ToGuildEntity());
 
     [Fact]
-    public void Missing_name_and_id_becomes_empty() =>
-        Assert.Equal(string.Empty, NetCordMappingExtensions.FormatEmoji(null, null));
+    public void ToUserEntity_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>(() => ((User)null!).ToUserEntity());
 
     [Fact]
-    public void Custom_emoji_with_missing_name_still_keeps_the_snowflake() =>
-        Assert.Equal(":842000000000000003", NetCordMappingExtensions.FormatEmoji(842_000_000_000_000_003UL, null));
+    public void ToRoleEntity_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>(() => ((Role)null!).ToRoleEntity());
+
+    [Fact]
+    public void ToMemberEntity_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>(() => ((GuildUser)null!).ToMemberEntity());
+
+    [Fact]
+    public void ToMessageEntity_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>(() => ((RestMessage)null!).ToMessageEntity());
+
+    [Fact]
+    public void ToHistoryEntity_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>(() => ((RestMessage)null!).ToHistoryEntity(HistoryChangeType.Created));
 }
 ```
 
-The format matches the Discord.Net adapter's `name:id` exactly, so a consumer that switches libraries reads back the same stored strings.
-
 - [ ] **Step 2: Run to verify they fail**
 
-Run: `dtk dotnet test tests/Persistord.Adapters.NetCord.Tests --filter EmojiFormattingTests`
-Expected: FAIL to compile — `FormatEmoji` does not exist.
+Run: `dtk dtk dotnet test tests/Persistord.Adapters.NetCord.Tests --filter MessageMappingTests`
+Expected: FAIL to compile — `ToMessageEntity` does not exist.
 
 - [ ] **Step 3: Complete the using block**
 
-Replace the using block at the top of `NetCordMappingExtensions.cs` with the full canonical header:
+Replace the using block at the top of `NetCordMappingExtensions.cs` with the full
+canonical header:
 
 ```csharp
 using NetCord;
@@ -844,7 +1119,8 @@ using NetCordEmbed = global::NetCord.Embed;
 
 - [ ] **Step 4: Add the message, history and helper methods**
 
-Add `ToMessageEntity` and `ToHistoryEntity` after `ToRoleEntity`; add `FormatEmoji` and `MapEmbed` after `MapChannelType`:
+Add `ToMessageEntity` and `ToHistoryEntity` after `ToRoleEntity`; add `FormatEmoji` and
+`MapEmbed` after `MapChannelType`:
 
 ```csharp
     /// <summary>
@@ -924,7 +1200,7 @@ Add `ToMessageEntity` and `ToHistoryEntity` after `ToRoleEntity`; add `FormatEmo
     /// </summary>
     /// <param name="id">The custom emoji's snowflake, or <see langword="null"/> for a unicode emoji.</param>
     /// <param name="name">The emoji name, or the unicode character itself.</param>
-    internal static string FormatEmoji(ulong? id, string? name) =>
+    private static string FormatEmoji(ulong? id, string? name) =>
         id is { } emojiId ? $"{name}:{emojiId}" : name ?? string.Empty;
 
     /// <summary>Maps a NetCord embed to a Persistord <see cref="Embed"/>.</summary>
@@ -966,81 +1242,20 @@ Add `ToMessageEntity` and `ToHistoryEntity` after `ToRoleEntity`; add `FormatEmo
     }
 ```
 
-- [ ] **Step 5: Run the emoji tests to verify they pass**
+- [ ] **Step 5: Run the full suite**
 
-Run: `dtk dotnet test tests/Persistord.Adapters.NetCord.Tests --filter EmojiFormattingTests`
-Expected: PASS, 4 tests.
+Run: `dtk dtk dotnet test tests/Persistord.Adapters.NetCord.Tests`
+Expected: PASS, 42 tests (16 + 9 + 10 + 7).
 
-- [ ] **Step 6: Write the null-argument tests**
-
-Create `tests/Persistord.Adapters.NetCord.Tests/NullArgumentTests.cs`:
-
-```csharp
-using NetCord;
-using NetCord.Rest;
-using Persistord.Adapters.NetCord;
-using Persistord.History.Entities;
-using Xunit;
-
-namespace Persistord.Adapters.NetCord.Tests;
-
-/// <summary>
-/// Verifies every public mapper rejects a null source. These pin the
-/// <c>ArgumentNullException.ThrowIfNull</c> guards against mutation, and are the only
-/// automated coverage the guild, user, member, role and message mappers can have —
-/// NetCord model types cannot be constructed or substituted.
-/// </summary>
-public class NullArgumentTests
-{
-    [Fact]
-    public void ToChannelEntity_throws_on_null() =>
-        Assert.Throws<ArgumentNullException>(() => ((IGuildChannel)null!).ToChannelEntity());
-
-    [Fact]
-    public void ToGuildEntity_throws_on_null() =>
-        Assert.Throws<ArgumentNullException>(() => ((RestGuild)null!).ToGuildEntity());
-
-    [Fact]
-    public void ToUserEntity_throws_on_null() =>
-        Assert.Throws<ArgumentNullException>(() => ((User)null!).ToUserEntity());
-
-    [Fact]
-    public void ToRoleEntity_throws_on_null() =>
-        Assert.Throws<ArgumentNullException>(() => ((Role)null!).ToRoleEntity());
-
-    [Fact]
-    public void ToMemberEntity_throws_on_null() =>
-        Assert.Throws<ArgumentNullException>(() => ((GuildUser)null!).ToMemberEntity());
-
-    [Fact]
-    public void ToMessageEntity_throws_on_null() =>
-        Assert.Throws<ArgumentNullException>(() => ((RestMessage)null!).ToMessageEntity());
-
-    [Fact]
-    public void ToHistoryEntity_throws_on_null() =>
-        Assert.Throws<ArgumentNullException>(() => ((RestMessage)null!).ToHistoryEntity(HistoryChangeType.Created));
-
-    [Fact]
-    public void MapChannelType_throws_on_null() =>
-        Assert.Throws<ArgumentNullException>(() => NetCordMappingExtensions.MapChannelType(null!));
-}
-```
-
-- [ ] **Step 7: Run the full suite**
-
-Run: `dtk dotnet test tests/Persistord.Adapters.NetCord.Tests`
-Expected: PASS, 30 tests (12 + 6 + 4 + 8).
-
-- [ ] **Step 8: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs tests/Persistord.Adapters.NetCord.Tests/EmojiFormattingTests.cs tests/Persistord.Adapters.NetCord.Tests/NullArgumentTests.cs
+git add src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs tests/Persistord.Adapters.NetCord.Tests/MessageMappingTests.cs tests/Persistord.Adapters.NetCord.Tests/NullArgumentTests.cs
 git commit -m "feat(adapters): map NetCord messages, reactions and history snapshots"
 ```
 
 ---
-
-## Task 6: Package README, docs wiring and pack verification
+## Task 5: Package README, docs wiring and pack verification
 
 **Files:**
 
@@ -1109,7 +1324,7 @@ your bot's membership lifecycle, which your persistence logic owns.
 
 NetCord expresses a channel's kind through its class rather than a property, and
 Persistord's `ChannelType` has four members, so the translation collapses NetCord's
-thirteen channel classes:
+channel classes:
 
 | NetCord class | `ChannelType` |
 | --- | --- |
@@ -1134,15 +1349,6 @@ project will raise **NU5104** (stable package with a prerelease dependency), whi
 repo's `TreatWarningsAsErrors` turns into a pack failure. Resolve it then — either by
 waiting for NetCord 1.0.0 stable or by shipping this adapter on its own prerelease
 track — rather than by suppressing the warning.
-
-## Test coverage
-
-NetCord's model types have non-public constructors and non-virtual properties, so they
-can be neither constructed nor mocked. Unit tests therefore cover the channel-type
-table, channel field mapping through the `IGuildChannel` interface, reaction-emoji
-formatting, and the null guards on every mapper. End-to-end mapping correctness is
-verified by the NetCord sample bot. This asymmetry with the Discord.Net adapter — whose
-interface surface admits full field-by-field mocking — is intentional.
 ````
 
 - [ ] **Step 2: Add the package to the root README table**
@@ -1207,11 +1413,11 @@ Run: `dtk dotnet build Persistord.slnx`
 Expected: PASS.
 
 Run: `dtk dotnet test Persistord.slnx`
-Expected: PASS — the whole suite, including the 30 new tests.
+Expected: PASS — 242 tests (the 200-test baseline plus this adapter's 42).
 
 - [ ] **Step 6: Verify the package packs with its readme**
 
-Run: `dotnet pack src/Persistord.Adapters.NetCord/Persistord.Adapters.NetCord.csproj -o artifacts/packtest`
+Run: `dtk dotnet pack src/Persistord.Adapters.NetCord/Persistord.Adapters.NetCord.csproj -o artifacts/packtest`
 Expected: PASS, producing `artifacts/packtest/Persistord.Adapters.NetCord.1.0.0.nupkg`.
 
 Confirm the readme and the NetCord dependency range are both in the package:
@@ -1234,17 +1440,18 @@ git commit -m "docs(adapters): document Persistord.Adapters.NetCord"
 
 ## Done when
 
-- `dtk dotnet build Persistord.slnx` and `dtk dotnet test Persistord.slnx` both pass.
+- `dtk dtk dotnet build Persistord.slnx` and `dtk dtk dotnet test Persistord.slnx` both pass, at 242 tests.
 - `Persistord.Adapters.NetCord` packs with its readme and a `[1.0.0-beta.19, 2.0.0)` NetCord dependency.
 - All seven `.To*Entity()` methods exist with the names the Discord.Net adapter uses.
-- The channel-type table has a test per arm, including all three thread subclasses and both audio kinds.
+- Every channel-type arm has a test, including all three thread kinds and both audio kinds.
+- Message mapping is covered field by field, including embeds with footer/author/fields, attachments, and both unicode and custom reactions.
 - The root README, the package README and `docs/articles/introduction.md` all name the package.
 
 ## Follow-up, explicitly out of scope
 
-- **The DSharpPlus adapter** — sibling plan ③, not started.
-- **The NetCord flagship bot sample** — spec sub-project ③. This is the only thing that
-  will end-to-end verify `ToGuildEntity`, `ToUserEntity`, `ToMemberEntity`,
-  `ToRoleEntity` and `ToMessageEntity`, since they cannot be unit-tested. Until that
-  sample exists, those five mappers are verified by compilation and code review only.
-  Do not let the green test count imply otherwise.
+- **The DSharpPlus adapter** — sibling plan ③, not started. When it is written, establish
+  its testability by building a spike, not by trusting spec §4's claim: that claim proved
+  false for NetCord.
+- **The NetCord flagship bot sample** — spec sub-project ③. No longer load-bearing for
+  correctness now that the mappers have real unit coverage, but still the only end-to-end
+  proof that a live gateway object maps and persists.
