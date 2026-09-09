@@ -591,7 +591,7 @@ the mapper must return `null` even though the source JSON carried a `ParentId`.
 
 - [ ] **Step 3: Run the tests to verify they fail**
 
-Run: `dtk dtk dotnet test tests/Persistord.Adapters.NetCord.Tests`
+Run: `dtk dotnet test tests/Persistord.Adapters.NetCord.Tests`
 Expected: FAIL to compile — `NetCordMappingExtensions` does not exist.
 
 - [ ] **Step 4: Create the extensions file**
@@ -674,7 +674,7 @@ in the Discord.Net adapter would be dead code here.
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `dtk dotnet test tests/Persistord.Adapters.NetCord.Tests`
-Expected: PASS, 16 tests (10 theory cases + 6 facts).
+Expected: PASS, 17 tests (11 theory cases + 6 facts).
 
 - [ ] **Step 6: Commit**
 
@@ -890,8 +890,8 @@ Add below `ToChannelEntity`, above `MapChannelType`:
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `dtk dtk dotnet test tests/Persistord.Adapters.NetCord.Tests`
-Expected: PASS, 25 tests (16 from Task 2, 9 new).
+Run: `dtk dotnet test tests/Persistord.Adapters.NetCord.Tests`
+Expected: PASS, 26 tests (17 from Task 2, 9 new).
 
 - [ ] **Step 6: Commit**
 
@@ -1099,7 +1099,7 @@ public class NullArgumentTests
 
 - [ ] **Step 2: Run to verify they fail**
 
-Run: `dtk dtk dotnet test tests/Persistord.Adapters.NetCord.Tests --filter MessageMappingTests`
+Run: `dtk dotnet test tests/Persistord.Adapters.NetCord.Tests --filter MessageMappingTests`
 Expected: FAIL to compile — `ToMessageEntity` does not exist.
 
 - [ ] **Step 3: Complete the using block**
@@ -1248,8 +1248,8 @@ Add `ToMessageEntity` and `ToHistoryEntity` after `ToRoleEntity`; add `FormatEmo
 
 - [ ] **Step 5: Run the full suite**
 
-Run: `dtk dtk dotnet test tests/Persistord.Adapters.NetCord.Tests`
-Expected: PASS, 42 tests (16 + 9 + 10 + 7).
+Run: `dtk dotnet test tests/Persistord.Adapters.NetCord.Tests`
+Expected: PASS, 43 tests (17 + 9 + 10 + 7).
 
 - [ ] **Step 6: Commit**
 
@@ -1423,7 +1423,7 @@ Run: `dtk dotnet build Persistord.slnx`
 Expected: PASS.
 
 Run: `dtk dotnet test Persistord.slnx`
-Expected: PASS — 242 tests (the 200-test baseline plus this adapter's 42).
+Expected: PASS — 243 tests (the 200-test baseline plus this adapter's 43).
 
 - [ ] **Step 6: Verify the package packs with its readme**
 
@@ -1452,7 +1452,7 @@ git commit -m "docs(adapters): document Persistord.Adapters.NetCord"
 
 ## Done when
 
-- `dtk dtk dotnet build Persistord.slnx` and `dtk dtk dotnet test Persistord.slnx` both pass, at 242 tests.
+- `dtk dotnet build Persistord.slnx` and `dtk dotnet test Persistord.slnx` both pass, at 243 tests.
 - `Persistord.Adapters.NetCord` packs with its readme and a `[1.0.0-beta.19, 2.0.0)` NetCord dependency.
 - All seven `.To*Entity()` methods exist with the names the Discord.Net adapter uses.
 - Every channel-type arm has a test, including all three thread kinds and both audio kinds.
