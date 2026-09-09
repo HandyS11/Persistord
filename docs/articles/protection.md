@@ -15,10 +15,28 @@ encrypted; the rest is exactly as readable as it would be without this package.
 
 The `[Protected]` attribute lives in `Persistord.Core.Abstractions`, so a package
 like `Persistord.Managed` can annotate a column (`ManagedWebhook.Token`) without
-depending on `Persistord.Protection` at all. It is honoured in three places: on the
-property itself, on a base class the entity inherits from, and on an interface
-member the entity implements. It is a silent no-op on a non-`string` property —
-there is no error or warning, the annotation simply changes nothing.
+depending on `Persistord.Protection` at all. It is honoured in four places: on the
+property itself, on a base class the entity inherits from, on an interface member
+the entity implements, and on a `string` property nested inside an EF complex type
+(`ComplexProperty`) — the walk recurses into every complex type reachable from the
+entity, so a `[Protected]` member behind one is found exactly like one declared
+directly on the entity. It is a silent no-op on a non-`string` property — there is
+no error or warning, the annotation simply changes nothing.
+
+**Every write is non-deterministic ciphertext.** `IDataProtector.Protect`
+randomises its output, so protecting the same plaintext twice produces two
+different stored values. This has consequences beyond "you can't read it in a
+database tool":
+
+- A `[Protected]` column cannot be queried by equality — `WHERE Token = @value`
+  never matches a row encrypted from `@value`, because the stored ciphertext isn't
+  a function of the plaintext alone.
+- It cannot usefully back a unique index for the same reason: two writes of the
+  same logical value produce different bytes, so the index enforces uniqueness of
+  ciphertext, not of the secret.
+- The ciphertext is substantially longer than the plaintext — over 130 characters
+  for a short secret — which overflows any `HasMaxLength` sized for the plaintext.
+  Size the column for ciphertext, not for the value it represents.
 
 ## Setup
 
@@ -42,12 +60,10 @@ services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo("/var/my-bot/keys"));
 ```
 
-### 3. Call `ApplyProtection` last in `OnModelCreating`
+### 3. Register `ProtectedStringConvention` from `ConfigureConventions`
 
-Constructor-inject `IDataProtectionProvider` into your context and call
-`ApplyProtection` after every module and entity configuration that creates the
-annotated properties — it walks the model as already built, so a property
-configured afterwards is not seen.
+This is the recommended entry point. Constructor-inject `IDataProtectionProvider`
+into your context and add the convention alongside Persistord's own:
 
 ```csharp
 public sealed class MyBotContext(
@@ -56,18 +72,49 @@ public sealed class MyBotContext(
 {
     public DbSet<ManagedWebhook> Webhooks => Set<ManagedWebhook>();
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+        configurationBuilder.Conventions.Add(_ => new ProtectedStringConvention(dataProtectionProvider));
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyManagedModule();
-        modelBuilder.ApplyProtection(dataProtectionProvider); // last
     }
 }
 ```
 
+Because `IModelFinalizingConvention` runs at model finalization — after every
+module and entity configuration has had a chance to add properties — it cannot be
+called too early the way the alternative below can, and it covers an entity type
+registered after the point an `ApplyProtection` call would already have run.
+
+### The explicit alternative: `ApplyProtection`, called last
+
+`Persistord.Protection` also ships `ApplyProtection`, for call sites that
+configure protection inline in `OnModelCreating` rather than through a
+convention. Call it last, after every module and entity configuration that
+creates the annotated properties — it walks the model as already built, so a
+property configured afterwards is not seen:
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    base.OnModelCreating(modelBuilder);
+    modelBuilder.ApplyManagedModule();
+    modelBuilder.ApplyProtection(dataProtectionProvider); // last
+}
+```
+
+Both routes share the same property walk, so both cover a `[Protected]` member
+nested inside an EF complex type identically.
+
 ## The purpose string is fixed
 
-Every protector `ApplyProtection` creates is derived from `ProtectionPurposes.V1`
+Every protector this package creates — whether through `ProtectedStringConvention`
+or `ApplyProtection` — is derived from `ProtectionPurposes.V1`
 (`"Persistord.Protection.v1"`). This cannot change without orphaning every
 ciphertext already in the database: a protector derived from a different purpose
 cannot decrypt what this one wrote.
@@ -78,6 +125,9 @@ Data Protection encrypts with keys held in a *key ring*. This package does not
 configure where that key ring lives — that is
 [`IDataProtectionBuilder`](https://learn.microsoft.com/aspnet/core/security/data-protection/configuration/overview)
 configuration, done once when you register Data Protection, as in step 2 above.
+Persistord itself references only `Microsoft.AspNetCore.DataProtection.Abstractions`
+— the implementation package, `Microsoft.AspNetCore.DataProtection`, is a
+dependency you add yourself in step 2, and keeping it patched is on you too.
 
 **Losing the key ring means losing every protected value.** There is no recovery
 path: without the key that encrypted a value, `Unprotect` cannot produce it back.
@@ -118,13 +168,13 @@ so it never bypasses revocation:
 
 ## One provider per application
 
-EF Core caches the compiled model per context type. `ApplyProtection` bakes the
-protector it was given into that cached model, so **the first
-`IDataProtectionProvider` supplied to a given context type is the one every
-subsequent instance of that context type uses**, for the lifetime of the process —
-passing a different provider on a later call has no effect. Register one
-`IDataProtectionProvider` per application, as a singleton, and constructor-inject
-it into the context.
+EF Core caches the compiled model per context type. Whichever route builds that
+model first — the convention or `ApplyProtection` — bakes the protector it was
+given into the cached model, so **the first `IDataProtectionProvider` supplied to
+a given context type is the one every subsequent instance of that context type
+uses**, for the lifetime of the process — passing a different provider on a later
+call has no effect. Register one `IDataProtectionProvider` per application, as a
+singleton, and constructor-inject it into the context.
 
 Tests that need a different key ring per instance must also replace EF's
 `IModelCacheKeyFactory`, so each configuration gets its own cache entry —
@@ -135,8 +185,9 @@ builds (see [Testing](testing.md)).
 
 `Persistord.Managed`'s `ManagedWebhook.Token` is annotated `[Protected]`, but the
 attribute alone changes nothing. **Without a reference to `Persistord.Protection`
-and a call to `ApplyProtection`, `ManagedWebhook.Token` is stored in plaintext.**
-See [Managed Resources](managed-resources.md) for the entity shape.
+and either registering `ProtectedStringConvention` or calling `ApplyProtection`,
+`ManagedWebhook.Token` is stored in plaintext.** See
+[Managed Resources](managed-resources.md) for the entity shape.
 
 ## See also
 
