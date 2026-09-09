@@ -217,6 +217,39 @@ public class UpsertTests
     }
 
     [Fact]
+    public async Task Upsert_finds_a_row_hidden_by_a_global_query_filter_and_updates_it_instead_of_inserting()
+    {
+        var (database, context) = SqliteFixture.Create<FilteredWidgetContext>(o => new FilteredWidgetContext(o));
+        using (database)
+        await using (context)
+        {
+            await context.FilteredWidgets.AddAsync(new FilteredWidgetEntity
+            {
+                GuildId = 1UL, Key = "dash", IsDeleted = true
+            });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            // Before the fix, the natural-key read honoured the global query filter, so the
+            // soft-deleted row was invisible to it: the upsert took the create branch and the
+            // insert collided with the still-present unique index, throwing DbUpdateException
+            // instead of reviving the row — the same shape as a soft-marked guild re-invite.
+            var row = await context.FilteredWidgets.UpsertAsync(
+                w => w.GuildId == 1UL && w.Key == "dash",
+                () => new FilteredWidgetEntity
+                {
+                    GuildId = 1UL, Key = "dash"
+                },
+                w => w.IsDeleted = false);
+
+            Assert.False(row.IsDeleted);
+
+            context.ChangeTracker.Clear();
+            Assert.Single(await context.FilteredWidgets.IgnoreQueryFilters().ToListAsync());
+        }
+    }
+
+    [Fact]
     public async Task Upsert_recovers_when_another_writer_wins_the_insert_race()
     {
         await using var database = SqliteTestDatabase.Shared(schema: TestSchema.EnsureCreated);
@@ -372,6 +405,38 @@ public sealed class PartedWidgetContext(DbContextOptions<PartedWidgetContext> op
             }).IsUnique();
             builder.OwnsOne(w => w.Settings);
             builder.HasMany(w => w.Children).WithOne().HasForeignKey(c => c.PartedWidgetEntityId);
+        });
+    }
+}
+
+/// <summary>A natural-key entity behind a global query filter, the shape a soft-marked guild is.</summary>
+public sealed class FilteredWidgetEntity
+{
+    public long Id { get; set; }
+
+    public ulong GuildId { get; set; }
+
+    public string Key { get; set; } = string.Empty;
+
+    public bool IsDeleted { get; set; }
+}
+
+public sealed class FilteredWidgetContext(DbContextOptions<FilteredWidgetContext> options)
+    : Persistord.Core.DiscordDbContext(options)
+{
+    public DbSet<FilteredWidgetEntity> FilteredWidgets => Set<FilteredWidgetEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<FilteredWidgetEntity>(builder =>
+        {
+            builder.Property(w => w.Key).IsRequired();
+            builder.HasIndex(w => new
+            {
+                w.GuildId, w.Key
+            }).IsUnique();
+            builder.HasQueryFilter(w => !w.IsDeleted);
         });
     }
 }

@@ -19,7 +19,9 @@ public static class UpsertExtensions
     /// <param name="naturalKey">
     /// A predicate that matches at most one row. Back it with a unique index: that index is what
     /// turns a concurrent duplicate insert into the <see cref="DbUpdateException"/> this method
-    /// recovers from.
+    /// recovers from. The read behind this predicate ignores global query filters, so it finds the
+    /// row a unique index would collide with regardless of filtering — which means this method can
+    /// revive a soft-deleted or otherwise filtered-out row instead of throwing on the insert.
     /// </param>
     /// <param name="create">Builds the row when none matches. The natural-key values belong here.</param>
     /// <param name="update">
@@ -48,7 +50,10 @@ public static class UpsertExtensions
     /// </summary>
     /// <typeparam name="TEntity">The entity type.</typeparam>
     /// <param name="set">The set to read and write.</param>
-    /// <param name="naturalKey">A predicate that matches at most one row.</param>
+    /// <param name="naturalKey">
+    /// A predicate that matches at most one row. The read behind it ignores global query filters —
+    /// see <see cref="UpsertAsync{TEntity}"/>'s <c>naturalKey</c> doc for why.
+    /// </param>
     /// <param name="create">Builds the row when none matches.</param>
     /// <param name="update">Applies the mutation, to created and existing rows alike.</param>
     /// <param name="cancellationToken">Cancels the read and the save.</param>
@@ -80,7 +85,7 @@ public static class UpsertExtensions
 
         var context = set.GetService<ICurrentDbContext>().Context;
 
-        var existing = await set.AsTracking()
+        var existing = await set.IgnoreQueryFilters().AsTracking()
             .SingleOrDefaultAsync(naturalKey, cancellationToken)
             .ConfigureAwait(false);
         if (existing is not null)
@@ -106,7 +111,7 @@ public static class UpsertExtensions
             // it. If there is still no winner the failure was not a race and must surface.
             context.Entry(created).State = EntityState.Detached;
 
-            var winner = await set.AsTracking()
+            var winner = await set.IgnoreQueryFilters().AsTracking()
                 .SingleOrDefaultAsync(naturalKey, cancellationToken)
                 .ConfigureAwait(false);
             if (winner is null)

@@ -65,6 +65,25 @@ var channel = await db.Set<ManagedChannel>().UpsertAsync(
 Whether `"announcements"` already had a row or not, `c.DiscordId =
 discordChannelId` is the only place that assignment is written.
 
+## It ignores global query filters
+
+Both natural-key reads call `.IgnoreQueryFilters()` next to `.AsTracking()`. A
+natural-key upsert has to find the row the unique index will collide with,
+filtered or not — the same reasoning
+[`PurgeGuildAsync`](guild-lifecycle.md) already applies when it deletes a
+guild that global filtering would otherwise hide.
+
+This means `UpsertAsync` can revive a soft-deleted or soft-marked row instead
+of throwing. That is exactly what the guild re-invite recipe in
+[Guild Lifecycle](guild-lifecycle.md) wants: a guild marked `LeftAt` and
+hidden by `ApplyGuildRoot(filterLeftGuilds: true)` is still the row a fresh
+`JoinedGuild` upsert must find and update, not a phantom unique constraint
+collision. Without `IgnoreQueryFilters()`, the filtered-out row is invisible
+to the read, the upsert takes the create branch, the insert fails against the
+still-present unique index, and the lost-race recovery re-read is filtered
+too — so the original `DbUpdateException` surfaces instead of being recovered
+from, and the row is left exactly as it was.
+
 ## `UpsertIfChangedAsync` and the dirty-check short-circuit
 
 `UpsertAsync` is `UpsertIfChangedAsync` with the outcome discarded. The full
