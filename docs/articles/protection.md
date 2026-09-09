@@ -109,7 +109,45 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 ```
 
 Both routes share the same property walk, so both cover a `[Protected]` member
-nested inside an EF complex type identically.
+nested inside an EF complex type identically. They do **not** agree on precedence
+against a competing explicit configuration — see [Precedence](#precedence) below.
+
+## Precedence
+
+`ProtectedStringConvention` applies its converter at EF's `DataAnnotation`
+configuration-source precedence (`fromDataAnnotation: true`), because `[Protected]`
+genuinely is a data annotation. That beats the plain `Convention` precedence a
+convention gets by default, but it still loses to an **explicit fluent
+`HasConversion(...)`** the consumer configures on the same property in
+`OnModelCreating` — `Explicit` outranks `DataAnnotation` in EF's own precedence
+order. In that one case, the property keeps the consumer's own converter, and
+`Persistord.Protection` does not encrypt it. No error, no warning.
+
+`ApplyProtection` does not have this gap. It writes through the raw mutable
+property setter, which is not precedence-aware: called last, it unconditionally
+overwrites whatever converter — explicit or otherwise — was configured on the
+property before it. If a `[Protected]` property must be protected even when it
+also carries its own custom conversion, use `ApplyProtection`, called after that
+custom conversion is configured, rather than the convention.
+
+```csharp
+public sealed class Widget
+{
+    [Protected]
+    public string Token { get; set; } = string.Empty;
+}
+
+// If OnModelCreating also configures:
+modelBuilder.Entity<Widget>().Property(w => w.Token).HasConversion(myOwnConverter);
+
+// ...then registering ProtectedStringConvention leaves Token on myOwnConverter,
+// unprotected — Explicit beats the convention's DataAnnotation precedence.
+// ApplyProtection(dataProtectionProvider), called after the line above, overwrites
+// myOwnConverter with the protecting one instead.
+```
+
+This is a narrow case — a `[Protected]` property that also needs its own custom
+conversion — and neither route tries to merge the two converters together.
 
 ## The purpose string is fixed
 

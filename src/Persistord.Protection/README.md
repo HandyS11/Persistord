@@ -74,6 +74,13 @@ one extension method, and every write to it goes through the same converter.
 
    Both routes cover a `[Protected]` property nested inside an EF complex
    type (`ComplexProperty`), not only one declared directly on the entity.
+   They disagree on one edge case, though: an explicit fluent
+   `HasConversion(...)` the consumer configures on the same `[Protected]`
+   property wins over the convention (EF's `Explicit` precedence beats the
+   convention's `DataAnnotation` precedence), leaving that property
+   unprotected — `ApplyProtection`, called last, overwrites it unconditionally
+   instead. See [Precedence](https://handys11.github.io/Persistord/articles/protection.html#precedence)
+   on the documentation site.
 
 **`[Protected]` is inert without this package.** `Persistord.Managed`'s
 `ManagedWebhook.Token`, for example, is annotated `[Protected]`, but without a
