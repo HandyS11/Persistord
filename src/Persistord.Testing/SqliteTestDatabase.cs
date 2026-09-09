@@ -28,6 +28,7 @@ public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
 {
     private readonly SqliteConnection _connection;
     private readonly bool _sharedCache;
+    private readonly Lock _schemaLock = new();
     private bool _schemaCreated;
 
     private SqliteTestDatabase(string connectionString, bool sharedCache, TestSchema schema)
@@ -206,19 +207,26 @@ public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
 
     private void EnsureSchema(DbContext context)
     {
-        if (_schemaCreated)
+        // The check-and-set, and the migrate/create call it guards, all run under one lock: two
+        // CreateContext calls racing from parallel tests must not both see _schemaCreated false
+        // and both migrate, nor may the second one see it already true and query before the first
+        // has actually finished building the schema.
+        lock (_schemaLock)
         {
-            return;
-        }
+            if (_schemaCreated)
+            {
+                return;
+            }
 
-        _schemaCreated = true;
-        if (Schema == TestSchema.Migrate)
-        {
-            context.Database.Migrate();
-        }
-        else
-        {
-            context.Database.EnsureCreated();
+            _schemaCreated = true;
+            if (Schema == TestSchema.Migrate)
+            {
+                context.Database.Migrate();
+            }
+            else
+            {
+                context.Database.EnsureCreated();
+            }
         }
     }
 }

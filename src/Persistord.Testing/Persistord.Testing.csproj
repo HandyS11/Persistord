@@ -8,6 +8,9 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>discord;efcore;persistence;testing;sqlite</PackageTags>
+    <!-- Test-support package: a library referencing it for its own tests should not propagate
+         that reference to consumers of the library. -->
+    <DevelopmentDependency>true</DevelopmentDependency>
   </PropertyGroup>
   <ItemGroup>
     <!-- VersionOverride, not the central pin: this is a SHIPPED dependency, so it must be a

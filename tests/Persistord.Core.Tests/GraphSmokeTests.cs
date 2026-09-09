@@ -83,7 +83,8 @@ public class GraphSmokeTests
             var deleted = await context.PurgeGuildAsync(1UL);
 
             // Only the guild row and the IGuildScoped consumer row participate: the five skeleton
-            // entities are deliberately not IGuildScoped (finding 4), so they are untouched.
+            // entities are deliberately not IGuildScoped (see GuildPurgeExtensions' remarks), so
+            // they are untouched.
             Assert.Equal(2, deleted);
             Assert.Empty(await context.Guilds.ToListAsync());
             Assert.Empty(await context.ScopedRows.ToListAsync());
@@ -134,8 +135,12 @@ public class GraphSmokeTests
         }
     }
 
-    /// <summary>A consumer entity that declares its own guild navigation and foreign key, the shape
-    /// finding 3 was reproduced against.</summary>
+    /// <summary>
+    /// A consumer entity that declares its own guild navigation and foreign key — the shape
+    /// <see cref="ApplyGuildRoot_preserves_a_consumer_entitys_own_guild_relationship"/> pins:
+    /// <c>ApplyGuildRoot</c> must not add a second, navigation-less relationship over the same
+    /// <c>GuildId</c> column.
+    /// </summary>
     internal sealed class ScopedWithOwnRelationship : IGuildScoped
     {
         public long Id { get; set; }
