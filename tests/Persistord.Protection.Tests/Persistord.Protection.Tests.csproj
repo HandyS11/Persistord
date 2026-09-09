@@ -15,6 +15,11 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Test-only reference: pins the one cross-package claim that justifies putting
+         ProtectedAttribute in Persistord.Core.Abstractions — that ApplyProtection/
+         ProtectedStringConvention actually encrypt Persistord.Managed's own [Protected] column,
+         ManagedWebhook.Token, not just a bespoke test entity shaped like it. -->
+    <ProjectReference Include="../../src/Persistord.Managed/Persistord.Managed.csproj" />
     <ProjectReference Include="../../src/Persistord.Protection/Persistord.Protection.csproj" />
     <ProjectReference Include="../../src/Persistord.Testing/Persistord.Testing.csproj" />
   </ItemGroup>
