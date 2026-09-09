@@ -175,9 +175,15 @@ public class ProtectionTests
                 new LateRegistrationContext(o, new ReversingProvider()));
 
         // LateRegistrationContext.OnModelCreating calls ApplyProtection before registering
-        // LateSecretRow, so the explicit route never sees this property. Only the convention,
-        // registered from ConfigureConventions and run at model finalization, still catches it.
-        await context.LateSecrets.AddAsync(new LateSecretRow
+        // LateSecretRow (via modelBuilder.Entity<LateSecretRow>() only — deliberately no DbSet
+        // property, which EF would otherwise add to the model before OnModelCreating runs), so
+        // the explicit route never sees this property. Only the convention, registered from
+        // ConfigureConventions and run at model finalization, still catches it. Before this test
+        // dropped the DbSet property, it passed for the wrong reason: EF's DbSet-discovery pass
+        // put LateSecretRow in the model ahead of OnModelCreating, so ApplyProtection alone
+        // already covered it and the convention's contribution was never actually exercised.
+        var set = context.Set<LateSecretRow>();
+        await set.AddAsync(new LateSecretRow
         {
             Token = "super-secret"
         });
@@ -187,8 +193,40 @@ public class ProtectionTests
         var stored = await ReadColumnAsync(context, "LateSecrets", "Token");
         Assert.NotEqual("super-secret", stored);
 
-        var row = await context.LateSecrets.SingleAsync();
+        var row = await set.SingleAsync();
         Assert.Equal("super-secret", row.Token);
+    }
+
+    [Fact]
+    public async Task The_convention_defers_to_an_explicit_fluent_HasConversion_on_the_same_property()
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context =
+            database.CreateContext<OverriddenSecretContext>(o =>
+                new OverriddenSecretContext(o, new ReversingProvider()));
+
+        await context.OverriddenSecrets.AddAsync(new OverriddenSecretRow
+        {
+            Token = "plain-secret"
+        });
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        // Known, verified limitation, not a regression to paper over: ProtectedStringConvention
+        // applies its converter at DataAnnotation precedence (fromDataAnnotation: true), which
+        // beats the Convention-precedence default but still loses to an explicit fluent
+        // HasConversion(...) on the same property, which is Explicit precedence — confirmed
+        // against the built EF Core 10.0.0 assembly: IConventionPropertyBuilder.HasConversion(_,
+        // fromDataAnnotation: true) returns null (rejected) here. The consumer's own converter's
+        // output is what lands in the column, not Persistord's ciphertext. ApplyProtection does
+        // not have this gap, because it writes through the raw IMutableProperty setter, which
+        // overwrites unconditionally when called last, regardless of what was configured before
+        // it — see both types' XML docs and docs/articles/protection.md's "Precedence" section.
+        var stored = await ReadColumnAsync(context, "OverriddenSecrets", "Token");
+        Assert.Equal("PFX:plain-secret", stored);
+
+        var row = await context.OverriddenSecrets.SingleAsync();
+        Assert.Equal("plain-secret", row.Token);
     }
 
     [Fact]
@@ -376,12 +414,19 @@ public sealed class LateSecretRow
 /// route never sees it — only <see cref="ProtectedStringConvention"/>, registered from
 /// <see cref="ConfigureConventions"/> and run at model finalization, still can.
 /// </summary>
+/// <remarks>
+/// Deliberately has no <c>DbSet&lt;LateSecretRow&gt;</c> property: EF discovers a <c>DbSet</c>
+/// property's entity type before <c>OnModelCreating</c> runs, which would put
+/// <see cref="LateSecretRow"/> in the model before <c>ApplyProtection</c> gets to it — defeating
+/// the whole point of this context, which is to prove the convention still reaches an entity
+/// type <c>ApplyProtection</c> could not have seen. <see cref="LateSecretRow"/> is reachable only
+/// through <c>context.Set&lt;LateSecretRow&gt;()</c>, once <c>modelBuilder.Entity&lt;LateSecretRow&gt;()</c>
+/// (placed after the <c>ApplyProtection</c> call) has registered it.
+/// </remarks>
 public sealed class LateRegistrationContext(
     DbContextOptions<LateRegistrationContext> options,
     IDataProtectionProvider dataProtectionProvider) : Persistord.Core.DiscordDbContext(options)
 {
-    public DbSet<LateSecretRow> LateSecrets => Set<LateSecretRow>();
-
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         base.ConfigureConventions(configurationBuilder);
@@ -393,5 +438,40 @@ public sealed class LateRegistrationContext(
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyProtection(dataProtectionProvider);
         modelBuilder.Entity<LateSecretRow>().ToTable("LateSecrets");
+    }
+}
+
+public sealed class OverriddenSecretRow
+{
+    public long Id { get; set; }
+
+    [Protected] public string Token { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Registers <see cref="OverriddenSecretRow"/> through <see cref="ProtectedStringConvention"/>
+/// only, with an explicit fluent <c>HasConversion(...)</c> configured on the same
+/// <c>[Protected]</c> property — the one shape where the convention route (DataAnnotation
+/// precedence) and <c>ApplyProtection</c> (an unconditional overwrite) disagree.
+/// </summary>
+public sealed class OverriddenSecretContext(
+    DbContextOptions<OverriddenSecretContext> options,
+    IDataProtectionProvider dataProtectionProvider) : Persistord.Core.DiscordDbContext(options)
+{
+    public DbSet<OverriddenSecretRow> OverriddenSecrets => Set<OverriddenSecretRow>();
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+        configurationBuilder.Conventions.Add(_ => new ProtectedStringConvention(dataProtectionProvider));
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<OverriddenSecretRow>()
+            .ToTable("OverriddenSecrets")
+            .Property(r => r.Token)
+            .HasConversion(v => "PFX:" + v, v => v.Substring(4));
     }
 }
