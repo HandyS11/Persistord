@@ -210,7 +210,9 @@ public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
         // The check-and-set, and the migrate/create call it guards, all run under one lock: two
         // CreateContext calls racing from parallel tests must not both see _schemaCreated false
         // and both migrate, nor may the second one see it already true and query before the first
-        // has actually finished building the schema.
+        // has actually finished building the schema. _schemaCreated is set only after Migrate()/
+        // EnsureCreated() returns successfully, so a build that throws leaves it false — a later
+        // call gets to retry the build instead of silently treating a half-built schema as done.
         lock (_schemaLock)
         {
             if (_schemaCreated)
@@ -218,7 +220,6 @@ public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
                 return;
             }
 
-            _schemaCreated = true;
             if (Schema == TestSchema.Migrate)
             {
                 context.Database.Migrate();
@@ -227,6 +228,8 @@ public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
             {
                 context.Database.EnsureCreated();
             }
+
+            _schemaCreated = true;
         }
     }
 }
