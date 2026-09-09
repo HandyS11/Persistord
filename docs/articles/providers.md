@@ -111,12 +111,17 @@ Before deleting, it also sets every **nullable** self-referencing foreign key to
 without a foreign-key violation, since a delete order cannot order a table
 against itself.
 
-Two shapes fall outside what it clears:
+Three shapes fall outside what it clears:
 
 - A **non-nullable** self-referencing foreign key is left as-is and can still
   fail the delete pass with a foreign-key violation.
 - A self-reference backed by a **shadow property** (no CLR member) is skipped
   rather than attempted — no entity Persistord ships has this shape today.
+- A **reference cycle** between two or more entity types cannot be ordered at
+  all, because no ordering satisfies every edge. The walk terminates, but the
+  order it produces violates one of the cycle's edges, so a restricting foreign
+  key inside the cycle can still fail the delete. Break the cycle with a
+  cascading or nullable foreign key if you need this method to clear it.
 
 ## PostgreSQL
 

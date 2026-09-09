@@ -29,7 +29,10 @@ public static class DatabaseMaintenanceExtensions
     /// shadow property (no CLR member) is skipped rather than attempted, because
     /// <see cref="Expression.Property(Expression, string)"/> throws <see cref="ArgumentException"/>
     /// for a property name with no corresponding CLR property; no entity shipped by Persistord has
-    /// that shape today, but failing loudly there would be baffling.
+    /// that shape today, but failing loudly there would be baffling. A reference cycle between two
+    /// or more entity types cannot be ordered at all — no ordering satisfies every edge — so a
+    /// restricting foreign key inside such a cycle can still fail the delete pass; break the cycle
+    /// with a cascading or nullable foreign key if you need this method to clear it.
     /// </remarks>
     public static async Task<int> ClearAllTablesAsync(
         this DbContext context,

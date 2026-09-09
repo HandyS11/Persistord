@@ -6,8 +6,13 @@ namespace Persistord.Core.Internal;
 /// Orders entity types so every dependent comes before the principal it points at, which is what
 /// lets plain <c>DELETE</c> statements run without tripping a restricted foreign key. The order
 /// comes from the EF model, so it holds on every relational provider — no pragma, no
-/// provider-specific deferral. Self-references and reference cycles are skipped; the rest of the
-/// order stays deterministic.
+/// provider-specific deferral. Two shapes it cannot order. A self-reference is skipped outright,
+/// because a table cannot be ordered against itself — the caller handles it, as
+/// <c>ClearAllTablesAsync</c> does by nulling nullable self-referencing keys before it deletes.
+/// A reference cycle between two or more entity types is walked without recursing forever, but no
+/// ordering of a cycle satisfies every edge, so the result violates at least one of them and a
+/// restricting foreign key inside a cycle can still fail the delete. Otherwise the order is
+/// deterministic: model order, dependents first.
 /// </summary>
 internal static class ModelDeleteOrder
 {

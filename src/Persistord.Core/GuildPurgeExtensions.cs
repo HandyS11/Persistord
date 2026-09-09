@@ -40,7 +40,9 @@ public static class GuildPurgeExtensions
     /// never deletes one. If a non-scoped entity has a restricting foreign key to a scoped row, this
     /// method can fail with a foreign-key violation when it tries to delete that scoped row (the
     /// transaction rolls back, so this is loud rather than silent). Give that non-scoped entity a
-    /// cascading foreign key, or delete it yourself before calling this method.
+    /// cascading foreign key, or delete it yourself before calling this method. A reference cycle
+    /// between two or more scoped entity types cannot be ordered either, so a restricting foreign
+    /// key inside a cycle can fail the same way.
     /// </remarks>
     public static async Task<int> PurgeGuildAsync(
         this DbContext context,
