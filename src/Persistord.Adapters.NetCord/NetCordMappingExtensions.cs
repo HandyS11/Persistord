@@ -1,4 +1,5 @@
 using NetCord;
+using NetCord.Rest;
 using Persistord.Core.Entities;
 using ChannelType = Persistord.Core.Entities.ChannelType;
 
@@ -37,6 +38,80 @@ public static class NetCordMappingExtensions
             },
             Type = MapChannelType(channel),
             Name = channel.Name,
+        };
+    }
+
+    /// <summary>Maps a NetCord guild to a <see cref="GuildEntity"/>.</summary>
+    /// <remarks>
+    /// Binds <c>RestGuild</c> rather than the gateway <c>Guild</c> because the gateway
+    /// type derives from it, so one method serves both. <c>JoinedAt</c> and
+    /// <c>LeftAt</c> are intentionally not set: they track the bot's own membership
+    /// lifecycle, which the consumer owns, not data carried on a Discord guild.
+    /// </remarks>
+    /// <param name="guild">The guild to map.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="guild"/> is <see langword="null"/>.</exception>
+    public static GuildEntity ToGuildEntity(this RestGuild guild)
+    {
+        ArgumentNullException.ThrowIfNull(guild);
+
+        return new GuildEntity
+        {
+            Id = guild.Id, Name = guild.Name, OwnerId = guild.OwnerId,
+        };
+    }
+
+    /// <summary>Maps a NetCord user to a <see cref="UserEntity"/>.</summary>
+    /// <param name="user">The user to map.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="user"/> is <see langword="null"/>.</exception>
+    public static UserEntity ToUserEntity(this User user)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+
+        return new UserEntity
+        {
+            Id = user.Id, Username = user.Username, GlobalName = user.GlobalName,
+        };
+    }
+
+    /// <summary>Maps a NetCord guild member to a <see cref="MemberEntity"/>.</summary>
+    /// <remarks>
+    /// Binds <c>GuildUser</c>, not its <c>PartialGuildUser</c> base: the partial type
+    /// deliberately omits <c>GuildId</c>, which is half of <see cref="MemberEntity"/>'s
+    /// composite key.
+    /// </remarks>
+    /// <param name="member">The guild member to map.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="member"/> is <see langword="null"/>.</exception>
+    public static MemberEntity ToMemberEntity(this GuildUser member)
+    {
+        ArgumentNullException.ThrowIfNull(member);
+
+        return new MemberEntity
+        {
+            GuildId = member.GuildId, UserId = member.Id, Nickname = member.Nickname, JoinedAt = member.JoinedAt,
+        };
+    }
+
+    /// <summary>Maps a NetCord role to a <see cref="RoleEntity"/>.</summary>
+    /// <remarks>
+    /// <c>Permissions</c> is a <c>[Flags] enum : ulong</c>, so the cast is lossless.
+    /// <c>Color</c> takes the role's primary colour; NetCord's <c>Color.RawValue</c> is
+    /// already <c>int</c>, so unlike the Discord.Net adapter no unchecked cast is needed.
+    /// Gradient and holographic roles' secondary and tertiary colours are dropped —
+    /// <see cref="RoleEntity"/> stores a single colour.
+    /// </remarks>
+    /// <param name="role">The role to map.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="role"/> is <see langword="null"/>.</exception>
+    public static RoleEntity ToRoleEntity(this Role role)
+    {
+        ArgumentNullException.ThrowIfNull(role);
+
+        return new RoleEntity
+        {
+            Id = role.Id,
+            GuildId = role.GuildId,
+            Name = role.Name,
+            Permissions = (ulong)role.Permissions,
+            Color = role.Colors.PrimaryColor.RawValue,
         };
     }
 
