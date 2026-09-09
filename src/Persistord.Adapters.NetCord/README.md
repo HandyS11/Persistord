@@ -68,9 +68,15 @@ shipped assembly is compiled against `1.0.0-beta.19`; NuGet resolves a range to 
 lowest satisfying version, and a consumer's newer direct reference wins.
 
 **NetCord has no stable release.** Every published version is a prerelease, so this
-adapter carries a prerelease dependency. That is invisible today because Persistord
-itself ships as a prerelease. When Persistord publishes a stable `1.0.0`, packing this
-project will raise **NU5104** (stable package with a prerelease dependency), which the
-repo's `TreatWarningsAsErrors` turns into a pack failure. Resolve it then — either by
-waiting for NetCord 1.0.0 stable or by shipping this adapter on its own prerelease
-track — rather than by suppressing the warning.
+adapter carries a prerelease dependency. A local `dotnet pack` with no version
+override fails **today** with **NU5104** (stable package with a prerelease
+dependency): `Directory.Build.props` sets a local-build placeholder
+`<Version>1.0.0</Version>`, which NuGet reads as stable, and the repo's
+`TreatWarningsAsErrors` turns that mismatch into a hard pack failure. Real releases
+are unaffected — `CD.yml` packs with `-p:Version=$VERSION`, and release tags are
+themselves prerelease (`1.0.0-beta4` and the like), so the stable/prerelease
+mismatch never arises there. To pack locally, pass a prerelease version explicitly:
+`dotnet pack -p:Version=1.0.0-beta.1`. When Persistord genuinely publishes a stable
+`1.0.0`, this becomes a real release blocker to resolve then — either by waiting for
+NetCord 1.0.0 stable or by shipping this adapter on its own prerelease track —
+rather than by suppressing the warning.
