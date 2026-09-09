@@ -48,11 +48,12 @@ The following are explicit non-goals in v1:
 
 Mapping from Discord.Net / DSharpPlus / NetCord model types to Persistord entities
 is the user's responsibility — though the optional `Persistord.Adapters.DiscordNet`
-package provides ready-made mappers if you use Discord.Net.
+and `Persistord.Adapters.NetCord` packages provide ready-made mappers for those two
+libraries. A DSharpPlus adapter is not yet available.
 
 ## Packages
 
-Persistord is split into eight NuGet packages:
+Persistord is split into nine NuGet packages:
 
 **`Persistord`** — the convenience meta package. Installing it pulls in the full
 library-neutral stack (`Core`, `Messages`, and `History`) in one reference. This is
@@ -78,6 +79,11 @@ interface types (`IGuild`, `IMessage`, etc.) to Persistord entities via `.To*Ent
 extension methods. Install only if you use Discord.Net; the core packages never
 reference a Discord client library.
 
+**`Persistord.Adapters.NetCord`** — an optional adapter that maps NetCord model
+types (`RestGuild`, `RestMessage`, etc.) to Persistord entities via `.To*Entity()`
+extension methods. Install only if you use NetCord; the core packages never
+reference a Discord client library.
+
 **`Persistord.Managed`** — records of the categories, channels, anchored
 messages, and webhooks a bot creates and owns, keyed by a name you chose. See
 [Managed Resources](managed-resources.md). Depends on `Persistord.Core`.
@@ -97,8 +103,8 @@ fixtures, so the meta package stays the library-neutral mirror stack (`Core`,
 `Messages`, `History`) and nothing more.
 
 The dependency graph is not linear: `Messages` depends on `Core`, `History` depends
-on `Messages`, and `Adapters.DiscordNet` depends on all three — that chain is the
-one the meta package bundles. `Managed`, `Protection`, and `Testing` each depend
-on `Core` alone, independently of that chain and of each other.
+on `Messages`, and both `Adapters.DiscordNet` and `Adapters.NetCord` depend on all
+three — that chain is the one the meta package bundles. `Managed`, `Protection`, and
+`Testing` each depend on `Core` alone, independently of that chain and of each other.
 
 To get started, see [Getting Started](getting-started.md).

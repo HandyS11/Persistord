@@ -70,6 +70,9 @@ jobs:
       - name: Pack NuGet Package Persistord.Adapters.DiscordNet
         run: cd ./src/Persistord.Adapters.DiscordNet/ && dotnet pack --configuration Release -p:Version=$VERSION
 
+      - name: Pack NuGet Package Persistord.Adapters.NetCord
+        run: cd ./src/Persistord.Adapters.NetCord/ && dotnet pack --configuration Release -p:Version=$VERSION
+
       - name: Pack NuGet Package Persistord.Managed
         run: cd ./src/Persistord.Managed/ && dotnet pack --configuration Release -p:Version=$VERSION
 
