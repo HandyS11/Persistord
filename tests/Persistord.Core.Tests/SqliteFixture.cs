@@ -1,22 +1,26 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
+using Persistord.Testing;
 
 namespace Persistord.Core.Tests;
 
-/// <summary>Creates a context backed by a fresh open in-memory SQLite connection.</summary>
+/// <summary>Creates a context over a private in-memory SQLite database.</summary>
 public static class SqliteFixture
 {
-    public static (SqliteConnection Connection, TestContext Context) Create()
+    public static (SqliteTestDatabase Database, TestContext Context) Create() =>
+        Create<TestContext>(options => new TestContext(options));
+
+    public static (SqliteTestDatabase Database, TContext Context) Create<TContext>(
+        Func<DbContextOptions<TContext>, TContext> factory,
+        bool createSchema = true)
+        where TContext : DbContext
     {
-        var connection = new SqliteConnection("DataSource=:memory:");
-        connection.Open();
-        var options = new DbContextOptionsBuilder<TestContext>()
-            .UseSqlite(connection)
-            .ReplaceService<IModelCacheKeyFactory, UniqueModelCacheKeyFactory>()
-            .Options;
-        var context = new TestContext(options);
-        context.Database.EnsureCreated();
-        return (connection, context);
+        ArgumentNullException.ThrowIfNull(factory);
+
+        var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        var context = createSchema
+            ? database.CreateContext(factory)
+            : factory(database.Options<TContext>());
+
+        return (database, context);
     }
 }

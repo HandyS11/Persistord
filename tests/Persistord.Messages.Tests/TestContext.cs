@@ -1,8 +1,7 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Persistord.Messages;
 using Persistord.Messages.Entities;
+using Persistord.Testing;
 
 namespace Persistord.Messages.Tests;
 
@@ -19,16 +18,9 @@ public sealed class TestContext(DbContextOptions<TestContext> options, bool filt
         modelBuilder.ApplyMessagesModule(FilterDeleted);
     }
 
-    public static (SqliteConnection, TestContext) Create(bool filterDeleted = true)
+    public static (SqliteTestDatabase Database, TestContext Context) Create(bool filterDeleted = true)
     {
-        var connection = new SqliteConnection("DataSource=:memory:");
-        connection.Open();
-        var options = new DbContextOptionsBuilder<TestContext>()
-            .UseSqlite(connection)
-            .ReplaceService<IModelCacheKeyFactory, UniqueModelCacheKeyFactory>()
-            .Options;
-        var context = new TestContext(options, filterDeleted);
-        context.Database.EnsureCreated();
-        return (connection, context);
+        var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        return (database, database.CreateContext<TestContext>(options => new TestContext(options, filterDeleted)));
     }
 }

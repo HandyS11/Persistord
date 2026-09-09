@@ -10,8 +10,8 @@ public class MessagesModelTests
     [Fact]
     public void Message_WithEmbedsAndChildren_RoundTrips()
     {
-        var (connection, context) = TestContext.Create();
-        using (connection)
+        var (database, context) = TestContext.Create();
+        using (database)
         using (context)
         {
             context.Messages.Add(new MessageEntity

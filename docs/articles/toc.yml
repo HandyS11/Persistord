@@ -22,6 +22,18 @@
       href: dbcontext-lifetime.md
     - name: Discord.Net Adapter
       href: discord-net-adapter.md
+    - name: Managed Resources
+      href: managed-resources.md
+    - name: Protection
+      href: protection.md
+    - name: Testing
+      href: testing.md
+    - name: Providers
+      href: providers.md
+    - name: Guild Lifecycle
+      href: guild-lifecycle.md
+    - name: Upsert
+      href: upsert.md
 - name: Resources
   items:
     - name: Samples

@@ -9,8 +9,8 @@ public class HistoryModelTests
     [Fact]
     public void DeleteHistory_SurvivesSoftDeletedMessage()
     {
-        var (connection, context) = TestContext.Create();
-        using (connection)
+        var (database, context) = TestContext.Create();
+        using (database)
         using (context)
         {
             var message = new MessageEntity
@@ -51,8 +51,8 @@ public class HistoryModelTests
     [Fact]
     public void HistoryIndex_IsOnMessageIdAndRecordedAt()
     {
-        var (connection, context) = TestContext.Create();
-        using (connection)
+        var (database, context) = TestContext.Create();
+        using (database)
         using (context)
         {
             var entity = context.Model.FindEntityType(typeof(MessageHistoryEntity))!;

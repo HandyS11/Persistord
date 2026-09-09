@@ -35,12 +35,19 @@ database or Discord library.
 | Package | Downloads | Adds | Depends on |
 | --- | --- | --- | --- |
 | [`Persistord`](src/Persistord) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.svg)](https://www.nuget.org/packages/Persistord) | meta package — bundles Core, Messages, and History | Core, Messages, History |
-| [`Persistord.Core`](src/Persistord.Core) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Core.svg)](https://www.nuget.org/packages/Persistord.Core) | snowflake conversion, base `DiscordDbContext`, core skeleton entities | — |
+| [`Persistord.Core`](src/Persistord.Core) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Core.svg)](https://www.nuget.org/packages/Persistord.Core) | snowflake conversion, base `DiscordDbContext`, opt-in skeleton graph (`DiscordGraphDbContext`), guild root, upsert, purge | — |
 | [`Persistord.Messages`](src/Persistord.Messages) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Messages.svg)](https://www.nuget.org/packages/Persistord.Messages) | `MessageEntity` (soft-delete), embeds, attachments, reactions | Core |
 | [`Persistord.History`](src/Persistord.History) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.History.svg)](https://www.nuget.org/packages/Persistord.History) | append-only `MessageHistoryEntity` with a real FK to messages | Messages |
 | [`Persistord.Adapters.DiscordNet`](src/Persistord.Adapters.DiscordNet) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Adapters.DiscordNet.svg)](https://www.nuget.org/packages/Persistord.Adapters.DiscordNet) | `.To*Entity()` mappers from [Discord.Net](https://github.com/discord-net/Discord.Net) types | Core, Messages, History |
+| [`Persistord.Managed`](src/Persistord.Managed) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Managed.svg)](https://www.nuget.org/packages/Persistord.Managed) | records of the categories, channels, anchored messages, and webhooks a bot creates and owns | Core |
+| [`Persistord.Protection`](src/Persistord.Protection) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Protection.svg)](https://www.nuget.org/packages/Persistord.Protection) | encrypts `[Protected]` string columns at rest via ASP.NET Core Data Protection | Core |
+| [`Persistord.Testing`](src/Persistord.Testing) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Testing.svg)](https://www.nuget.org/packages/Persistord.Testing) | in-memory SQLite fixtures and EF Core model assertions for tests | Core |
 
 The core packages are independent of any Discord client library. Install the DiscordNet adapter **only** if you use Discord.Net.
+`Persistord.Managed`, `Persistord.Protection`, and `Persistord.Testing` are opt-in and
+**not** part of the `Persistord` meta package: a bot that only mirrors Discord never
+owns resources, encrypts a column, or needs the test fixtures, so the meta package
+stays the library-neutral mirror stack (Core, Messages, History) and nothing more.
 
 ## Install
 
@@ -59,8 +66,8 @@ dotnet add package Persistord.Adapters.DiscordNet   # optional: Discord.Net mapp
 
 ### 1. Derive a context
 
-Inherit `DiscordDbContext`, expose the module `DbSet`s you want, and apply the
-module configurations in `OnModelCreating`:
+`DiscordDbContext` applies only the snowflake conventions and maps nothing —
+derive it and apply the module configurations you want in `OnModelCreating`:
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
@@ -79,15 +86,17 @@ public sealed class MyBotContext : DiscordDbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);   // core skeleton + snowflake convention
+        base.OnModelCreating(modelBuilder);   // snowflake convention only
         modelBuilder.ApplyMessagesModule();   // omit if you don't persist messages
         modelBuilder.ApplyHistoryModule();    // requires ApplyMessagesModule()
     }
 }
 ```
 
-Core entities (`Guilds`, `Channels`, `Users`, `Members`, `Roles`) are already
-exposed by the base context — you only declare the module `DbSet`s.
+If your bot also mirrors guilds, channels, users, members or roles, derive
+`DiscordGraphDbContext` instead — it exposes those `DbSet`s (`Guilds`,
+`Channels`, `Users`, `Members`, `Roles`) automatically, on top of the same
+conventions.
 
 ### 2. Choose a provider
 

@@ -16,5 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Persistord.Core/Persistord.Core.csproj" />
+    <ProjectReference Include="../../src/Persistord.Testing/Persistord.Testing.csproj" />
   </ItemGroup>
 </Project>

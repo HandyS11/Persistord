@@ -8,7 +8,7 @@ using Persistord.Messages.Entities;
 namespace Persistord.Sample.DiscordNet;
 
 /// <summary>Context for the Discord.Net adapter sample: core skeleton, Messages, and History.</summary>
-public sealed class AdapterContext(DbContextOptions<AdapterContext> options) : DiscordDbContext(options)
+public sealed class AdapterContext(DbContextOptions<AdapterContext> options) : DiscordGraphDbContext(options)
 {
     public DbSet<MessageEntity> Messages => Set<MessageEntity>();
 

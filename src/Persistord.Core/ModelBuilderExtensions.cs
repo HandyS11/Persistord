@@ -7,12 +7,13 @@ namespace Persistord.Core;
 public static class ModelBuilderExtensions
 {
     /// <summary>
-    /// Applies the configurations for all core skeleton entities
-    /// (guild, channel, user, member, role). Call from <c>OnModelCreating</c>.
+    /// Applies the configurations for all skeleton entities (guild, channel, user, member,
+    /// role). Call from <c>OnModelCreating</c>, or derive <see cref="DiscordGraphDbContext"/>
+    /// which calls it for you.
     /// </summary>
     /// <param name="modelBuilder">The model builder to configure.</param>
     /// <returns>The same <paramref name="modelBuilder"/> for chaining.</returns>
-    public static ModelBuilder ApplyCoreConfiguration(this ModelBuilder modelBuilder)
+    public static ModelBuilder ApplyCoreGraph(this ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         return modelBuilder
@@ -22,4 +23,13 @@ public static class ModelBuilderExtensions
             .ApplyConfiguration(new MemberEntityConfiguration())
             .ApplyConfiguration(new RoleEntityConfiguration());
     }
+
+    /// <summary>Renamed to <see cref="ApplyCoreGraph"/>.</summary>
+    /// <param name="modelBuilder">The model builder to configure.</param>
+    /// <returns>The same <paramref name="modelBuilder"/> for chaining.</returns>
+#pragma warning disable S1133 // Intentional one-release forwarder; removal is tracked by the deprecation note above.
+    [Obsolete("Renamed to ApplyCoreGraph. This forwarder is kept for one release and will be removed.")]
+    public static ModelBuilder ApplyCoreConfiguration(this ModelBuilder modelBuilder) =>
+        modelBuilder.ApplyCoreGraph();
+#pragma warning restore S1133
 }

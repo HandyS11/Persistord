@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>Persistord.Testing</PackageId>
+    <Description>In-memory SQLite fixtures and EF Core model assertions for testing Persistord-based contexts.</Description>
+    <Authors>HandyS11</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>discord;efcore;persistence;testing;sqlite</PackageTags>
+    <!-- Test-support package: a library referencing it for its own tests should not propagate
+         that reference to consumers of the library. -->
+    <DevelopmentDependency>true</DevelopmentDependency>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- VersionOverride, not the central pin: this is a SHIPPED dependency, so it must be a
+         floor a consumer can satisfy with any 10.0.x, exactly like the EF Core references in
+         Persistord.Core. The central 10.0.11 pin stays as-is so test and sample projects keep
+         exercising the latest SQLite provider. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="[10.0.0, 11.0.0)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Persistord.Core/Persistord.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildProjectDirectory)/README.md" Pack="true" PackagePath="\" Condition="Exists('README.md')" />
+  </ItemGroup>
+</Project>

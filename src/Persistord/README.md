@@ -16,7 +16,7 @@ Installing `Persistord` pulls in the full library-neutral stack in one reference
 
 | Package | Adds |
 | --- | --- |
-| `Persistord.Core` | snowflake conversion, base `DiscordDbContext`, core skeleton entities |
+| `Persistord.Core` | snowflake conversion, base `DiscordDbContext`, opt-in skeleton graph (`DiscordGraphDbContext`), guild root, upsert, purge |
 | `Persistord.Messages` | `MessageEntity` (soft-delete), embeds, attachments, reactions |
 | `Persistord.History` | append-only `MessageHistoryEntity` with a real FK to messages |
 

@@ -1,15 +1,40 @@
 # Core Graph
 
-`Persistord.Core` ships an abstract `DiscordDbContext` and five skeleton entity
-types that mirror the core Discord object graph. Every derived context inherits
-these automatically — you only declare the module `DbSet`s your bot needs.
+`Persistord.Core` ships an abstract `DiscordDbContext` with the global snowflake
+convention, and an abstract `DiscordGraphDbContext` that adds five skeleton entity
+types mirroring the core Discord object graph. Derive whichever base class matches
+your context: conventions only, or conventions plus the skeleton.
 
 ## DiscordDbContext
 
-`DiscordDbContext` is the base class you inherit:
+`DiscordDbContext` applies only Persistord's conventions and maps no entity types.
+Derive it when your context owns its own resources and never mirrors Discord's
+guild/channel/user/member/role graph:
 
 ```csharp
 public sealed class MyBotContext : DiscordDbContext
+{
+    public MyBotContext(DbContextOptions<MyBotContext> options) : base(options) { }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);   // snowflake convention only
+        // apply optional modules here
+    }
+}
+```
+
+`ConfigureConventions()` registers the `ulong ↔ long` snowflake converters
+globally. See [Snowflake Conversion](snowflake-conversion.md).
+
+## DiscordGraphDbContext
+
+`DiscordGraphDbContext` derives from `DiscordDbContext` and adds the five
+skeleton `DbSet`s. Derive it when your context mirrors Discord's guild, channel,
+user, member and role objects:
+
+```csharp
+public sealed class MyBotContext : DiscordGraphDbContext
 {
     public MyBotContext(DbContextOptions<MyBotContext> options) : base(options) { }
 
@@ -21,14 +46,14 @@ public sealed class MyBotContext : DiscordDbContext
 }
 ```
 
-The base implementation calls `ApplyCoreConfiguration()` (which wires the core
-entity type configurations) and `ConfigureConventions()` (which registers the
-snowflake converters globally). See [Snowflake Conversion](snowflake-conversion.md).
+The base implementation calls `ApplyCoreGraph()` (which wires the core entity
+type configurations). Call `ApplyCoreGraph()` yourself from a plain
+`DiscordDbContext` if you'd rather opt in without the extra base class.
 
 ## Skeleton DbSets
 
-The base context exposes these `DbSet`s directly — no declaration needed in your
-derived class:
+`DiscordGraphDbContext` exposes these `DbSet`s directly — no declaration needed
+in your derived class:
 
 ```csharp
 public DbSet<GuildEntity>   Guilds   => Set<GuildEntity>();
@@ -37,6 +62,36 @@ public DbSet<UserEntity>    Users    => Set<UserEntity>();
 public DbSet<MemberEntity>  Members  => Set<MemberEntity>();
 public DbSet<RoleEntity>    Roles    => Set<RoleEntity>();
 ```
+
+## Upgrading from 1.0.0-beta2
+
+`DiscordDbContext` no longer maps the skeleton. If you use
+`Guilds`/`Channels`/`Users`/`Members`/`Roles`, change your base class to
+`DiscordGraphDbContext`. If you never did but your derived context's committed
+model snapshot still has those five tables in it (any `DiscordDbContext`
+consumer from beta2 does), your next `dotnet ef migrations add` diffs against
+that snapshot and emits `DropTable` for `Guilds`, `Channels`, `Users`,
+`Members` and `Roles` — usually what you want, but **review the generated
+migration before running `database update`**: this is the most likely way to
+lose data on this upgrade. `ApplyCoreConfiguration()` is renamed
+`ApplyCoreGraph()`; the old name forwards for one release.
+
+**Third break: a bare `ulong` primary key is no longer store-generated.** On
+`1.0.0-beta2`, a consumer's own `public ulong Id { get; set; }` primary key
+was `ValueGenerated.OnAdd` by EF's own convention — SQLite emitted `"Id"
+INTEGER NOT NULL ... PRIMARY KEY AUTOINCREMENT` for it. `SnowflakeKeyConvention`
+(see [Snowflake Conversion](snowflake-conversion.md)) now marks every `ulong`
+or `ulong?` primary-key property `ValueGenerated.Never`, because a Discord
+snowflake, a Steam64 id, or any other unsigned 64-bit key is a value the
+caller already owns, never one the database should assign — which is the
+[spec](https://github.com/HandyS11/Persistord)'s intended behaviour, not a
+regression. Two things follow for an upgrading consumer: your next
+`dotnet ef migrations add` drops the identity/autoincrement from that column,
+and code that relied on EF assigning the key (leaving `Id` as `0` on a new
+row before `SaveChangesAsync`) now inserts a literal `0` and collides on the
+second such row. If you genuinely want a store-generated `ulong` key, call
+`.Property(e => e.Id).ValueGeneratedOnAdd()` explicitly on that entity —
+explicit fluent configuration wins over the convention.
 
 ## Entity shapes
 
@@ -47,15 +102,44 @@ All entities are plain POCOs. They carry no Discord client library types.
 | Property | Type | Notes |
 | --- | --- | --- |
 | `Id` | `ulong` | Primary key, snowflake |
-| `Name` | `string` | Guild name |
-| `OwnerId` | `ulong` | Snowflake of the guild owner |
+| `Name` | `string?` | Guild name, when the consumer mirrors it |
+| `OwnerId` | `ulong?` | Snowflake of the guild owner, when the consumer mirrors it |
+| `JoinedAt` | `DateTimeOffset?` | When the bot joined the guild, when the consumer records it |
+| `LeftAt` | `DateTimeOffset?` | When the bot left, or was removed from, the guild; `null` means still in it |
+
+`GuildEntity` is the tenant root every `IGuildScoped` row hangs off. `Name` and
+`OwnerId` are now optional — a bot that owns resources rather than mirroring
+Discord can store just an id and the lifecycle stamps. Call
+`ApplyGuildRoot(cascade, filterLeftGuilds)` last in `OnModelCreating` to
+register the root: with `cascade: true` (the default) it adds a cascading
+foreign key from every `IGuildScoped` entity's `GuildId` to the guild row, so
+deleting a guild deletes everything scoped to it and the guild row becomes a
+prerequisite for scoped rows; pass `cascade: false` when scoped rows may
+outlive their guild row. `filterLeftGuilds: true` adds a global query filter
+that hides guilds with a non-null `LeftAt` from ordinary queries (use
+`IgnoreQueryFilters()` to see them).
+
+**None of the five skeleton entities below implements `IGuildScoped`.** This is
+deliberate — marking them would move an existing consumer's migrations — and a
+consumer cannot retrofit the interface onto Persistord's own types. The
+practical effect: `ApplyGuildRoot` wires no cascading foreign key for
+`ChannelEntity`, `UserEntity`, `MemberEntity` or `RoleEntity`, and
+`PurgeGuildAsync` does not delete them. A consumer who mirrors Discord's graph
+and wants those rows purged with their guild must delete them itself.
+
+**Breaking change from `1.0.0-beta2`:** `Name` and `OwnerId` were required;
+they are now optional, and `JoinedAt`/`LeftAt` are new columns. A consumer
+with an existing `Guilds` table needs a migration — on SQLite, relaxing a
+column to nullable is a table rebuild, which `dotnet ef migrations add` emits
+for you. Code reading `guild.Name` or `guild.OwnerId` now gets a nullable
+value and must handle `null`.
 
 ### ChannelEntity
 
 | Property | Type | Notes |
 | --- | --- | --- |
 | `Id` | `ulong` | Primary key, snowflake |
-| `GuildId` | `ulong` | Foreign key to `GuildEntity` |
+| `GuildId` | `ulong` | Indexed, not a foreign key — see [GuildEntity](#guildentity) above |
 | `ParentId` | `ulong?` | Nullable self-referencing FK — categories own channels, channels own threads |
 | `Type` | enum | Channel type discriminator (text, voice, category, thread, …) |
 | `Name` | `string` | Channel name |
@@ -88,7 +172,7 @@ channel → thread hierarchy.
 | Property | Type | Notes |
 | --- | --- | --- |
 | `Id` | `ulong` | Primary key, snowflake |
-| `GuildId` | `ulong` | Foreign key to `GuildEntity` |
+| `GuildId` | `ulong` | Indexed, not a foreign key — see [GuildEntity](#guildentity) above |
 | `Name` | `string` | Role name |
 | `Permissions` | `ulong` | Discord permission bitfield |
 | `Color` | `int` | Role color as an integer |

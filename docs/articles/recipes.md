@@ -6,12 +6,35 @@ assumes you already have a short-lived `DbContext` obtained from
 
 ## Persist a guild
 
-Add a `GuildEntity` and save. `Id`, `Name`, and `OwnerId` are the three required
-fields.
+Add a `GuildEntity` and save. `Id` is the only required field — `Name` and
+`OwnerId` are optional, for a bot that owns resources rather than mirroring
+Discord.
 
 ```csharp
 db.Guilds.Add(new GuildEntity { Id = guildId, Name = name, OwnerId = ownerId });
 await db.SaveChangesAsync();
+```
+
+## Remember a channel the bot created
+
+`Persistord.Managed`'s `UpsertManagedAsync` finds-or-creates the record in one
+call, keyed by `(guildId, scope, key)`. See [Upsert](upsert.md) for the
+`UpsertAsync` it wraps, and [Managed Resources](managed-resources.md) for the
+reconcile loop this fits into.
+
+```csharp
+var record = await db.UpsertManagedAsync<ManagedChannel>(
+    guildId, scope: null, key: "announcements", discordId: channel.Id);
+```
+
+## Purge a guild
+
+Deletes every `IGuildScoped` row for the guild, and the guild row itself, in
+one transaction. See [Guild Lifecycle](guild-lifecycle.md) for the per-guild
+lock this needs and why Discord resources must be torn down first.
+
+```csharp
+await db.PurgeGuildAsync(guildId);
 ```
 
 ## Log a message create, edit, and delete

@@ -14,19 +14,46 @@ Foundation package for [Persistord](https://github.com/HandyS11/Persistord), a
 provider-agnostic, Discord-library-agnostic persistence layer for Discord bots
 built on EF Core 10.
 
-`Persistord.Core` ships:
+`Persistord.Core` ships snowflake conversion, a conventions-only base context
+(`DiscordDbContext`), and an opt-in skeleton graph on top of it
+(`DiscordGraphDbContext`) — see [What's in the box](#whats-in-the-box) below
+for the full surface, including type signatures.
 
-- **Snowflake conversion** — Discord ids are `ulong`; relational providers store
-  signed `long`. `UlongToLongConverter` / `NullableUlongToLongConverter` perform a
-  bit-faithful `unchecked` round-trip, so every value (including ids with the high
-  bit set) survives storage exactly. The conversion is registered globally in
-  `DiscordDbContext.ConfigureConventions`, so you never annotate individual ids.
-- **`DiscordDbContext`** — an abstract base context that maps the core skeleton
-  entities (`GuildEntity`, `ChannelEntity`, `UserEntity`, `MemberEntity`,
-  `RoleEntity`) and applies the snowflake convention. Inherit it, add the module
-  `DbSet`s you want, and apply module configurations in `OnModelCreating`.
-- **`ApplyCoreConfiguration()`** — a `ModelBuilder` extension that wires the core
-  entity configurations. `DiscordDbContext` calls it for you.
+## What's in the box
+
+- **`DiscordDbContext`** (conventions) —
+  `abstract class DiscordDbContext : DbContext`. Applies the snowflake and
+  guild-scope conventions and maps no entity types.
+- **`DiscordGraphDbContext`** (skeleton) —
+  `abstract class DiscordGraphDbContext : DiscordDbContext`. Adds the opt-in
+  guild/channel/user/member/role skeleton entities.
+- **`ApplyCoreGraph`** —
+  `ModelBuilder ApplyCoreGraph(this ModelBuilder modelBuilder)`. Wires the
+  skeleton entity configurations.
+- **`ApplyGuildRoot`** —
+  `ModelBuilder ApplyGuildRoot(this ModelBuilder modelBuilder, bool cascade = true, bool filterLeftGuilds = false)`.
+  Registers `GuildEntity` as the tenant root, optionally cascading deletes to
+  every `IGuildScoped` entity and filtering guilds that have left.
+- **`IGuildScoped`** —
+  `interface IGuildScoped { ulong GuildId { get; } }`. Marks a row as
+  belonging to exactly one guild.
+- **`ICreatedAt` / `IUpdatedAt` + `TimestampInterceptor`** —
+  `DateTimeOffset CreatedAt { get; set; }` / `DateTimeOffset UpdatedAt { get; set; }`,
+  stamped by `TimestampInterceptor : SaveChangesInterceptor` from a
+  `TimeProvider` on every save.
+- **`UpsertAsync` / `UpsertIfChangedAsync`** —
+  `Task<TEntity> UpsertAsync<TEntity>(this DbSet<TEntity> set, Expression<Func<TEntity, bool>> naturalKey, Func<TEntity> create, Action<TEntity> update, CancellationToken cancellationToken = default)` /
+  `Task<UpsertResult<TEntity>> UpsertIfChangedAsync<TEntity>(this DbSet<TEntity> set, Expression<Func<TEntity, bool>> naturalKey, Func<TEntity> create, Action<TEntity> update, CancellationToken cancellationToken = default)`.
+  Natural-key create-or-update with lost-insert-race recovery; the latter also reports whether the
+  call actually wrote.
+- **`PurgeGuildAsync`** —
+  `Task<int> PurgeGuildAsync(this DbContext context, ulong guildId, CancellationToken cancellationToken = default)`.
+  Deletes every `IGuildScoped` row of one guild, plus its `GuildEntity` row,
+  dependents before principals, in one transaction.
+- **`ClearAllTablesAsync`** —
+  `Task<int> ClearAllTablesAsync(this DbContext context, CancellationToken cancellationToken = default)`.
+  Deletes every row of every mapped table, dependents before principals, for
+  test teardown and local database resets.
 
 ## Provider-agnostic by design
 
@@ -46,6 +73,7 @@ not thread-safe. Use `IDbContextFactory<T>` and create a short-lived context per
 unit of work (per gateway event, per command):
 
 ```csharp
+// Assumes MyBotContext derives DiscordGraphDbContext, which is what exposes Guilds.
 await using var db = await factory.CreateDbContextAsync();
 db.Guilds.Add(new GuildEntity { Id = guildId, Name = name, OwnerId = ownerId });
 await db.SaveChangesAsync();

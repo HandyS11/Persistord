@@ -19,6 +19,7 @@ short-lived context per unit of work — one per gateway event, one per command,
 per background task iteration:
 
 ```csharp
+// Assumes MyBotContext derives DiscordGraphDbContext, which is what exposes Guilds.
 await using var db = await factory.CreateDbContextAsync();
 
 db.Guilds.Add(new GuildEntity { Id = guildId, Name = name, OwnerId = ownerId });

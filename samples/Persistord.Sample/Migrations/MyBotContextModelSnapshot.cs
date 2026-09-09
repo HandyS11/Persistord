@@ -15,7 +15,7 @@ namespace Persistord.Sample.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
 
             modelBuilder.Entity("Persistord.Core.Entities.ChannelEntity", b =>
                 {
@@ -49,11 +49,16 @@ namespace Persistord.Sample.Migrations
                     b.Property<long>("Id")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<DateTimeOffset?>("JoinedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("OwnerId")
+                    b.Property<DateTimeOffset?>("LeftAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("OwnerId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");

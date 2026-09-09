@@ -1,47 +1,66 @@
 using Microsoft.EntityFrameworkCore;
+using Persistord.Core.Conventions;
 using Persistord.Core.Conversions;
-using Persistord.Core.Entities;
+using Persistord.Core.Interception;
 
 namespace Persistord.Core;
 
 /// <summary>
-/// Base EF Core context that ships the core Discord skeleton and the global
-/// snowflake conversion. Inherit it, declare module <c>DbSet</c>s, and apply
-/// module configurations in <c>OnModelCreating</c>. The library never selects a
-/// provider; the consumer calls <c>UseSqlite</c>/<c>UseNpgsql</c>/etc.
+/// Base EF Core context that applies Persistord's global conventions: the bit-faithful
+/// <see cref="ulong"/>-to-<see cref="long"/> conversion for every unsigned 64-bit property, the
+/// snowflake primary-key convention, and, when constructed with a <see cref="TimeProvider"/>, a
+/// <see cref="TimestampInterceptor"/> that stamps timestamped entities. It maps no entity types,
+/// so a bot that owns Discord resources rather than mirroring them pays for no tables. Derive
+/// <see cref="DiscordGraphDbContext"/> instead to get the guild/channel/user/member/role skeleton.
 /// </summary>
-/// <remarks>Initializes the context with the given options.</remarks>
-/// <param name="options">The context options supplied by the consumer.</param>
-public abstract class DiscordDbContext(DbContextOptions options) : DbContext(options)
+public abstract class DiscordDbContext : DbContext
 {
-    /// <summary>Persisted guilds.</summary>
-    public DbSet<GuildEntity> Guilds => Set<GuildEntity>();
+    private readonly TimeProvider? _timeProvider;
 
-    /// <summary>Persisted channels.</summary>
-    public DbSet<ChannelEntity> Channels => Set<ChannelEntity>();
+    /// <summary>Initializes the context with the given options.</summary>
+    /// <param name="options">The context options supplied by the consumer.</param>
+    protected DiscordDbContext(DbContextOptions options)
+        : base(options)
+    {
+    }
 
-    /// <summary>Persisted users.</summary>
-    public DbSet<UserEntity> Users => Set<UserEntity>();
-
-    /// <summary>Persisted guild members.</summary>
-    public DbSet<MemberEntity> Members => Set<MemberEntity>();
-
-    /// <summary>Persisted roles.</summary>
-    public DbSet<RoleEntity> Roles => Set<RoleEntity>();
+    /// <summary>
+    /// Initializes the context with the given options and registers a
+    /// <see cref="TimestampInterceptor"/> driven by <paramref name="timeProvider"/>, so
+    /// <see cref="Abstractions.ICreatedAt"/> and <see cref="Abstractions.IUpdatedAt"/> entities
+    /// stamp themselves. The interceptor is registered from <see cref="OnConfiguring"/>: a derived
+    /// context that overrides <see cref="OnConfiguring"/> without calling <c>base.OnConfiguring</c>
+    /// silently loses it.
+    /// </summary>
+    /// <param name="options">The context options supplied by the consumer.</param>
+    /// <param name="timeProvider">The clock to stamp from.</param>
+    protected DiscordDbContext(DbContextOptions options, TimeProvider timeProvider)
+        : base(options)
+    {
+        ArgumentNullException.ThrowIfNull(timeProvider);
+        _timeProvider = timeProvider;
+    }
 
     /// <inheritdoc />
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        ArgumentNullException.ThrowIfNull(modelBuilder);
-        base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyCoreConfiguration();
+        ArgumentNullException.ThrowIfNull(optionsBuilder);
+        base.OnConfiguring(optionsBuilder);
+
+        if (_timeProvider is not null)
+        {
+            optionsBuilder.AddInterceptors(new TimestampInterceptor(_timeProvider));
+        }
     }
 
     /// <inheritdoc />
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         ArgumentNullException.ThrowIfNull(configurationBuilder);
+        base.ConfigureConventions(configurationBuilder);
         configurationBuilder.Properties<ulong>().HaveConversion<UlongToLongConverter>();
         configurationBuilder.Properties<ulong?>().HaveConversion<NullableUlongToLongConverter>();
+        configurationBuilder.Conventions.Add(_ => new SnowflakeKeyConvention());
+        configurationBuilder.Conventions.Add(_ => new GuildScopeConvention());
     }
 }

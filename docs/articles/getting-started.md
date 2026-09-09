@@ -23,10 +23,22 @@ dotnet add package Persistord.History       # optional: requires Messages
 dotnet add package Persistord.Adapters.DiscordNet   # optional: Discord.Net mappers
 ```
 
+This is the library-neutral mirror stack the meta package bundles. Three more
+packages exist outside it, opt in and installed separately when you need them:
+`Persistord.Managed` (records of resources your bot creates and owns),
+`Persistord.Protection` (encrypts `[Protected]` columns at rest), and
+`Persistord.Testing` (in-memory SQLite fixtures for tests). See
+[Introduction](introduction.md#packages) for the full package list.
+
 ## 1. Derive a context
 
-Inherit `DiscordDbContext`, expose the module `DbSet`s you want, and apply the
-module configurations in `OnModelCreating`:
+`Persistord.Core` splits the base context in two: `DiscordDbContext` applies
+only the snowflake conventions and maps nothing, while `DiscordGraphDbContext`
+adds the guild/channel/user/member/role skeleton on top.
+
+If your bot doesn't mirror Discord's own objects — it just persists messages,
+say — derive `DiscordDbContext` and apply the module configurations you want in
+`OnModelCreating`:
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
@@ -45,6 +57,26 @@ public sealed class MyBotContext : DiscordDbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);   // snowflake convention only
+        modelBuilder.ApplyMessagesModule();   // omit if you don't persist messages
+        modelBuilder.ApplyHistoryModule();    // requires ApplyMessagesModule()
+    }
+}
+```
+
+If your bot also mirrors guilds, channels, users, members or roles, derive
+`DiscordGraphDbContext` instead — it exposes those `DbSet`s automatically:
+
+```csharp
+public sealed class MyBotContext : DiscordGraphDbContext
+{
+    public MyBotContext(DbContextOptions<MyBotContext> options) : base(options) { }
+
+    public DbSet<MessageEntity> Messages => Set<MessageEntity>();
+    public DbSet<MessageHistoryEntity> MessageHistory => Set<MessageHistoryEntity>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
         base.OnModelCreating(modelBuilder);   // core skeleton + snowflake convention
         modelBuilder.ApplyMessagesModule();   // omit if you don't persist messages
         modelBuilder.ApplyHistoryModule();    // requires ApplyMessagesModule()
@@ -53,7 +85,7 @@ public sealed class MyBotContext : DiscordDbContext
 ```
 
 Core entities (`Guilds`, `Channels`, `Users`, `Members`, `Roles`) are already
-exposed by the base context — you only declare the module `DbSet`s.
+exposed by `DiscordGraphDbContext` — you only declare the module `DbSet`s.
 
 ## 2. Choose a provider
 
@@ -103,3 +135,9 @@ await db.SaveChangesAsync();
   filters.
 - [DbContext Lifetime](dbcontext-lifetime.md) — patterns for `IDbContextFactory`
   in a concurrent bot.
+- [Guild Lifecycle](guild-lifecycle.md) — upserting the guild root on
+  `JoinedGuild` and soft-marking or purging it on `LeftGuild`.
+- [Upsert](upsert.md) — the natural-key upsert behind that recipe and its own
+  gotchas.
+- [Providers](providers.md) — the SQLite and PostgreSQL caveats worth knowing
+  before you pick one.

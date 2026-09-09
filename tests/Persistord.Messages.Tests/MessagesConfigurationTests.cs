@@ -15,8 +15,8 @@ public class MessagesConfigurationTests
 {
     private static IModel BuildModel()
     {
-        var (connection, context) = TestContext.Create();
-        using (connection)
+        var (database, context) = TestContext.Create();
+        using (database)
         using (context)
         {
             return context.Model;
