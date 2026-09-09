@@ -14,22 +14,10 @@ Foundation package for [Persistord](https://github.com/HandyS11/Persistord), a
 provider-agnostic, Discord-library-agnostic persistence layer for Discord bots
 built on EF Core 10.
 
-`Persistord.Core` ships:
-
-- **Snowflake conversion** — Discord ids are `ulong`; relational providers store
-  signed `long`. `UlongToLongConverter` / `NullableUlongToLongConverter` perform a
-  bit-faithful `unchecked` round-trip, so every value (including ids with the high
-  bit set) survives storage exactly. The conversion is registered globally in
-  `DiscordDbContext.ConfigureConventions`, so you never annotate individual ids.
-- **`DiscordDbContext`** — an abstract base context that applies the snowflake
-  convention and maps no entity types. Inherit it, add the module `DbSet`s you
-  want, and apply module configurations in `OnModelCreating`.
-- **`DiscordGraphDbContext`** — derives from `DiscordDbContext` and adds the
-  opt-in core skeleton entities (`GuildEntity`, `ChannelEntity`, `UserEntity`,
-  `MemberEntity`, `RoleEntity`). Inherit it instead when your context mirrors
-  Discord's guild/channel/user/member/role graph.
-- **`ApplyCoreGraph()`** — a `ModelBuilder` extension that wires the core
-  entity configurations. `DiscordGraphDbContext` calls it for you.
+`Persistord.Core` ships snowflake conversion, a conventions-only base context
+(`DiscordDbContext`), and an opt-in skeleton graph on top of it
+(`DiscordGraphDbContext`) — see [What's in the box](#whats-in-the-box) below
+for the full surface, including type signatures.
 
 ## What's in the box
 
@@ -85,6 +73,7 @@ not thread-safe. Use `IDbContextFactory<T>` and create a short-lived context per
 unit of work (per gateway event, per command):
 
 ```csharp
+// Assumes MyBotContext derives DiscordGraphDbContext, which is what exposes Guilds.
 await using var db = await factory.CreateDbContextAsync();
 db.Guilds.Add(new GuildEntity { Id = guildId, Name = name, OwnerId = ownerId });
 await db.SaveChangesAsync();
