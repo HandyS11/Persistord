@@ -64,3 +64,4 @@ held back. A new adapter release follows each Discord.Net breaking major.
 
 - [Messages](messages.md) — `MessageEntity` shape and embed storage decisions.
 - [History](history.md) — `MessageHistoryEntity` and `HistoryChangeType`.
+- [Choosing an Adapter](adapters.md) — compares all three adapters side by side.
