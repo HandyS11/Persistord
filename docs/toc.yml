@@ -1,6 +1,10 @@
-- name: Articles
+- name: Guides
   href: articles/
+- name: Packages
+  href: packages/
+- name: Samples
+  href: samples/
 - name: Development
   href: development/
-- name: API
+- name: API Reference
   href: api/

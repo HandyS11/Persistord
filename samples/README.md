@@ -12,8 +12,8 @@ dotnet run --project samples/<SampleName>
 
 | Sample | Shows |
 | --- | --- |
-| [`Persistord.Sample`](Persistord.Sample) | Minimal quick-start — all three modules with a generated migration. |
-| [`Persistord.Sample.CoreGraph`](Persistord.Sample.CoreGraph) | Guilds, channels, users, members, roles, and the snowflake `ulong ↔ long` round-trip. |
-| [`Persistord.Sample.Messages`](Persistord.Sample.Messages) | Messages with embeds, attachments, and reactions. |
-| [`Persistord.Sample.History`](Persistord.Sample.History) | Soft-delete, query filters, and append-only history. |
-| [`Persistord.Sample.DiscordNet`](Persistord.Sample.DiscordNet) | `.To*Entity()` mappers driven by faked Discord.Net types. |
+| [`Persistord.Sample`](https://github.com/HandyS11/Persistord/tree/develop/samples/Persistord.Sample) | Minimal quick-start — all three modules with a generated migration. |
+| [`Persistord.Sample.CoreGraph`](https://github.com/HandyS11/Persistord/tree/develop/samples/Persistord.Sample.CoreGraph) | Guilds, channels, users, members, roles, and the snowflake `ulong ↔ long` round-trip. |
+| [`Persistord.Sample.Messages`](https://github.com/HandyS11/Persistord/tree/develop/samples/Persistord.Sample.Messages) | Messages with embeds, attachments, and reactions. |
+| [`Persistord.Sample.History`](https://github.com/HandyS11/Persistord/tree/develop/samples/Persistord.Sample.History) | Soft-delete, query filters, and append-only history. |
+| [`Persistord.Sample.DiscordNet`](https://github.com/HandyS11/Persistord/tree/develop/samples/Persistord.Sample.DiscordNet) | `.To*Entity()` mappers driven by faked Discord.Net types. |
