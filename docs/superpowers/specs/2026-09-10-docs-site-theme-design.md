@@ -174,10 +174,23 @@ solves, never shows the library working, and never mentions nine of the ten pack
    (choose a provider, reference a Discord library), and three calls to action: Get started /
    Browse packages / View source.
 2. **The transform** — three columns reading *gateway event → `.ToMessageEntity()` → the
-   `messages` row*. The snowflake `1234567890123456789` appears in lavender on the left and
-   lands as violet `-8211653183586094899` in a `BIGINT` column on the right, annotated *"same
-   64 bits, read back unsigned"*. This is the sharpest idea in the library and it carries the
-   page.
+   `messages` row*. A realistic snowflake appears in lavender on the left (it came off the
+   gateway) and in violet in a `BIGINT` column on the right (it is now in a column).
+
+   **The id must not be shown changing value.** An earlier draft of this section had
+   `1234567890123456789` landing as `-8211653183586094899`; that is false. The value is below
+   2^63, and no Discord snowflake reaches 2^63 until roughly September 2084 — which
+   `articles/snowflake-conversion.md` already states. A hero built on a sign flip would
+   contradict the guide it links to.
+
+   The accurate claim is stronger. No relational provider has an unsigned 64-bit column, so EF
+   Core cannot map a `ulong` at all: the failure is a model that will not build, not a corrupted
+   number. `DiscordDbContext` registers `UlongToLongConverter` in `ConfigureConventions`, so
+   every `ulong` and `ulong?` in the model converts globally and no id is ever annotated. The
+   cast is `unchecked` and therefore bit-faithful across all 2^64 values — including those above
+   2^63 that a Steam64 id or another non-Discord `ulong` reaches today. The annotation reads:
+   *"`BIGINT` is signed; there is no unsigned 64-bit column. The same 64 bits go in and come back
+   out — for every `ulong`, not just the ones that fit."*
 3. **Install strip** — `dotnet add package Persistord` with a copy button.
 4. **Facts row** — 3 Discord libraries · 6 core entities · 0 provider dependencies · 10 packages.
 5. **Packages** — cards in three groups: *the stack* (`Persistord`, `.Core`, `.Messages`,
