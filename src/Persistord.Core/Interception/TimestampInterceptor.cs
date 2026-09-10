@@ -28,7 +28,12 @@ public sealed class TimestampInterceptor : SaveChangesInterceptor
         _timeProvider = timeProvider;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Stamps timestamps on tracked entities at the start of a synchronous save.
+    /// </summary>
+    /// <param name="eventData">Contextual information about the context being saved.</param>
+    /// <param name="result">The current interception result, passed through unchanged.</param>
+    /// <returns>The <paramref name="result" /> value passed in; this interceptor never suppresses the save.</returns>
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
         InterceptionResult<int> result)
@@ -38,7 +43,13 @@ public sealed class TimestampInterceptor : SaveChangesInterceptor
         return base.SavingChanges(eventData, result);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Stamps timestamps on tracked entities at the start of an asynchronous save.
+    /// </summary>
+    /// <param name="eventData">Contextual information about the context being saved.</param>
+    /// <param name="result">The current interception result, passed through unchanged.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the save to complete.</param>
+    /// <returns>The <paramref name="result" /> value passed in; this interceptor never suppresses the save.</returns>
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,

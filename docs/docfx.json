@@ -29,9 +29,7 @@
       { "files": [ "articles/**.md", "articles/**/toc.yml", "toc.yml", "*.md" ] },
       { "files": [ "development/**.md", "development/**/toc.yml" ] }
     ],
-    "resource": [
-      { "files": [ "images/**" ] }
-    ],
+    "resource": [],
     "output": "_site",
     "template": [ "default", "modern" ],
     "globalMetadata": {
