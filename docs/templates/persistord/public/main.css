@@ -256,3 +256,418 @@ blockquote {
   color: var(--pd-violet-soft);
   text-decoration: underline;
 }
+
+/* --------------------------------------------------------------- landing -- */
+
+/* docfx emits `<div class="content"><article data-uid="">`, so the class sits on
+   the wrapping div and `.content article` is the handle. Reversing the two into
+   a single compound selector on the article matches nothing at all.
+   `data-layout` comes from the page's `layout:` front matter. */
+
+/* The landing page is the one place that escapes the reading measure — its
+   sections set their own widths, and several of them are grids. */
+body[data-layout='landing'] .content article > p,
+body[data-layout='landing'] .content article > ul,
+body[data-layout='landing'] .content article > ol {
+  max-width: none;
+}
+
+/* Articles rule off every h2 to separate long prose. The landing page is not
+   prose: its sections already carry their own headings and spacing, and a rule
+   above each one would fence the page into boxes. */
+body[data-layout='landing'] .content article h2 {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* ------------------------------------------------------------------ hero -- */
+
+.pd-hero {
+  padding: 2.8rem 0 2.6rem;
+}
+
+.pd-hero h1 {
+  margin: 0;
+  max-width: 24ch;
+  font-size: clamp(2rem, 1.1rem + 3.2vw, 3.25rem);
+  line-height: 1.08;
+}
+
+.pd-hero-lede {
+  margin: 1.15rem 0 0;
+  max-width: 64ch;
+  font-size: 1.1rem;
+  line-height: 1.62;
+  color: var(--pd-ink-dim);
+}
+
+.pd-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1.9rem;
+}
+
+/* Primary is distinguished by weight, not by hue: the accents are reserved for
+   things that reach the database or came off the gateway, and a button is
+   neither. */
+.pd-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.15rem;
+  border: 1px solid var(--pd-hairline-strong);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-surface);
+  color: var(--pd-ink);
+  font-size: 0.96rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pd-btn:hover,
+.pd-btn:focus-visible {
+  border-color: var(--pd-ink-dim);
+  background-color: var(--pd-surface-raised);
+  color: var(--pd-ink);
+  text-decoration: none;
+}
+
+.pd-btn-primary {
+  border-color: var(--pd-ink);
+  background-color: var(--pd-ink);
+  color: var(--pd-void);
+}
+
+.pd-btn-primary:hover,
+.pd-btn-primary:focus-visible {
+  border-color: var(--pd-ink-dim);
+  background-color: var(--pd-ink-dim);
+  color: var(--pd-void);
+}
+
+/* ------------------------------------------------------------- transform -- */
+
+.pd-panes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+/* One column below the point where three panes stop fitting: the three steps
+   read top-to-bottom just as well as left-to-right, and two columns would break
+   the sequence in half. */
+@media (max-width: 900px) {
+  .pd-panes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pd-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-surface);
+  overflow: hidden;
+}
+
+.pd-pane-bar {
+  display: block;
+  padding: 0.5rem 0.9rem;
+  border-bottom: 1px solid var(--pd-hairline);
+  background-color: var(--pd-surface-raised);
+  color: var(--pd-mute);
+  font-family: var(--pd-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* The panes are set one step down from body ink so the two marked ids are the
+   brightest thing in them - in dark mode `--pd-lavender` sits a hair off
+   `--pd-ink`, and against full-strength body text the mark would vanish. */
+.pd-pane pre {
+  margin: 0;
+  padding: 0.85rem 0.9rem;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  color: var(--pd-ink-dim);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+
+/* The id came off the gateway, so it is lavender on the left; by the third pane
+   it is a value in a column, so it is violet. */
+.pd-snowflake {
+  border-radius: 4px;
+  padding: 0 0.18em;
+  color: var(--pd-lavender);
+  font-weight: 700;
+}
+
+.pd-row-id {
+  border-radius: 4px;
+  padding: 0 0.18em;
+  background-color: var(--pd-violet-wash);
+  color: var(--pd-violet);
+  font-weight: 700;
+}
+
+/* The site's entire motion budget: the snowflake crossing the transform.
+   Everything else on the site is static. */
+@media (prefers-reduced-motion: no-preference) {
+  .pd-transform[data-draw='running'] .pd-snowflake {
+    animation: pd-carry 900ms ease-out both;
+  }
+}
+
+@keyframes pd-carry {
+  from {
+    background-color: var(--pd-violet-wash);
+  }
+
+  to {
+    background-color: transparent;
+  }
+}
+
+/* --------------------------------------------------------------- install -- */
+
+.pd-install {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 34rem;
+  margin: 0 0 2.6rem;
+  padding: 0.5rem 0.6rem 0.5rem 1rem;
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-surface);
+}
+
+.pd-prompt {
+  color: var(--pd-mute);
+  font-family: var(--pd-mono);
+  user-select: none;
+}
+
+/* Undoes the global inline-code wash: this is a command to run, not a value
+   that reaches the database. */
+.pd-install > code {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  background-color: transparent;
+  color: var(--pd-ink);
+  font-size: 0.94rem;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.pd-copy {
+  flex: 0 0 auto;
+  padding: 0.34rem 0.75rem;
+  border: 1px solid var(--pd-hairline-strong);
+  border-radius: 6px;
+  background-color: var(--pd-surface-raised);
+  color: var(--pd-ink-dim);
+  font-family: var(--pd-sans);
+  font-size: 0.84rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pd-copy:hover {
+  border-color: var(--pd-ink-dim);
+  color: var(--pd-ink);
+}
+
+/* `main.js` sets `data-copied` on the button, so the accent appears only once
+   something has actually been written to the clipboard. */
+.pd-copy[data-copied='true'] {
+  color: var(--pd-violet-soft);
+  border-color: var(--pd-violet);
+}
+
+/* ----------------------------------------------------------------- stats -- */
+
+/* The 1px grid gap over a hairline background draws the dividers, so the cells
+   need no borders of their own. */
+.pd-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 1px;
+  margin: 0 0 3rem;
+  padding: 0;
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-hairline);
+  overflow: hidden;
+}
+
+.pd-stat {
+  padding: 1.05rem 1.2rem;
+  background-color: var(--pd-surface);
+}
+
+.pd-stat dt {
+  color: var(--pd-ink);
+  font-family: var(--pd-mono);
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pd-stat dd {
+  margin: 0.4rem 0 0;
+  color: var(--pd-ink-dim);
+  font-size: 0.86rem;
+}
+
+/* -------------------------------------------------------------- sections -- */
+
+.pd-section {
+  margin: 0 0 3.2rem;
+}
+
+.pd-section > h2 {
+  margin: 0 0 0.55rem;
+  font-size: 1.5rem;
+}
+
+.pd-section > p {
+  margin: 0 0 1.5rem;
+  max-width: 74ch;
+  color: var(--pd-ink-dim);
+}
+
+.pd-section > .pd-note {
+  margin: 1.15rem 0 0;
+  max-width: 78ch;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--pd-ink-dim);
+}
+
+.pd-section > .pd-note strong {
+  color: var(--pd-ink);
+}
+
+/* -------------------------------------------------------------- packages -- */
+
+.pd-packages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.5rem;
+}
+
+.pd-package-group > h3 {
+  margin: 0 0 0.65rem;
+  color: var(--pd-mute);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.pd-package-group > ul {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ------------------------------------------------------- packages, cards -- */
+
+.pd-package,
+.pd-card {
+  display: block;
+  position: relative;
+  height: 100%;
+  padding: 0.75rem 0.95rem;
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-surface);
+  color: var(--pd-ink);
+  text-decoration: none;
+}
+
+.pd-package:hover,
+.pd-package:focus-visible,
+.pd-card:hover,
+.pd-card:focus-visible {
+  border-color: var(--pd-hairline-strong);
+  background-color: var(--pd-surface-raised);
+  color: var(--pd-ink);
+  text-decoration: none;
+}
+
+.pd-package > code,
+.pd-card > strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Keeps the longest package name clear of the pinned off-site glyph. */
+.pd-package.external > code,
+.pd-card.external > strong {
+  padding-right: 1.3rem;
+}
+
+/* Package names, capability titles and the lede all mention code without
+   naming anything persisted, so they drop the global inline-code wash. */
+.pd-hero-lede code,
+.pd-package code,
+.pd-card code {
+  padding: 0;
+  background-color: transparent;
+  color: inherit;
+  font-size: 0.94em;
+}
+
+/* docfx marks off-site links with a trailing glyph. The description above it is
+   a block, so left alone the glyph claims a line of its own at the foot of the
+   card; pin it to the corner instead. */
+.pd-package.external::after,
+.pd-card.external::after {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.85rem;
+  margin: 0;
+  color: var(--pd-mute);
+}
+
+.pd-package > span,
+.pd-card > span {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--pd-ink-dim);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.pd-cards,
+.pd-next {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
+  gap: 0.8rem;
+}
+
+/* Focus is state, not decoration — the same exception the active TOC entry
+   earns above. */
+.pd-btn:focus-visible,
+.pd-copy:focus-visible,
+.pd-package:focus-visible,
+.pd-card:focus-visible {
+  outline: 2px solid var(--pd-violet);
+  outline-offset: 2px;
+}
