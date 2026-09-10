@@ -29,14 +29,23 @@
       { "files": [ "articles/**.md", "articles/**/toc.yml", "toc.yml", "*.md" ] },
       { "files": [ "development/**.md", "development/**/toc.yml" ] }
     ],
-    "resource": [],
+    "resource": [
+      { "src": "..", "files": [ "icon.png" ] }
+    ],
     "output": "_site",
-    "template": [ "default", "modern" ],
+    "template": [ "default", "modern", "templates/persistord" ],
     "globalMetadata": {
       "_appName": "Persistord",
       "_appTitle": "Persistord",
+      "_appLogoPath": "icon.png",
+      "_appFaviconPath": "icon.png",
+      "_appFooter": "<div class=\"pd-footer\"><span>Persistord &mdash; the EF Core model your Discord bot keeps rewriting</span><nav><a href=\"https://github.com/HandyS11/Persistord\">GitHub</a><a href=\"https://www.nuget.org/packages/Persistord\">NuGet</a><a href=\"https://github.com/HandyS11/Persistord/releases\">Releases</a><a href=\"https://github.com/HandyS11/Persistord/blob/develop/LICENSE\">MIT licence</a></nav></div>",
       "_enableSearch": true,
-      "pdf": false
+      "pdf": false,
+      "_gitContribute": {
+        "repo": "https://github.com/HandyS11/Persistord",
+        "branch": "develop"
+      }
     }
   }
 }

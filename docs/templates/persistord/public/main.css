@@ -1,0 +1,11 @@
+/*
+ * Persistord documentation theme.
+ *
+ * Layered on top of docfx's `default` + `modern` templates. Overrides stay on
+ * Bootstrap custom properties (`--bs-*`) and documented docfx selectors so a
+ * docfx upgrade shifts as little as possible underneath us.
+ */
+
+:root {
+  --pd-theme-loaded: 1;
+}
