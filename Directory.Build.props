@@ -15,6 +15,17 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <!-- Every package shares the repo-root icon.png. Declared here rather than in each
+         packable project so the path to the repo root is written once; projects that are
+         not packable carry the property and the item harmlessly, since they never pack. -->
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+  <PropertyGroup>
     <AnalysisLevel>latest-all</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
