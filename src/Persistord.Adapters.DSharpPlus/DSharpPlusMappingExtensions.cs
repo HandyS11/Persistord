@@ -36,6 +36,91 @@ public static class DSharpPlusMappingExtensions
         };
     }
 
+    /// <summary>Maps a DSharpPlus guild to a <see cref="GuildEntity"/>.</summary>
+    /// <remarks>
+    /// <c>JoinedAt</c> and <c>LeftAt</c> are intentionally not set: they track the bot's
+    /// own membership lifecycle, which the consumer owns, not data carried on a Discord
+    /// guild.
+    /// </remarks>
+    /// <param name="guild">The guild to map.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="guild"/> is <see langword="null"/>.</exception>
+    public static GuildEntity ToGuildEntity(this DiscordGuild guild)
+    {
+        ArgumentNullException.ThrowIfNull(guild);
+
+        return new GuildEntity
+        {
+            Id = guild.Id, Name = guild.Name, OwnerId = guild.OwnerId,
+        };
+    }
+
+    /// <summary>Maps a DSharpPlus user to a <see cref="UserEntity"/>.</summary>
+    /// <remarks>
+    /// <see cref="UserEntity.GlobalName"/> is left <see langword="null"/>: DSharpPlus
+    /// 4.5.3 exposes no equivalent of Discord's <c>global_name</c> field.
+    /// <c>DiscordMember.DisplayName</c> is not one — it is a cache-resolved
+    /// nickname-or-username fallback, and it throws on a member the client has not
+    /// cached.
+    /// </remarks>
+    /// <param name="user">The user to map.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="user"/> is <see langword="null"/>.</exception>
+    public static UserEntity ToUserEntity(this DiscordUser user)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+
+        return new UserEntity
+        {
+            Id = user.Id, Username = user.Username ?? string.Empty,
+        };
+    }
+
+    /// <summary>Maps a DSharpPlus guild member to a <see cref="MemberEntity"/>.</summary>
+    /// <remarks>
+    /// The guild id is a parameter rather than a field read: <c>DiscordMember</c> keeps
+    /// its guild id in an <c>internal</c> field, and its public <c>Guild</c> property
+    /// resolves through the client's guild cache and throws for any member the cache
+    /// does not hold. Since the id is half of <see cref="MemberEntity"/>'s composite key
+    /// it cannot be omitted, so the caller — which always has it in hand from the event
+    /// or command context — supplies it.
+    /// </remarks>
+    /// <param name="member">The guild member to map.</param>
+    /// <param name="guildId">The snowflake id of the guild this membership belongs to.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="member"/> is <see langword="null"/>.</exception>
+    public static MemberEntity ToMemberEntity(this DiscordMember member, ulong guildId)
+    {
+        ArgumentNullException.ThrowIfNull(member);
+
+        return new MemberEntity
+        {
+            GuildId = guildId, UserId = member.Id, Nickname = member.Nickname, JoinedAt = member.JoinedAt,
+        };
+    }
+
+    /// <summary>Maps a DSharpPlus role to a <see cref="RoleEntity"/>.</summary>
+    /// <remarks>
+    /// The guild id is a parameter for the same reason as on
+    /// <see cref="ToMemberEntity"/>: <c>DiscordRole</c> exposes no guild id at all.
+    /// <c>Permissions</c> is an <c>Int64</c>-backed <c>[Flags]</c> enum while
+    /// <see cref="RoleEntity.Permissions"/> is <c>ulong</c>, so the conversion is
+    /// unchecked — it reinterprets the bitfield rather than sign-extending it.
+    /// </remarks>
+    /// <param name="role">The role to map.</param>
+    /// <param name="guildId">The snowflake id of the guild this role belongs to.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="role"/> is <see langword="null"/>.</exception>
+    public static RoleEntity ToRoleEntity(this DiscordRole role, ulong guildId)
+    {
+        ArgumentNullException.ThrowIfNull(role);
+
+        return new RoleEntity
+        {
+            Id = role.Id,
+            GuildId = guildId,
+            Name = role.Name ?? string.Empty,
+            Permissions = unchecked((ulong)role.Permissions),
+            Color = role.Color.Value,
+        };
+    }
+
     /// <summary>
     /// Maps a DSharpPlus channel kind to a Persistord <see cref="ChannelType"/>.
     /// <para>
