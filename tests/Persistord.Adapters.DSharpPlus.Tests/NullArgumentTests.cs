@@ -32,6 +32,5 @@ public class NullArgumentTests
 
     [Fact]
     public void ToHistoryEntity_throws_on_a_null_message() =>
-        Assert.Throws<ArgumentNullException>(
-            () => ((DiscordMessage)null!).ToHistoryEntity(HistoryChangeType.Created));
+        Assert.Throws<ArgumentNullException>(() => ((DiscordMessage)null!).ToHistoryEntity(HistoryChangeType.Created));
 }

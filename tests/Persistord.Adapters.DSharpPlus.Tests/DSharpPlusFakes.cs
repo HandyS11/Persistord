@@ -17,8 +17,27 @@ namespace Persistord.Adapters.DSharpPlus.Tests;
 /// </summary>
 internal static class DSharpPlusFakes
 {
+    internal const string OneAttachment =
+        """[{"id":"900","filename":"shot.png","url":"https://cdn.example/shot.png"}]""";
+
+    internal const string UnicodeAndCustomReactions =
+        """[{"count":3,"emoji":{"id":null,"name":"thumbsup"}},{"count":1,"emoji":{"id":"12345","name":"blob"}}]""";
+
+    internal const string FullEmbed =
+        """
+        [{"title":"a title","description":"a description","color":1122867,
+          "footer":{"text":"a footer","icon_url":"https://cdn.example/i.png"},
+          "author":{"name":"an author","url":"https://example/a"},
+          "fields":[{"name":"fname","value":"fvalue","inline":true}]}]
+        """;
+
+    internal const string BareEmbed = """[{"title":"a title"}]""";
+
     private static readonly JsonSerializerSettings Settings =
-        new() { ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor };
+        new()
+        {
+            ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor
+        };
 
     internal static T Make<T>(string json) => JsonConvert.DeserializeObject<T>(json, Settings)!;
 
@@ -91,33 +110,21 @@ internal static class DSharpPlusFakes
     {
         var parts = new List<string>
         {
-            $"\"id\":\"{id}\"",
-            $"\"channel_id\":\"{channelId}\"",
+            $"\"id\":\"{id}\"", $"\"channel_id\":\"{channelId}\"",
         };
 
         if (authorId is { } aid) { parts.Add($"\"author\":{{\"id\":\"{aid}\",\"username\":\"author\"}}"); }
+
         if (content is not null) { parts.Add($"\"content\":\"{content}\""); }
+
         if (editedAt is not null) { parts.Add($"\"edited_timestamp\":\"{editedAt}\""); }
+
         if (attachments is not null) { parts.Add($"\"attachments\":{attachments}"); }
+
         if (reactions is not null) { parts.Add($"\"reactions\":{reactions}"); }
+
         if (embeds is not null) { parts.Add($"\"embeds\":{embeds}"); }
 
         return Make<DiscordMessage>($"{{{string.Join(",", parts)}}}");
     }
-
-    internal const string OneAttachment =
-        """[{"id":"900","filename":"shot.png","url":"https://cdn.example/shot.png"}]""";
-
-    internal const string UnicodeAndCustomReactions =
-        """[{"count":3,"emoji":{"id":null,"name":"thumbsup"}},{"count":1,"emoji":{"id":"12345","name":"blob"}}]""";
-
-    internal const string FullEmbed =
-        """
-        [{"title":"a title","description":"a description","color":1122867,
-          "footer":{"text":"a footer","icon_url":"https://cdn.example/i.png"},
-          "author":{"name":"an author","url":"https://example/a"},
-          "fields":[{"name":"fname","value":"fvalue","inline":true}]}]
-        """;
-
-    internal const string BareEmbed = """[{"title":"a title"}]""";
 }

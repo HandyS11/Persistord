@@ -8,19 +8,19 @@ namespace Persistord.Adapters.DSharpPlus.Tests;
 public class ChannelMappingTests
 {
     [Theory]
-    [InlineData(0, ChannelType.Text)]          // Text
-    [InlineData(1, ChannelType.Text)]          // Private (DM) — fallback
-    [InlineData(2, ChannelType.Voice)]         // Voice
-    [InlineData(3, ChannelType.Text)]          // Group (group DM) — fallback
-    [InlineData(4, ChannelType.Category)]      // Category
-    [InlineData(5, ChannelType.Text)]          // News (announcement)
-    [InlineData(6, ChannelType.Text)]          // Store
-    [InlineData(10, ChannelType.Thread)]       // NewsThread
-    [InlineData(11, ChannelType.Thread)]       // PublicThread
-    [InlineData(12, ChannelType.Thread)]       // PrivateThread
-    [InlineData(13, ChannelType.Voice)]        // Stage
-    [InlineData(14, ChannelType.Text)]         // Directory — fallback
-    [InlineData(15, ChannelType.Text)]         // GuildForum — fallback
+    [InlineData(0, ChannelType.Text)] // Text
+    [InlineData(1, ChannelType.Text)] // Private (DM) — fallback
+    [InlineData(2, ChannelType.Voice)] // Voice
+    [InlineData(3, ChannelType.Text)] // Group (group DM) — fallback
+    [InlineData(4, ChannelType.Category)] // Category
+    [InlineData(5, ChannelType.Text)] // News (announcement)
+    [InlineData(6, ChannelType.Text)] // Store
+    [InlineData(10, ChannelType.Thread)] // NewsThread
+    [InlineData(11, ChannelType.Thread)] // PublicThread
+    [InlineData(12, ChannelType.Thread)] // PrivateThread
+    [InlineData(13, ChannelType.Voice)] // Stage
+    [InlineData(14, ChannelType.Text)] // Directory — fallback
+    [InlineData(15, ChannelType.Text)] // GuildForum — fallback
     [InlineData(2147483647, ChannelType.Text)] // Unknown — fallback
     public void ToChannelEntity_translates_every_channel_type(int raw, ChannelType expected)
     {

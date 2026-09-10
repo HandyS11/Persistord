@@ -276,9 +276,7 @@ public static class DSharpPlusMappingExtensions
         {
             mapped.Fields.Add(new EmbedField
             {
-                Name = field.Name ?? string.Empty,
-                Value = field.Value ?? string.Empty,
-                Inline = field.Inline,
+                Name = field.Name ?? string.Empty, Value = field.Value ?? string.Empty, Inline = field.Inline,
             });
         }
 
