@@ -333,19 +333,20 @@ Create `tests/Persistord.Adapters.DSharpPlus.Tests/stryker-config.json`:
 
 - [ ] **Step 5: Add both projects to the solution**
 
-In `Persistord.slnx`, add the source project to the `/src/` folder after the NetCord line:
+Both entries go in **alphabetical position**, which for `DSharpPlus` means after the
+`DiscordNet` line and before the `NetCord` line (`DiscordNet`, `DSharpPlus`, `NetCord`).
+
+In the `/src/` folder, between `Persistord.Adapters.DiscordNet` and `Persistord.Adapters.NetCord`:
 
 ```xml
     <Project Path="src/Persistord.Adapters.DSharpPlus/Persistord.Adapters.DSharpPlus.csproj" />
 ```
 
-and the test project to the `/tests/` folder **before** the NetCord line (entries are alphabetical: `DiscordNet`, `DSharpPlus`, `NetCord`):
+In the `/tests/` folder, between `Persistord.Adapters.DiscordNet.Tests` and `Persistord.Adapters.NetCord.Tests`:
 
 ```xml
     <Project Path="tests/Persistord.Adapters.DSharpPlus.Tests/Persistord.Adapters.DSharpPlus.Tests.csproj" />
 ```
-
-Put the `src` entry in alphabetical position too, i.e. after `Persistord.Adapters.DiscordNet` and before `Persistord.Adapters.NetCord`.
 
 - [ ] **Step 6: Verify the solution restores and builds**
 
