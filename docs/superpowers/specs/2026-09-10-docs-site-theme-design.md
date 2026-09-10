@@ -183,14 +183,38 @@ solves, never shows the library working, and never mentions nine of the ten pack
    `articles/snowflake-conversion.md` already states. A hero built on a sign flip would
    contradict the guide it links to.
 
-   The accurate claim is stronger. No relational provider has an unsigned 64-bit column, so EF
-   Core cannot map a `ulong` at all: the failure is a model that will not build, not a corrupted
-   number. `DiscordDbContext` registers `UlongToLongConverter` in `ConfigureConventions`, so
-   every `ulong` and `ulong?` in the model converts globally and no id is ever annotated. The
-   cast is `unchecked` and therefore bit-faithful across all 2^64 values — including those above
-   2^63 that a Steam64 id or another non-Discord `ulong` reaches today. The annotation reads:
-   *"`BIGINT` is signed; there is no unsigned 64-bit column. The same 64 bits go in and come back
-   out — for every `ulong`, not just the ones that fit."*
+   The accurate claim is quieter than the ones that preceded it, and it is the one to make.
+   PostgreSQL and SQL Server have no native unsigned 64-bit integer type, so EF Core maps an
+   unconverted `ulong` to a **20-digit fixed-point column** — `numeric(20,0)` and `decimal(20,0)`
+   respectively — which is wider, slower to compare, and not the same type as the 64-bit integer
+   columns everything else joins and indexes on. `UlongToLongConverter` is what makes a snowflake
+   land in a plain signed `BIGINT`. `DiscordDbContext` registers it in `ConfigureConventions`, so
+   every `ulong` and `ulong?` in the model converts globally and no id is ever annotated, and the
+   cast is `unchecked` and therefore bit-faithful across all 2^64 values.
+
+   **Three claims this section must NOT make.** Every one of them appeared in a draft of this
+   spec, and each was caught only by measuring rather than by reading. The common failure was
+   reaching for a dramatic failure mode when the real one is quieter:
+
+   - *"No relational provider has an unsigned 64-bit column."* Over-broad — MySQL and MariaDB
+     ship `BIGINT UNSIGNED`. The library's own `articles/snowflake-conversion.md` hedges with
+     "**most** relational providers … including PostgreSQL/Npgsql and SQL Server", and
+     `troubleshooting.md` with "**many**". The landing page must not claim more than the guide it
+     links to; matching the guide's hedge costs the argument nothing.
+   - *"…values above 2^63, which a Steam64 id reaches today."* False. A Steam64 id is
+     `76561197960265728 + accountID` with a 32-bit accountID, so its maximum is
+     `76561202255233023` — roughly 120× **below** 2^63. No Steam64 id has ever had the high bit
+     set. Cite no "real id that exceeds 2^63" without verifying the magnitude arithmetically
+     first; the bit-faithfulness claim stands on its own without an example.
+   - *"Without a converter EF Core cannot map a `ulong` at all — the model will not build."*
+     False. Verified with a probe at the versions this repo pins (Npgsql 10.0.3, SQL Server
+     10.0.12): both providers map `ulong` with no converter and the model builds —
+     `col=numeric(20,0)` and `col=decimal(20,0)` respectively, `converter=NONE`. The converter
+     changes the storage *type*, not whether the model compiles.
+
+   `articles/snowflake-conversion.md` carried a milder version of the third claim ("it makes a
+   `ulong` storable at all") and was corrected alongside the landing page, so the guide and the
+   front page state the same thing.
 3. **Install strip** — `dotnet add package Persistord` with a copy button.
 4. **Facts row** — 3 Discord libraries · 6 core entities · 0 provider dependencies · 10 packages.
 5. **Packages** — cards in three groups: *the stack* (`Persistord`, `.Core`, `.Messages`,
