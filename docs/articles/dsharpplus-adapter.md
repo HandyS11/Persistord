@@ -55,7 +55,7 @@ db.Members.Add(member.ToMemberEntity(eventArgs.Guild.Id));
 db.Roles.Add(role.ToRoleEntity(eventArgs.Guild.Id));
 ```
 
-## What the mappers do not touch
+## What mappers copy (and what they leave alone)
 
 Mappers are pure functions over data fields. They never set `IsDeleted`/`DeletedAt`,
 never set EF-generated surrogate keys (`Embed.Id`, `EmbedField.Id`, `ReactionEntity.Id`),

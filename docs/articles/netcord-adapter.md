@@ -41,7 +41,7 @@ Each mapper binds the base type that both the gateway and REST variants derive f
 so `Gateway.Guild` and `Gateway.Message` map through the same methods as their
 `Rest*` counterparts.
 
-## What the mappers do not touch
+## What mappers copy (and what they leave alone)
 
 Mappers are pure functions over data fields. They never set `IsDeleted`/`DeletedAt`,
 never set EF-generated surrogate keys (`Embed.Id`, `ReactionEntity.Id`), and never set
@@ -53,17 +53,26 @@ track your bot's membership lifecycle, which your persistence logic owns.
 
 NetCord expresses a channel's kind through its class rather than a property, and
 Persistord's `ChannelType` has four members, so the translation collapses NetCord's
-channel classes:
+channel classes. The mapper switches on base type and interface, not on an
+enumerated list of concrete classes, so every class that derives from a given base
+lands in the same bucket:
 
 | NetCord class | `ChannelType` |
 | --- | --- |
-| `PublicGuildThread`, `PrivateGuildThread`, `AnnouncementGuildThread`, `ForumGuildThread` | `Thread` |
-| `VoiceGuildChannel`, `StageGuildChannel` | `Voice` |
+| `PublicGuildThread`, `PrivateGuildThread`, `AnnouncementGuildThread`, `ForumGuildThread` (all derive from `GuildThread`) | `Thread` |
+| `VoiceGuildChannel`, `StageGuildChannel` (both implement `IVoiceGuildChannel`) | `Voice` |
 | `CategoryGuildChannel` | `Category` |
 | `TextGuildChannel`, `AnnouncementGuildChannel`, `ForumGuildChannel`, `MediaForumGuildChannel`, `DirectoryGuildChannel` | `Text` |
 
-Unrecognised channel classes fall back to `Text` rather than throwing, so a future
-NetCord channel kind will not break a running bot.
+Because the switch matches on `GuildThread`/`IVoiceGuildChannel` rather than by
+name, a channel class NetCord adds later is classified by what it derives from, not
+by whether the mapper explicitly knows about it: a future thread subtype maps to
+`Thread` and a future voice-capable channel maps to `Voice` automatically, with no
+adapter change required. Only a class matching none of the three typed arms reaches
+the `Text` fallback — this never throws. NetCord's own `UnknownGuildThread`, the
+placeholder for thread kinds NetCord hasn't modelled explicitly yet, already
+demonstrates this: it derives from `GuildThread`, so it maps to `Thread` without
+appearing anywhere in the mapper.
 
 ## Versioning
 

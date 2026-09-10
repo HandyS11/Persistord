@@ -30,11 +30,19 @@ that follow from it:
 
 | | Discord.Net | DSharpPlus | NetCord |
 | --- | --- | --- | --- |
-| Binds to | Interfaces (`IGuild`, `IMessage`, …) | Concrete classes (`DiscordGuild`, …) | Base gateway/REST types (`RestGuild`, …) |
+| Binds to | Interfaces (`IGuild`, `IMessage`, …) | Concrete classes (`DiscordGuild`, …) | Mixed: `Rest*` bases, unified classes, `IGuildChannel` |
 | Gateway *and* REST | Yes, via interfaces | Single class per entity | Yes, via base types |
 | Extra parameters | none | `ToMemberEntity(guildId)`, `ToRoleEntity(guildId)` | none |
 | Version range | `[3.20.1, 4.0.0)` | `[4.5.3, 5.0.0)` | `[1.0.0-beta.19, 2.0.0)` |
 | Transitive weight | — | `Newtonsoft.Json` (netstandard2.0) | prerelease-only |
+
+NetCord's "binds to" is a genuine mix, not one shape: `ToGuildEntity()` binds
+`RestGuild` and `ToMessageEntity()`/`ToHistoryEntity()` bind `RestMessage` — base
+types shared by the gateway and REST variants. `ToUserEntity()`, `ToMemberEntity()`,
+and `ToRoleEntity()` bind `User`, `GuildUser`, and `Role` — single unified types with
+no gateway/REST split. `ToChannelEntity()` binds the `IGuildChannel` interface. See
+the [NetCord guide](netcord-adapter.md)'s mapper table for the exact binding per
+method.
 
 ### The guild id parameter
 
@@ -53,11 +61,15 @@ NetCord's `GuildUser`/`Role` both carry their guild id directly, so their
 ### Channel types
 
 Each client library expresses channel kind differently — Discord.Net and NetCord
-through interfaces/classes, DSharpPlus through a `ChannelType` property — and each
-has more channel kinds than Persistord's four-member `ChannelType`. Every adapter
-collapses its own set down to `Text`, `Voice`, `Category`, or `Thread`, falling back
-to `Text` for anything unrecognised. The collapsing tables are adapter-specific; see
-each adapter's guide for its exact mapping.
+classify by interface/class hierarchy, DSharpPlus by a flat `ChannelType` enum — and
+each has more channel kinds than Persistord's four-member `ChannelType`. Every
+adapter collapses its own set down to `Text`, `Voice`, `Category`, or `Thread`,
+never throwing on an unrecognised kind. The mechanism differs, though: Discord.Net's
+and NetCord's interface/class dispatch classifies a future channel kind by what it
+derives from, with no adapter change required, while DSharpPlus's flat enum falls
+through to the `Text` arm for a future value until the adapter adds one explicitly.
+The collapsing tables are adapter-specific; see each adapter's guide for its exact
+mapping.
 
 ### Dependency consequences
 
