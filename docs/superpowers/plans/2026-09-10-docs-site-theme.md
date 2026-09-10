@@ -17,7 +17,7 @@
 - **The colour rule:** violet marks *persisted* things (rows, columns, keys, migrations, anything reaching the database). Lavender marks *Discord* things (gateway payloads, snowflake ids, events). Anything else is chrome, and chrome is never accented.
 - **Both themes are designed, not derived.** Light mode is cool paper with violet darkened to hold contrast on white — never a mechanical inversion of the dark ramp.
 - **Brand colours, sampled from `icon.png`:** ink `#181a27`, violet `#3d26b8` / `#4635c2`, mid-violet `#8685f4`, pale lavender `#e0dfff`.
-- **Motion budget:** exactly one non-user-triggered animation on the entire site (the landing page snowflake), wrapped in `prefers-reduced-motion: reduce`.
+- **Motion budget:** exactly one non-user-triggered animation on the entire site — a lavender wash fading out from behind the landing page's snowflake, in place. Gated behind `prefers-reduced-motion: no-preference`, so it is opt-in rather than opt-out. The mark itself never moves: a snowflake that travels between the panes would imply the value is carried and changed, which is the one thing the transform must not suggest.
 - **Repository facts:** repo `https://github.com/HandyS11/Persistord`, default branch `develop`, licence MIT, 10 published packages, DocFX config at `docs/docfx.json`.
 - **Do not modify** `.github/workflows/Documentation.yml`. It already runs `dotnet docfx docs/docfx.json`.
 - **Do not rewrite** the 19 existing article bodies. They gain cross-links and TOC regrouping only.
@@ -779,7 +779,7 @@ types of its own, so it contributes nothing here.
 | `Persistord.Messages.Entities` | `MessageEntity` and its embed, attachment, and reaction children |
 | `Persistord.History.Entities` | `MessageHistoryEntity`, `HistoryChangeType` |
 | `Persistord.Managed.Entities` | `ManagedResource` and the categories, channels, messages, and webhooks a bot owns |
-| `Persistord.Protection` | `ApplyProtection()`, plus the `ProtectedStringConvention`, `ProtectedStringConverter` and `ProtectionPurposes` it applies |
+| `Persistord.Protection` | `ProtectedStringConvention` — the recommended entry point, registered from `ConfigureConventions` — and `ApplyProtection()`, the explicit alternative called last in `OnModelCreating`; both install a `ProtectedStringConverter` keyed on `ProtectionPurposes.V1` |
 | `Persistord.Adapters.*` | The `.To*Entity()` mappers, one namespace per Discord library |
 | `Persistord.Testing` | In-memory SQLite fixtures and EF Core model assertions |
 
@@ -1145,8 +1145,8 @@ body[data-layout='landing'] article.content > p {
   max-width: none;
 }
 
-/* The site's entire motion budget: the snowflake crossing the transform.
-   Everything else on the site is static. */
+/* The site's entire motion budget: a lavender wash fading out from behind the
+   snowflake, in place. Everything else on the site is static. */
 @media (prefers-reduced-motion: no-preference) {
   .pd-transform[data-draw='running'] .pd-snowflake {
     animation: pd-carry 900ms ease-out both;

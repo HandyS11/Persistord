@@ -16,7 +16,7 @@ types of its own, so it contributes nothing here.
 | `Persistord.Messages.Entities` | `MessageEntity` and its embed, attachment, and reaction children |
 | `Persistord.History.Entities` | `MessageHistoryEntity`, `HistoryChangeType` |
 | `Persistord.Managed.Entities` | `ManagedResource` and the categories, channels, messages, and webhooks a bot owns |
-| `Persistord.Protection` | `ApplyProtection()`, plus the `ProtectedStringConvention`, `ProtectedStringConverter` and `ProtectionPurposes` it applies |
+| `Persistord.Protection` | `ProtectedStringConvention` — the recommended entry point, registered from `ConfigureConventions` — and `ApplyProtection()`, the explicit alternative called last in `OnModelCreating`; both install a `ProtectedStringConverter` keyed on `ProtectionPurposes.V1` |
 | `Persistord.Adapters.*` | The `.To*Entity()` mappers, one namespace per Discord library |
 | `Persistord.Testing` | In-memory SQLite fixtures and EF Core model assertions |
 

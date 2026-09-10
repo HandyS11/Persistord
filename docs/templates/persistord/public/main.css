@@ -11,18 +11,32 @@
  * If it does not reach the database and did not come off the gateway, it is
  * chrome, and chrome is never accented.
  *
- * Inline code is the one deliberate exception. `:not(pre) > code` gets a violet
- * wash on every article, so `dotnet add package` and `netstandard2.0` are washed
- * alongside `MessageEntity`, and by the rule above they should not be. It is kept
- * because a tinted cell behind inline code is a documentation convention readers
- * already parse as "this is code", not as "this is persisted" - the rule is about
- * where the eye is *pulled*, and a wash this faint on every code span reads as
- * texture rather than as a mark. Where that stops being true the wash is turned
- * off rather than reinterpreted: on `.pd-hero-lede`, `.pd-note`, `.pd-package`
- * and `.pd-card` the surrounding text is dense with language and API names, and a
- * wash on those would sit next to the `.pd-row-id` mark that does mean something
- * and dilute it. Those opt-outs are below; the colour rule itself is not softened
- * for anything else.
+ * The rule governs the *semantic marks* - `.pd-snowflake` and `.pd-row-id`, and
+ * the wash that fades off the snowflake. Those are the accents that carry meaning,
+ * and nothing else may join them. Three other things are nonetheless tinted, and
+ * an editor will find them, so they are listed here rather than discovered:
+ *
+ *   1. State and focus, which are not decoration and have no other channel.
+ *      The current page's TOC entry (a position marker), TOC and footer link
+ *      hover, `.pd-copy[data-copied='true']` (it worked), and the focus ring on
+ *      `.pd-btn` / `.pd-copy` / `.pd-package` / `.pd-card`. A reader who cannot
+ *      see where they are, what they are pointing at, or what has keyboard focus
+ *      has lost something the colour rule was never meant to protect.
+ *   2. Inline code. `:not(pre) > code` takes a violet wash and `--bs-code-color`
+ *      the soft violet, so `dotnet add package` and `netstandard2.0` are tinted
+ *      alongside `MessageEntity`. This one genuinely cuts across the rule and is
+ *      kept anyway: a tinted cell behind inline code is a documentation
+ *      convention readers already parse as "this is code" rather than "this is
+ *      persisted", and a wash this faint on every code span reads as texture, not
+ *      as a mark.
+ *   3. The `blockquote` rule, for the same reason as 2 - a typographic
+ *      convention, not a claim about the content.
+ *
+ * Where 2 stops reading as texture the wash is turned off rather than
+ * reinterpreted: on `.pd-hero-lede`, `.pd-note`, `.pd-package` and `.pd-card` the
+ * surrounding text is dense with language and API names, and a wash there would
+ * sit beside the `.pd-row-id` mark that does mean something and dilute it. Those
+ * opt-outs are below. Anything not on this list is chrome, and chrome stays plain.
  *
  * The ramp is sampled from icon.png: ink #181a27, violet #3d26b8 / #4635c2,
  * mid-violet #8685f4, pale lavender #e0dfff. Sampled values are a starting
@@ -238,23 +252,45 @@ blockquote {
   color: var(--pd-ink-dim);
 }
 
-/* The active TOC entry is the one thing in the sidebar that earns an accent:
-   it is a position marker, not decoration.
+/* The current page's TOC entry earns an accent: it is a position marker, not
+   decoration. So does hover, just below, for the same reason - see the header's
+   list of what is tinted and why.
 
    docfx renders the sidebar tree from JS as `<nav class="toc"><ul><li class=" active ">
    <a>`: a bare `<ul>` with no `.nav` on it and no class on the anchors. Selectors
    written against Bootstrap's `.nav` shape match nothing in that tree - the handles
-   are the `<li>` and the `active` class docfx puts on the current page's entry. */
+   are the `<li>` and the `active` class docfx puts on the entry.
+
+   `active` is not unique, though. docfx marks the whole ancestor path, so the API
+   tree - nested since `namespaceLayout: nested` - carries it on four rows at once
+   on a page like `Persistord.Core.Entities.GuildEntity`, and only the innermost is
+   the page you are actually on. `:has()` picks that one: an active row that contains
+   no deeper active row. Note this is not the same as `:not(.expander)`. A namespace
+   page is its own expander row, carries `expander expanded active` exactly like its
+   ancestors, and is distinguishable from them only by depth - so keying on `.expander`
+   would look right on class pages and silently leave every namespace page unmarked.
+   Where `:has()` is unsupported the whole rule is dropped and the entry simply falls
+   back to docfx's own active colour, which is the safe direction to fail in. */
 .toc li > a:hover,
 .toc li > a:focus {
   color: var(--pd-violet-soft);
 }
 
-.toc li.active > a {
+.toc li.active:not(:has(li.active)) > a {
   color: var(--pd-violet-soft);
   border-left: 2px solid var(--pd-violet);
   padding-left: 0.5rem;
   margin-left: -0.5rem;
+}
+
+/* When that row is an expander - i.e. the current page is a namespace - the
+   disclosure chevron sits immediately left of the anchor, in an absolutely
+   positioned `.expand-stub::before`. The hanging bar above is pulled into exactly
+   that space and renders straight through the glyph, striking it out. Drop the
+   pull-in there and let the bar sit inside the anchor's own box instead, so the row
+   reads chevron, bar, label. */
+.toc li.expander.active:not(:has(li.active)) > a {
+  margin-left: 0;
 }
 
 /* ---------------------------------------------------------------- footer -- */
@@ -458,9 +494,12 @@ body[data-layout='landing'] .content article h2 {
   color: var(--pd-violet);
 }
 
-/* The site's entire motion budget: the snowflake crossing the transform.
-   Everything else on the site is static. The wash is lavender, not violet - it
-   is on the gateway side of the transform and has not reached a column yet. */
+/* The site's entire motion budget: a lavender wash fading out from behind the
+   snowflake, in place. Nothing translates - a mark that travelled between the
+   panes would imply the value is being carried and changed, which is the one
+   thing the transform must not suggest. Everything else on the site is static.
+   The wash is lavender, not violet - it is on the gateway side of the transform
+   and has not reached a column yet. */
 @media (prefers-reduced-motion: no-preference) {
   .pd-transform .pd-snowflake {
     animation: pd-carry 900ms ease-out both;

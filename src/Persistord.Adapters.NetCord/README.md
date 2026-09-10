@@ -50,9 +50,9 @@ counterparts.
 ## What the mappers do not touch
 
 Mappers are pure functions over data fields. They never set `IsDeleted`/`DeletedAt`,
-never set EF-generated surrogate keys (`Embed.Id`, `ReactionEntity.Id`), and never set
-child foreign keys — children are added to the parent's navigation collection and EF
-fills the keys on save. `GuildEntity.JoinedAt`/`LeftAt` are also left alone: they track
+never set EF-generated surrogate keys (`Embed.Id`, `EmbedField.Id`, `ReactionEntity.Id`),
+and never set child foreign keys — children are added to the parent's navigation
+collection and EF fills the keys on save. `GuildEntity.JoinedAt`/`LeftAt` are also left alone: they track
 your bot's membership lifecycle, which your persistence logic owns.
 
 ## Channel types
