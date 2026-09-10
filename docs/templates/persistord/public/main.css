@@ -4,8 +4,255 @@
  * Layered on top of docfx's `default` + `modern` templates. Overrides stay on
  * Bootstrap custom properties (`--bs-*`) and documented docfx selectors so a
  * docfx upgrade shifts as little as possible underneath us.
+ *
+ * Colour is semantic here, not decorative:
+ *   violet    - persisted things: rows, columns, keys, migrations
+ *   lavender  - Discord things: gateway payloads, snowflakes, events
+ * If it does not reach the database and did not come off the gateway, it is
+ * chrome, and chrome is never accented.
+ *
+ * The ramp is sampled from icon.png: ink #181a27, violet #3d26b8 / #4635c2,
+ * mid-violet #8685f4, pale lavender #e0dfff.
  */
 
+@font-face {
+  font-family: 'Persistord Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/inter-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Persistord Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/inter-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Persistord Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/inter-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Persistord Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Persistord Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/jetbrains-mono-latin-700-normal.woff2') format('woff2');
+}
+
+/* ---------------------------------------------------------------- tokens -- */
+
 :root {
-  --pd-theme-loaded: 1;
+  --pd-sans: 'Persistord Sans', system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --pd-mono: 'Persistord Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Mono',
+    Consolas, monospace;
+
+  --pd-radius: 10px;
+  --pd-measure: 72ch;
+}
+
+[data-bs-theme='dark'] {
+  --pd-void: #0d0f1a;
+  --pd-surface: #161a2b;
+  --pd-surface-raised: #1e2338;
+  --pd-hairline: #242a44;
+  --pd-hairline-strong: #363e63;
+  --pd-ink: #dfe1f2;
+  --pd-ink-dim: #9aa0c4;
+  --pd-mute: #6f769b;
+
+  --pd-violet: #8685f4;
+  --pd-violet-soft: #a9a8f8;
+  --pd-violet-wash: rgba(134, 133, 244, 0.13);
+  --pd-lavender: #e0dfff;
+
+  --bs-body-bg: var(--pd-void);
+  --bs-body-color: var(--pd-ink);
+  --bs-body-bg-rgb: 13, 15, 26;
+  --bs-body-color-rgb: 223, 225, 242;
+  --bs-emphasis-color: #fff;
+  --bs-secondary-color: var(--pd-ink-dim);
+  --bs-border-color: var(--pd-hairline);
+  --bs-heading-color: #eef0ff;
+  --bs-code-color: var(--pd-violet-soft);
+  --bs-link-color: #9c9bf7;
+  --bs-link-color-rgb: 156, 155, 247;
+  --bs-link-hover-color: #c0bffb;
+  --bs-link-hover-color-rgb: 192, 191, 251;
+}
+
+/* The light theme is designed, not derived: cool paper rather than an inverted
+   copy of the dark ramp, with the violet darkened far enough to hold contrast
+   on white. */
+[data-bs-theme='light'] {
+  --pd-void: #f6f6fb;
+  --pd-surface: #fff;
+  --pd-surface-raised: #eeeef8;
+  --pd-hairline: #dcdcec;
+  --pd-hairline-strong: #b9b9d4;
+  --pd-ink: #14162a;
+  --pd-ink-dim: #4a4d6e;
+  --pd-mute: #6d7093;
+
+  --pd-violet: #4635c2;
+  --pd-violet-soft: #3d26b8;
+  --pd-violet-wash: rgba(70, 53, 194, 0.08);
+  --pd-lavender: #3d26b8;
+
+  --bs-body-bg: var(--pd-void);
+  --bs-body-color: var(--pd-ink);
+  --bs-body-bg-rgb: 246, 246, 251;
+  --bs-body-color-rgb: 20, 22, 42;
+  --bs-secondary-color: var(--pd-ink-dim);
+  --bs-border-color: var(--pd-hairline);
+  --bs-heading-color: #0b0d1c;
+  --bs-code-color: #4635c2;
+  --bs-link-color: #4635c2;
+  --bs-link-hover-color: #3d26b8;
+  --bs-link-color-rgb: 70, 53, 194;
+  --bs-link-hover-color-rgb: 61, 38, 184;
+}
+
+/* ------------------------------------------------------------------ base -- */
+
+body {
+  font-family: var(--pd-sans);
+  background-color: var(--pd-void);
+  -webkit-font-smoothing: antialiased;
+}
+
+code,
+pre,
+kbd,
+samp,
+.text-monospace {
+  font-family: var(--pd-mono);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.021em;
+}
+
+article.content h2 {
+  margin-top: 2.4rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--pd-hairline);
+}
+
+article.content > p,
+article.content > ul,
+article.content > ol {
+  max-width: var(--pd-measure);
+}
+
+/* -------------------------------------------------------------- surfaces -- */
+
+header .navbar,
+footer {
+  background-color: var(--pd-surface) !important;
+  border-color: var(--pd-hairline) !important;
+}
+
+.navbar-brand > img {
+  height: 26px;
+  width: 26px;
+  border-radius: 6px;
+}
+
+pre {
+  background-color: var(--pd-surface);
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  padding: 0.9rem 1.1rem;
+}
+
+:not(pre) > code {
+  background-color: var(--pd-violet-wash);
+  border-radius: 5px;
+  padding: 0.13em 0.36em;
+  font-size: 0.9em;
+}
+
+table.table {
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--pd-hairline);
+}
+
+table.table th {
+  color: var(--pd-ink);
+  font-weight: 600;
+}
+
+blockquote {
+  border-left: 3px solid var(--pd-violet);
+  padding-left: 1rem;
+  color: var(--pd-ink-dim);
+}
+
+/* The active TOC entry is the one thing in the sidebar that earns an accent:
+   it is a position marker, not decoration. */
+.toc .nav > li > a:hover,
+.toc .nav > li > a:focus {
+  color: var(--pd-violet-soft);
+}
+
+.toc .nav > li.active > a {
+  color: var(--pd-violet-soft);
+  border-left: 2px solid var(--pd-violet);
+  padding-left: 0.5rem;
+  margin-left: -0.5rem;
+}
+
+/* ---------------------------------------------------------------- footer -- */
+
+.pd-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.4rem;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.pd-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+}
+
+.pd-footer a {
+  color: var(--pd-ink-dim);
+  text-decoration: none;
+}
+
+.pd-footer a:hover {
+  color: var(--pd-violet-soft);
+  text-decoration: underline;
 }
