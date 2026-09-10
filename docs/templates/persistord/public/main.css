@@ -12,7 +12,9 @@
  * chrome, and chrome is never accented.
  *
  * The ramp is sampled from icon.png: ink #181a27, violet #3d26b8 / #4635c2,
- * mid-violet #8685f4, pale lavender #e0dfff.
+ * mid-violet #8685f4, pale lavender #e0dfff. Sampled values are a starting
+ * point, not a contract - the icon's pale lavender is unusable as a dark-theme
+ * mark and is darkened in the dark block below; see the note there.
  */
 
 @font-face {
@@ -80,7 +82,15 @@
   --pd-violet: #8685f4;
   --pd-violet-soft: #a9a8f8;
   --pd-violet-wash: rgba(134, 133, 244, 0.13);
-  --pd-lavender: #e0dfff;
+
+  /* Lavender has to survive against body ink, since it marks values inside
+     running text and code. The icon's own #e0dfff cannot: it is 1.00:1 against
+     --pd-ink, luminance-identical and separated only by a trace of chroma, so a
+     mark set in it reads as ordinary body text. Darkened to the point where it
+     separates from ink (1.46:1) and from --pd-violet (1.66:1) while still
+     clearing AA as text (10.06:1 on --pd-void, 9.10:1 on --pd-surface). */
+  --pd-lavender: #b7b5ff;
+  --pd-lavender-wash: rgba(183, 181, 255, 0.13);
 
   --bs-body-bg: var(--pd-void);
   --bs-body-color: var(--pd-ink);
@@ -114,6 +124,7 @@
   --pd-violet-soft: #3d26b8;
   --pd-violet-wash: rgba(70, 53, 194, 0.08);
   --pd-lavender: #7c3aed;
+  --pd-lavender-wash: rgba(124, 58, 237, 0.08);
 
   --bs-body-bg: var(--pd-void);
   --bs-body-color: var(--pd-ink);
@@ -262,17 +273,9 @@ blockquote {
 /* docfx emits `<div class="content"><article data-uid="">`, so the class sits on
    the wrapping div and `.content article` is the handle. Reversing the two into
    a single compound selector on the article matches nothing at all.
-   `data-layout` comes from the page's `layout:` front matter. */
+   `data-layout` comes from the page's `layout:` front matter.
 
-/* The landing page is the one place that escapes the reading measure — its
-   sections set their own widths, and several of them are grids. */
-body[data-layout='landing'] .content article > p,
-body[data-layout='landing'] .content article > ul,
-body[data-layout='landing'] .content article > ol {
-  max-width: none;
-}
-
-/* Articles rule off every h2 to separate long prose. The landing page is not
+   Articles rule off every h2 to separate long prose. The landing page is not
    prose: its sections already carry their own headings and spacing, and a rule
    above each one would fence the page into boxes. */
 body[data-layout='landing'] .content article h2 {
@@ -339,10 +342,14 @@ body[data-layout='landing'] .content article h2 {
   color: var(--pd-void);
 }
 
+/* Hover has to brighten, like every other surface here. `--pd-ink` is already
+   the end of the ink ramp, so the step past it is the heading colour this file
+   sets in both theme blocks: #eef0ff dark, #0b0d1c light. 14.71:1 -> 16.85:1
+   dark and 16.55:1 -> 17.91:1 light. */
 .pd-btn-primary:hover,
 .pd-btn-primary:focus-visible {
-  border-color: var(--pd-ink-dim);
-  background-color: var(--pd-ink-dim);
+  border-color: var(--bs-heading-color);
+  background-color: var(--bs-heading-color);
   color: var(--pd-void);
 }
 
@@ -363,10 +370,13 @@ body[data-layout='landing'] .content article h2 {
   }
 }
 
+/* A <figure>, so the bar below can caption the payload rather than float beside
+   it; `margin: 0` drops the browser default that comes with the element. */
 .pd-pane {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  margin: 0;
   border: 1px solid var(--pd-hairline);
   border-radius: var(--pd-radius);
   background-color: var(--pd-surface);
@@ -378,16 +388,15 @@ body[data-layout='landing'] .content article h2 {
   padding: 0.5rem 0.9rem;
   border-bottom: 1px solid var(--pd-hairline);
   background-color: var(--pd-surface-raised);
-  color: var(--pd-mute);
+  color: var(--pd-ink-dim);
   font-family: var(--pd-mono);
   font-size: 0.74rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-/* The panes are set one step down from body ink so the two marked ids are the
-   brightest thing in them - in dark mode `--pd-lavender` sits a hair off
-   `--pd-ink`, and against full-strength body text the mark would vanish. */
+/* Pane bodies sit one step down from body ink so the two marked ids read as
+   lifted out of their surroundings rather than merely coloured in. */
 .pd-pane pre {
   margin: 0;
   padding: 0.85rem 0.9rem;
@@ -401,12 +410,13 @@ body[data-layout='landing'] .content article h2 {
 }
 
 /* The id came off the gateway, so it is lavender on the left; by the third pane
-   it is a value in a column, so it is violet. */
+   it is a value in a column, so it is violet and sits in a cell of wash. Hue is
+   the whole signal, so neither mark is bolded - weight would make them read as
+   emphasis rather than as two different kinds of thing. */
 .pd-snowflake {
   border-radius: 4px;
   padding: 0 0.18em;
   color: var(--pd-lavender);
-  font-weight: 700;
 }
 
 .pd-row-id {
@@ -414,20 +424,20 @@ body[data-layout='landing'] .content article h2 {
   padding: 0 0.18em;
   background-color: var(--pd-violet-wash);
   color: var(--pd-violet);
-  font-weight: 700;
 }
 
 /* The site's entire motion budget: the snowflake crossing the transform.
-   Everything else on the site is static. */
+   Everything else on the site is static. The wash is lavender, not violet - it
+   is on the gateway side of the transform and has not reached a column yet. */
 @media (prefers-reduced-motion: no-preference) {
-  .pd-transform[data-draw='running'] .pd-snowflake {
+  .pd-transform .pd-snowflake {
     animation: pd-carry 900ms ease-out both;
   }
 }
 
 @keyframes pd-carry {
   from {
-    background-color: var(--pd-violet-wash);
+    background-color: var(--pd-lavender-wash);
   }
 
   to {
@@ -451,7 +461,7 @@ body[data-layout='landing'] .content article h2 {
 }
 
 .pd-prompt {
-  color: var(--pd-mute);
+  color: var(--pd-ink-dim);
   font-family: var(--pd-mono);
   user-select: none;
 }
@@ -569,7 +579,7 @@ body[data-layout='landing'] .content article h2 {
 
 .pd-package-group > h3 {
   margin: 0 0 0.65rem;
-  color: var(--pd-mute);
+  color: var(--pd-ink-dim);
   font-size: 0.76rem;
   font-weight: 600;
   letter-spacing: 0.09em;
@@ -618,14 +628,17 @@ body[data-layout='landing'] .content article h2 {
 }
 
 /* Keeps the longest package name clear of the pinned off-site glyph. */
-.pd-package.external > code,
-.pd-card.external > strong {
+.pd-package.external > code {
   padding-right: 1.3rem;
 }
 
-/* Package names, capability titles and the lede all mention code without
-   naming anything persisted, so they drop the global inline-code wash. */
+/* The global inline-code wash is violet, which on this page means "this reaches
+   the database". Package names, capability titles, the lede and the transform's
+   annotation all name language and API chrome - `ConfigureConventions`,
+   `unchecked` - so a wash on them would spend the accent on nothing, directly
+   beneath the one `.pd-row-id` mark that is supposed to mean it. */
 .pd-hero-lede code,
+.pd-note code,
 .pd-package code,
 .pd-card code {
   padding: 0;
@@ -636,14 +649,13 @@ body[data-layout='landing'] .content article h2 {
 
 /* docfx marks off-site links with a trailing glyph. The description above it is
    a block, so left alone the glyph claims a line of its own at the foot of the
-   card; pin it to the corner instead. */
-.pd-package.external::after,
-.pd-card.external::after {
+   card; pin it to the corner instead. Only the package links leave the site. */
+.pd-package.external::after {
   position: absolute;
   top: 0.8rem;
   right: 0.85rem;
   margin: 0;
-  color: var(--pd-mute);
+  color: var(--pd-ink-dim);
 }
 
 .pd-package > span,

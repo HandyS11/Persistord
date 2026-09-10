@@ -13,35 +13,35 @@ layout: landing
   </div>
 </section>
 
-<section class="pd-section pd-transform" data-draw="running">
+<section class="pd-section pd-transform">
   <h2>A gateway payload, a mapper call, a row</h2>
   <p>Discord hands you a 64-bit <em>unsigned</em> id. An adapter maps the payload to <code>MessageEntity</code>. EF Core writes it to a signed column — and reads back exactly what went in.</p>
   <div class="pd-panes">
-    <div class="pd-pane">
-      <span class="pd-pane-bar">1 · gateway event</span>
+    <figure class="pd-pane">
+      <figcaption class="pd-pane-bar">1 · gateway event</figcaption>
       <pre>{
   "id": "<span class="pd-snowflake">1547396186112000000</span>",
   "channel_id": "1547300000000000000",
   "content": "gg"
 }</pre>
-    </div>
-    <div class="pd-pane">
-      <span class="pd-pane-bar">2 · .ToMessageEntity()</span>
+    </figure>
+    <figure class="pd-pane">
+      <figcaption class="pd-pane-bar">2 · .ToMessageEntity()</figcaption>
       <pre>// Persistord.Adapters.DiscordNet
 var row = message.ToMessageEntity();
 db.Messages.Add(row);
 await db.SaveChangesAsync();</pre>
-    </div>
-    <div class="pd-pane">
-      <span class="pd-pane-bar">3 · messages row</span>
+    </figure>
+    <figure class="pd-pane">
+      <figcaption class="pd-pane-bar">3 · messages row</figcaption>
       <pre>column     type     value
 ---------  -------  -------------------
 Id         BIGINT   <span class="pd-row-id">1547396186112000000</span>
 ChannelId  BIGINT   1547300000000000000
 Content    TEXT     'gg'</pre>
-    </div>
+    </figure>
   </div>
-  <p class="pd-note"><strong><code>BIGINT</code> is signed; there is no unsigned 64-bit column. The same 64 bits go in and come back out — for every <code>ulong</code>, not just the ones that fit.</strong> Without a converter EF Core cannot map a <code>ulong</code> at all, so this was never a rounding problem — it is a model that will not build. <code>DiscordDbContext</code> registers <code>UlongToLongConverter</code> in <code>ConfigureConventions</code>, so every <code>ulong</code> and <code>ulong?</code> in your model converts globally and you never annotate an id. The cast is <code>unchecked</code>, so it is bit-faithful across all 2<sup>64</sup> values — including the ones past 2<sup>63</sup> that a Steam64 id reaches today and a Discord snowflake will not reach until roughly 2084. <a href="articles/snowflake-conversion.md">How the conversion works</a></p>
+  <p class="pd-note"><strong>PostgreSQL and SQL Server have no native unsigned 64-bit type, so a snowflake lands in a signed <code>BIGINT</code>. The same 64 bits go in and come back out — for every <code>ulong</code>, not just the ones that fit.</strong> Without a converter EF Core cannot map a <code>ulong</code> to those providers at all, so this was never a rounding problem — it is a model that will not build. <code>DiscordDbContext</code> registers <code>UlongToLongConverter</code> in <code>ConfigureConventions</code>, so every <code>ulong</code> and <code>ulong?</code> in your model converts globally and you never annotate an id. The cast is <code>unchecked</code>, so it is bit-faithful across all 2<sup>64</sup> values — including the ones past 2<sup>63</sup> that a Discord snowflake will not reach until roughly 2084. <a href="articles/snowflake-conversion.md">How the conversion works</a></p>
 </section>
 
 <div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord</code><button class="pd-copy" type="button">Copy</button></div>
