@@ -21,6 +21,7 @@ dotnet add package Persistord.Core
 dotnet add package Persistord.Messages      # optional: message persistence
 dotnet add package Persistord.History       # optional: requires Messages
 dotnet add package Persistord.Adapters.DiscordNet   # optional: Discord.Net mappers
+dotnet add package Persistord.Adapters.DSharpPlus   # optional: DSharpPlus mappers
 dotnet add package Persistord.Adapters.NetCord      # optional: NetCord mappers
 ```
 

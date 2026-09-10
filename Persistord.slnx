@@ -9,6 +9,7 @@
   <Folder Name="/src/">
     <Project Path="src/Persistord/Persistord.csproj" />
     <Project Path="src/Persistord.Adapters.DiscordNet/Persistord.Adapters.DiscordNet.csproj" />
+    <Project Path="src/Persistord.Adapters.DSharpPlus/Persistord.Adapters.DSharpPlus.csproj" />
     <Project Path="src/Persistord.Adapters.NetCord/Persistord.Adapters.NetCord.csproj" />
     <Project Path="src/Persistord.Core/Persistord.Core.csproj" />
     <Project Path="src/Persistord.History/Persistord.History.csproj" />
@@ -19,6 +20,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Persistord.Adapters.DiscordNet.Tests/Persistord.Adapters.DiscordNet.Tests.csproj" />
+    <Project Path="tests/Persistord.Adapters.DSharpPlus.Tests/Persistord.Adapters.DSharpPlus.Tests.csproj" />
     <Project Path="tests/Persistord.Adapters.NetCord.Tests/Persistord.Adapters.NetCord.Tests.csproj" />
     <Project Path="tests/Persistord.Core.Tests/Persistord.Core.Tests.csproj" />
     <Project Path="tests/Persistord.History.Tests/Persistord.History.Tests.csproj" />

@@ -39,12 +39,13 @@ database or Discord library.
 | [`Persistord.Messages`](src/Persistord.Messages) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Messages.svg)](https://www.nuget.org/packages/Persistord.Messages) | `MessageEntity` (soft-delete), embeds, attachments, reactions | Core |
 | [`Persistord.History`](src/Persistord.History) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.History.svg)](https://www.nuget.org/packages/Persistord.History) | append-only `MessageHistoryEntity` with a real FK to messages | Messages |
 | [`Persistord.Adapters.DiscordNet`](src/Persistord.Adapters.DiscordNet) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Adapters.DiscordNet.svg)](https://www.nuget.org/packages/Persistord.Adapters.DiscordNet) | `.To*Entity()` mappers from [Discord.Net](https://github.com/discord-net/Discord.Net) types | Core, Messages, History |
+| [`Persistord.Adapters.DSharpPlus`](src/Persistord.Adapters.DSharpPlus) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Adapters.DSharpPlus.svg)](https://www.nuget.org/packages/Persistord.Adapters.DSharpPlus) | `.To*Entity()` mappers from [DSharpPlus](https://github.com/DSharpPlus/DSharpPlus) types | Core, Messages, History |
 | [`Persistord.Adapters.NetCord`](src/Persistord.Adapters.NetCord) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Adapters.NetCord.svg)](https://www.nuget.org/packages/Persistord.Adapters.NetCord) | `.To*Entity()` mappers from [NetCord](https://netcord.dev) types | Core, Messages, History |
 | [`Persistord.Managed`](src/Persistord.Managed) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Managed.svg)](https://www.nuget.org/packages/Persistord.Managed) | records of the categories, channels, anchored messages, and webhooks a bot creates and owns | Core |
 | [`Persistord.Protection`](src/Persistord.Protection) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Protection.svg)](https://www.nuget.org/packages/Persistord.Protection) | encrypts `[Protected]` string columns at rest via ASP.NET Core Data Protection | Core |
 | [`Persistord.Testing`](src/Persistord.Testing) | [![Downloads](https://img.shields.io/nuget/dt/Persistord.Testing.svg)](https://www.nuget.org/packages/Persistord.Testing) | in-memory SQLite fixtures and EF Core model assertions for tests | Core |
 
-The core packages are independent of any Discord client library. Install an adapter **only** if you use that library — `Persistord.Adapters.DiscordNet` for Discord.Net, `Persistord.Adapters.NetCord` for NetCord.
+The core packages are independent of any Discord client library. Install an adapter **only** if you use that library — `Persistord.Adapters.DiscordNet` for Discord.Net, `Persistord.Adapters.DSharpPlus` for DSharpPlus, `Persistord.Adapters.NetCord` for NetCord.
 `Persistord.Managed`, `Persistord.Protection`, and `Persistord.Testing` are opt-in and
 **not** part of the `Persistord` meta package: a bot that only mirrors Discord never
 owns resources, encrypts a column, or needs the test fixtures, so the meta package
@@ -61,6 +62,7 @@ dotnet add package Persistord.Core
 dotnet add package Persistord.Messages      # optional: message persistence
 dotnet add package Persistord.History       # optional: requires Messages
 dotnet add package Persistord.Adapters.DiscordNet   # optional: Discord.Net mappers
+dotnet add package Persistord.Adapters.DSharpPlus   # optional: DSharpPlus mappers
 dotnet add package Persistord.Adapters.NetCord      # optional: NetCord mappers
 ```
 
@@ -159,6 +161,7 @@ browse the [Guides](https://handys11.github.io/Persistord/articles/snowflake-con
 
 - Per-package READMEs: [Core](src/Persistord.Core), [Messages](src/Persistord.Messages),
   [History](src/Persistord.History), [Adapters.DiscordNet](src/Persistord.Adapters.DiscordNet),
+  [Adapters.DSharpPlus](src/Persistord.Adapters.DSharpPlus),
   [Adapters.NetCord](src/Persistord.Adapters.NetCord).
 - Samples — runnable, focused walkthroughs (all SQLite): [`samples/`](samples/README.md).
 

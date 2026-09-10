@@ -15,6 +15,12 @@
          projects pull EF transitively via Sqlite/Npgsql, so CI still exercises latest.
          Raise the floor only deliberately, when we start using a newer EF API. -->
     <PackageVersion Include="Discord.Net" Version="[3.20.1, 4.0.0)" />
+    <!-- DSharpPlus 4.5.3 is the latest LISTED stable. A 5.0.0 exists on NuGet and sorts
+         higher, but it is unlisted (published 1900-01-01, NuGet's withdrawn marker) and
+         targets net7.0; the 5.0.0-nightly-* line is the in-progress rewrite and is
+         prerelease-only. 4.5.3 is netstandard2.0 and brings Newtonsoft.Json 13.0.2 in
+         transitively — verified warning-free under this repo's analyzer set. -->
+    <PackageVersion Include="DSharpPlus" Version="[4.5.3, 5.0.0)" />
     <!-- NetCord has no stable release; 1.0.0-beta.19 is the latest of 509 prereleases.
          Ranged like the other shipped deps: floor = the version the nupkg is compiled
          against, ceiling = the next major. See the NU5104 note in the adapter README
@@ -36,6 +42,10 @@
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="Xunit.SkippableFact" Version="1.5.85" />
+    <!-- Test-only: the DSharpPlus adapter tests construct DSharpPlus entities by
+         deserializing Discord gateway payloads, because every DSharpPlus constructor
+         and setter is internal. Not referenced by any shipped package. -->
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
   <ItemGroup>
     <!-- Analyzers -->
