@@ -114,6 +114,16 @@ section 2, so a later editor knows what is load-bearing.
   links in the navbar.
 - No `@import` or `<link>` in the built site resolves to a third-party origin.
 
+  **Accepted deviation — badge images in the package READMEs.** The ten package READMEs
+  section 5 mounts into the site carry 20 `img.shields.io` badges between them, so those
+  ten pages do make a third-party request at page load. This is accepted rather than
+  fixed. The constraint above is aimed at the *theme's* assets — fonts, CSS, JS — which
+  stay local; the badges are README content authored for GitHub and nuget.org, where they
+  carry real value, and the same file ships inside each nupkg. Stripping them for the site
+  would fork ten READMEs from the copies that ship with the packages, which costs more
+  than the requests do. No theme asset resolves off-origin, and that is what the crawl in
+  section 6 checks.
+
 ## 2. Colour, typography, motion
 
 ### 2.1 Problem
@@ -146,9 +156,18 @@ never accented.
 Typography is Inter for text and JetBrains Mono for code, both self-hosted with
 `font-display: swap`.
 
-Motion is limited to a single landing-page animation: the snowflake id moving between the
-transform panes in section 3. It is wrapped in `prefers-reduced-motion: reduce` and is the only
-non-user-triggered movement on the site.
+Motion is limited to a single landing-page animation, on the snowflake id in section 3's
+transform. It is gated behind `prefers-reduced-motion: no-preference`, so it is opt-in rather
+than opt-out, and it is the only non-user-triggered movement on the site.
+
+**Amended after implementation.** This paragraph originally described the snowflake as *moving
+between* the transform panes. What was built instead fades a lavender wash out from behind the
+mark, in place, and the description is corrected to the implementation rather than the other way
+round. The three panes exist to show that the same 64 bits go in and come back out; a number
+that visibly travels from pane to pane implies the value is being carried and therefore possibly
+changed, which is the one thing this section elsewhere forbids the page from suggesting. Fading a
+gateway-coloured wash off a mark that never moves says "this arrived from the gateway" and leaves
+the digits alone. The code is correct; the spec was not.
 
 ### 2.3 Acceptance
 
@@ -170,7 +189,7 @@ solves, never shows the library working, and never mentions nine of the ten pack
 `main.css`:
 
 1. **Hero** — headline *"Every Discord bot rewrites the same tables. Persistord ships them."*,
-   a lede naming EF Core 10, the six core entities, and the two things the library refuses to do
+   a lede naming EF Core 10, the five core-graph entities, and the two things the library refuses to do
    (choose a provider, reference a Discord library), and three calls to action: Get started /
    Browse packages / View source.
 2. **The transform** — three columns reading *gateway event → `.ToMessageEntity()` → the
@@ -216,7 +235,7 @@ solves, never shows the library working, and never mentions nine of the ten pack
    `ulong` storable at all") and was corrected alongside the landing page, so the guide and the
    front page state the same thing.
 3. **Install strip** — `dotnet add package Persistord` with a copy button.
-4. **Facts row** — 3 Discord libraries · 6 core entities · 0 provider dependencies · 10 packages.
+4. **Facts row** — 3 Discord libraries · 5 core-graph entities · 0 provider dependencies · 10 packages.
 5. **Packages** — cards in three groups: *the stack* (`Persistord`, `.Core`, `.Messages`,
    `.History`), *adapters, pick at most one* (`.Adapters.DiscordNet`, `.Adapters.DSharpPlus`,
    `.Adapters.NetCord`), and *opt-in* (`.Managed`, `.Protection`, `.Testing`). The grouping

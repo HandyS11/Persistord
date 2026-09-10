@@ -763,20 +763,23 @@ docs/api/*
 ```markdown
 # API Reference
 
-Generated from the XML documentation comments in each shipped package.
+Generated from the XML documentation comments in the nine packages that ship code.
+The tenth, `Persistord` itself, is a meta package: it carries dependencies and no
+types of its own, so it contributes nothing here.
 
 ## Where to start
 
 | Namespace | Holds |
 | --- | --- |
 | `Persistord.Core` | `DiscordDbContext`, `DiscordGraphDbContext`, upsert, purge, guild-root, and model-builder extensions |
-| `Persistord.Core.Entities` | The six core entities and `ChannelType` |
+| `Persistord.Core.Entities` | The five core entities — `GuildEntity`, `ChannelEntity`, `UserEntity`, `MemberEntity`, `RoleEntity` — and the `ChannelType` enum |
 | `Persistord.Core.Conversions` | The `ulong` ↔ `long` snowflake converters |
 | `Persistord.Core.Conventions` | `SnowflakeKeyConvention`, `GuildScopeConvention` |
 | `Persistord.Core.Abstractions` | `ICreatedAt`, `IUpdatedAt`, `IGuildScoped`, `ProtectedAttribute` |
 | `Persistord.Messages.Entities` | `MessageEntity` and its embed, attachment, and reaction children |
 | `Persistord.History.Entities` | `MessageHistoryEntity`, `HistoryChangeType` |
 | `Persistord.Managed.Entities` | `ManagedResource` and the categories, channels, messages, and webhooks a bot owns |
+| `Persistord.Protection` | `ApplyProtection()`, plus the `ProtectedStringConvention`, `ProtectedStringConverter` and `ProtectionPurposes` it applies |
 | `Persistord.Adapters.*` | The `.To*Entity()` mappers, one namespace per Discord library |
 | `Persistord.Testing` | In-memory SQLite fixtures and EF Core model assertions |
 
@@ -1101,7 +1104,7 @@ layout: landing
 
 Then these sections, as inline HTML (permitted — `.markdownlint.json` sets `MD033: false`):
 
-1. **`<section class="pd-hero">`** — `<h1>` "Every Discord bot rewrites the same tables. Persistord ships them." A `<p class="pd-hero-lede">` naming EF Core 10, the six core entities, and the two refusals (it never picks your database provider, never references a Discord library). Three `<a class="pd-btn">`: "Get started" → `articles/getting-started.md`, "Browse packages" → `articles/packages.md`, "View source" → the GitHub repo. Give the first `class="pd-btn pd-btn-primary"`.
+1. **`<section class="pd-hero">`** — `<h1>` "Every Discord bot rewrites the same tables. Persistord ships them." A `<p class="pd-hero-lede">` naming EF Core 10, the five core-graph entities, and the two refusals (it never picks your database provider, never references a Discord library). Three `<a class="pd-btn">`: "Get started" → `articles/getting-started.md`, "Browse packages" → `articles/packages.md`, "View source" → the GitHub repo. Give the first `class="pd-btn pd-btn-primary"`.
 
 2. **`<section class="pd-transform">`** — three columns: `gateway event` → `.ToMessageEntity()` → `messages` row. Mark the id with `<span class="pd-snowflake">` on the left and `<span class="pd-row-id">` on the right. Per the colour rule, the left id is lavender (it came off the gateway) and the right is violet (it is in a column).
 
@@ -1122,7 +1125,7 @@ Then these sections, as inline HTML (permitted — `.markdownlint.json` sets `MD
 
 3. **`<div class="pd-install">`** — `<span class="pd-prompt">$</span><code>dotnet add package Persistord</code><button class="pd-copy" type="button">Copy</button>`. The button contract is what Task 2's `main.js` wires: a `.pd-copy` whose `parentElement` contains a `<code>`.
 
-4. **`<dl class="pd-stats">`** — 3 Discord libraries · 6 core entities · 0 provider dependencies · 10 packages.
+4. **`<dl class="pd-stats">`** — 3 Discord libraries · 5 core-graph entities · 0 provider dependencies · 10 packages.
 
 5. **`<section class="pd-section">` Packages** — `<div class="pd-packages">` with three labelled groups: *the stack* (`Persistord`, `.Core`, `.Messages`, `.History`), *adapters — pick at most one* (`.Adapters.DiscordNet`, `.Adapters.DSharpPlus`, `.Adapters.NetCord`), *opt-in* (`.Managed`, `.Protection`, `.Testing`). Every one of the ten links to its NuGet page.
 
