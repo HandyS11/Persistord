@@ -73,7 +73,7 @@ alone: they track your bot's membership lifecycle, which your persistence logic 
 ## Coverage gaps
 
 Two fields cannot be filled from DSharpPlus 4.5.x, and the mappers leave them at their
-defaults rather than guessing:
+defaults rather than guessing. A third gap is not a field but an input that throws:
 
 - **`UserEntity.GlobalName` stays `null`.** DSharpPlus 4.5.x has no equivalent of
   Discord's `global_name`. `DiscordMember.DisplayName` is not one — it is a
@@ -81,6 +81,11 @@ defaults rather than guessing:
   uncached member. If you need global names, set the property yourself.
 - **`ChannelEntity.GuildId` is `0` for DM and group-DM channels,** which carry no guild
   id. Guild channels are unaffected.
+- **`ToUserEntity()` throws on an uncached `DiscordMember`.** `DiscordMember` derives
+  from `DiscordUser` and overrides `Username` to resolve through the client's user
+  cache, so `member.ToUserEntity()` compiles and works against a live, cached client but
+  throws `NullReferenceException` for a member the client has not cached. This is a
+  DSharpPlus characteristic, not something the mapper works around.
 
 ## Channel types
 

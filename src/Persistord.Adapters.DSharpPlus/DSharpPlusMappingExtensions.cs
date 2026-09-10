@@ -63,7 +63,9 @@ public static class DSharpPlusMappingExtensions
     /// 4.5.3 exposes no equivalent of Discord's <c>global_name</c> field.
     /// <c>DiscordMember.DisplayName</c> is not one — it is a cache-resolved
     /// nickname-or-username fallback, and it throws on a member the client has not
-    /// cached.
+    /// cached. Passing a <c>DiscordMember</c> the client has not cached here throws
+    /// too, for the same underlying reason: <c>DiscordMember</c> overrides
+    /// <c>Username</c> to resolve through the client's user cache.
     /// </remarks>
     /// <param name="user">The user to map.</param>
     /// <exception cref="ArgumentNullException"><paramref name="user"/> is <see langword="null"/>.</exception>
