@@ -43,16 +43,21 @@ await db.SaveChangesAsync();
 | `ToMessageEntity()` | `RestMessage` | `MessageEntity` |
 | `ToHistoryEntity(changeType)` | `RestMessage` | `MessageHistoryEntity` |
 
-Each mapper binds the base type that both the gateway and REST variants derive from,
-so `Gateway.Guild` and `Gateway.Message` map through the same methods as their `Rest*`
-counterparts.
+NetCord splits gateway and REST variants for only two of these types: `Gateway.Guild`
+derives from `RestGuild`, and `Gateway.Message` from `RestMessage`. So `ToGuildEntity()`,
+`ToMessageEntity()` and `ToHistoryEntity()` take either variant through the one method —
+pass a gateway object straight from an event handler.
+
+The other four bind types that have no such split. `User`, `GuildUser` and `Role` are
+single unified classes, and `ToChannelEntity()` binds the `IGuildChannel` interface that
+every guild channel class implements.
 
 ## What the mappers do not touch
 
 Mappers are pure functions over data fields. They never set `IsDeleted`/`DeletedAt`,
-never set EF-generated surrogate keys (`Embed.Id`, `ReactionEntity.Id`), and never set
-child foreign keys — children are added to the parent's navigation collection and EF
-fills the keys on save. `GuildEntity.JoinedAt`/`LeftAt` are also left alone: they track
+never set EF-generated surrogate keys (`Embed.Id`, `EmbedField.Id`, `ReactionEntity.Id`),
+and never set child foreign keys — children are added to the parent's navigation
+collection and EF fills the keys on save. `GuildEntity.JoinedAt`/`LeftAt` are also left alone: they track
 your bot's membership lifecycle, which your persistence logic owns.
 
 ## Channel types

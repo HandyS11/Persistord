@@ -1,0 +1,763 @@
+/*
+ * Persistord documentation theme.
+ *
+ * Layered on top of docfx's `default` + `modern` templates. Overrides stay on
+ * Bootstrap custom properties (`--bs-*`) and documented docfx selectors so a
+ * docfx upgrade shifts as little as possible underneath us.
+ *
+ * Colour is semantic here, not decorative:
+ *   violet    - persisted things: rows, columns, keys, migrations
+ *   lavender  - Discord things: gateway payloads, snowflakes, events
+ * If it does not reach the database and did not come off the gateway, it is
+ * chrome, and chrome is never accented.
+ *
+ * The rule governs the *semantic marks* - `.pd-snowflake` and `.pd-row-id`, and
+ * the wash that fades off the snowflake. Those are the accents that carry meaning,
+ * and nothing else may join them. Three other things are nonetheless tinted, and
+ * an editor will find them, so they are listed here rather than discovered:
+ *
+ *   1. State and focus, which are not decoration and have no other channel.
+ *      The current page's TOC entry (a position marker), TOC and footer link
+ *      hover, `.pd-copy[data-copied='true']` (it worked), and the focus ring on
+ *      `.pd-btn` / `.pd-copy` / `.pd-package` / `.pd-card`. A reader who cannot
+ *      see where they are, what they are pointing at, or what has keyboard focus
+ *      has lost something the colour rule was never meant to protect.
+ *   2. Inline code. `:not(pre) > code` takes a violet wash and `--bs-code-color`
+ *      the soft violet, so `dotnet add package` and `netstandard2.0` are tinted
+ *      alongside `MessageEntity`. This one genuinely cuts across the rule and is
+ *      kept anyway: a tinted cell behind inline code is a documentation
+ *      convention readers already parse as "this is code" rather than "this is
+ *      persisted", and a wash this faint on every code span reads as texture, not
+ *      as a mark.
+ *   3. The `blockquote` rule, for the same reason as 2 - a typographic
+ *      convention, not a claim about the content.
+ *
+ * Where 2 stops reading as texture the wash is turned off rather than
+ * reinterpreted: on `.pd-hero-lede`, `.pd-note`, `.pd-package` and `.pd-card` the
+ * surrounding text is dense with language and API names, and a wash there would
+ * sit beside the `.pd-row-id` mark that does mean something and dilute it. Those
+ * opt-outs are below. Anything not on this list is chrome, and chrome stays plain.
+ *
+ * The ramp is sampled from icon.png: ink #181a27, violet #3d26b8 / #4635c2,
+ * mid-violet #8685f4, pale lavender #e0dfff. Sampled values are a starting
+ * point, not a contract - the icon's pale lavender is unusable as a dark-theme
+ * mark and is darkened in the dark block below; see the note there.
+ */
+
+@font-face {
+  font-family: 'Persistord Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/inter-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Persistord Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/inter-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Persistord Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/inter-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Persistord Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Persistord Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/jetbrains-mono-latin-700-normal.woff2') format('woff2');
+}
+
+/* ---------------------------------------------------------------- tokens -- */
+
+:root {
+  --pd-sans: 'Persistord Sans', system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --pd-mono: 'Persistord Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Mono',
+    Consolas, monospace;
+
+  --pd-radius: 10px;
+  --pd-measure: 72ch;
+}
+
+[data-bs-theme='dark'] {
+  --pd-void: #0d0f1a;
+  --pd-surface: #161a2b;
+  --pd-surface-raised: #1e2338;
+  --pd-hairline: #242a44;
+  --pd-hairline-strong: #363e63;
+  --pd-ink: #dfe1f2;
+  --pd-ink-dim: #9aa0c4;
+
+  --pd-violet: #8685f4;
+  --pd-violet-soft: #a9a8f8;
+  --pd-violet-wash: rgba(134, 133, 244, 0.13);
+
+  /* Lavender has to survive against body ink, since it marks values inside
+     running text and code. The icon's own #e0dfff cannot: it is 1.00:1 against
+     --pd-ink, luminance-identical and separated only by a trace of chroma, so a
+     mark set in it reads as ordinary body text. Darkened to the point where it
+     separates from ink (1.46:1) and from --pd-violet (1.66:1) while still
+     clearing AA as text (10.06:1 on --pd-void, 9.10:1 on --pd-surface). */
+  --pd-lavender: #b7b5ff;
+  --pd-lavender-wash: rgba(183, 181, 255, 0.13);
+
+  --bs-body-bg: var(--pd-void);
+  --bs-body-color: var(--pd-ink);
+  --bs-body-bg-rgb: 13, 15, 26;
+  --bs-body-color-rgb: 223, 225, 242;
+  --bs-emphasis-color: #fff;
+  --bs-secondary-color: var(--pd-ink-dim);
+  --bs-border-color: var(--pd-hairline);
+  --bs-heading-color: #eef0ff;
+  --bs-code-color: var(--pd-violet-soft);
+  --bs-link-color: #9c9bf7;
+  --bs-link-color-rgb: 156, 155, 247;
+  --bs-link-hover-color: #c0bffb;
+  --bs-link-hover-color-rgb: 192, 191, 251;
+}
+
+/* The light theme is designed, not derived: cool paper rather than an inverted
+   copy of the dark ramp, with the violet darkened far enough to hold contrast
+   on white. */
+[data-bs-theme='light'] {
+  --pd-void: #f6f6fb;
+  --pd-surface: #fff;
+  --pd-surface-raised: #eeeef8;
+  --pd-hairline: #dcdcec;
+  --pd-hairline-strong: #b9b9d4;
+  --pd-ink: #14162a;
+  --pd-ink-dim: #4a4d6e;
+
+  --pd-violet: #4635c2;
+  --pd-violet-soft: #3d26b8;
+  --pd-violet-wash: rgba(70, 53, 194, 0.08);
+  --pd-lavender: #7c3aed;
+  --pd-lavender-wash: rgba(124, 58, 237, 0.08);
+
+  --bs-body-bg: var(--pd-void);
+  --bs-body-color: var(--pd-ink);
+  --bs-body-bg-rgb: 246, 246, 251;
+  --bs-body-color-rgb: 20, 22, 42;
+  --bs-secondary-color: var(--pd-ink-dim);
+  --bs-border-color: var(--pd-hairline);
+  --bs-heading-color: #0b0d1c;
+  --bs-code-color: #4635c2;
+  --bs-link-color: #4635c2;
+  --bs-link-hover-color: #3d26b8;
+  --bs-link-color-rgb: 70, 53, 194;
+  --bs-link-hover-color-rgb: 61, 38, 184;
+}
+
+/* ------------------------------------------------------------------ base -- */
+
+body {
+  font-family: var(--pd-sans);
+  background-color: var(--pd-void);
+  -webkit-font-smoothing: antialiased;
+}
+
+code,
+pre,
+kbd,
+samp,
+.font-monospace {
+  font-family: var(--pd-mono);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.021em;
+}
+
+.content article h2 {
+  margin-top: 2.4rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--pd-hairline);
+}
+
+.content article > p,
+.content article > ul,
+.content article > ol {
+  max-width: var(--pd-measure);
+}
+
+/* -------------------------------------------------------------- surfaces -- */
+
+header .navbar,
+footer {
+  background-color: var(--pd-surface) !important;
+  border-color: var(--pd-hairline) !important;
+}
+
+.navbar-brand > img {
+  height: 26px;
+  width: 26px;
+  border-radius: 6px;
+}
+
+pre {
+  background-color: var(--pd-surface);
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  padding: 0.9rem 1.1rem;
+}
+
+:not(pre) > code {
+  background-color: var(--pd-violet-wash);
+  border-radius: 5px;
+  padding: 0.13em 0.36em;
+  font-size: 0.9em;
+}
+
+table.table {
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--pd-hairline);
+}
+
+table.table th {
+  color: var(--pd-ink);
+  font-weight: 600;
+}
+
+blockquote {
+  border-left: 3px solid var(--pd-violet);
+  padding-left: 1rem;
+  color: var(--pd-ink-dim);
+}
+
+/* The current page's TOC entry earns an accent: it is a position marker, not
+   decoration. So does hover, just below, for the same reason - see the header's
+   list of what is tinted and why.
+
+   docfx renders the sidebar tree from JS as `<nav class="toc"><ul><li class=" active ">
+   <a>`: a bare `<ul>` with no `.nav` on it and no class on the anchors. Selectors
+   written against Bootstrap's `.nav` shape match nothing in that tree - the handles
+   are the `<li>` and the `active` class docfx puts on the entry.
+
+   `active` is not unique, though. docfx marks the whole ancestor path, so the API
+   tree - nested since `namespaceLayout: nested` - carries it on four rows at once
+   on a page like `Persistord.Core.Entities.GuildEntity`, and only the innermost is
+   the page you are actually on. `:has()` picks that one: an active row that contains
+   no deeper active row. Note this is not the same as `:not(.expander)`. A namespace
+   page is its own expander row, carries `expander expanded active` exactly like its
+   ancestors, and is distinguishable from them only by depth - so keying on `.expander`
+   would look right on class pages and silently leave every namespace page unmarked.
+   Where `:has()` is unsupported the whole rule is dropped and the entry simply falls
+   back to docfx's own active colour, which is the safe direction to fail in. */
+.toc li > a:hover,
+.toc li > a:focus {
+  color: var(--pd-violet-soft);
+}
+
+.toc li.active:not(:has(li.active)) > a {
+  color: var(--pd-violet-soft);
+  border-left: 2px solid var(--pd-violet);
+  padding-left: 0.5rem;
+  margin-left: -0.5rem;
+}
+
+/* When that row is an expander - i.e. the current page is a namespace - the
+   disclosure chevron sits immediately left of the anchor, in an absolutely
+   positioned `.expand-stub::before`. The hanging bar above is pulled into exactly
+   that space and renders straight through the glyph, striking it out. Drop the
+   pull-in there and let the bar sit inside the anchor's own box instead, so the row
+   reads chevron, bar, label. */
+.toc li.expander.active:not(:has(li.active)) > a {
+  margin-left: 0;
+}
+
+/* ---------------------------------------------------------------- footer -- */
+
+.pd-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.4rem;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.pd-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+}
+
+.pd-footer a {
+  color: var(--pd-ink-dim);
+  text-decoration: none;
+}
+
+.pd-footer a:hover {
+  color: var(--pd-violet-soft);
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------- landing -- */
+
+/* docfx emits `<div class="content"><article data-uid="">`, so the class sits on
+   the wrapping div and `.content article` is the handle. Reversing the two into
+   a single compound selector on the article matches nothing at all.
+   `data-layout` comes from the page's `layout:` front matter.
+
+   Articles rule off every h2 to separate long prose. The landing page is not
+   prose: its sections already carry their own headings and spacing, and a rule
+   above each one would fence the page into boxes. */
+body[data-layout='landing'] .content article h2 {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* ------------------------------------------------------------------ hero -- */
+
+.pd-hero {
+  padding: 2.8rem 0 2.6rem;
+}
+
+.pd-hero h1 {
+  margin: 0;
+  max-width: 24ch;
+  font-size: clamp(2rem, 1.1rem + 3.2vw, 3.25rem);
+  line-height: 1.08;
+}
+
+.pd-hero-lede {
+  margin: 1.15rem 0 0;
+  max-width: 64ch;
+  font-size: 1.1rem;
+  line-height: 1.62;
+  color: var(--pd-ink-dim);
+}
+
+.pd-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1.9rem;
+}
+
+/* Primary is distinguished by weight, not by hue: the accents are reserved for
+   things that reach the database or came off the gateway, and a button is
+   neither.
+
+   The boundary is the whole of a secondary button's affordance, so WCAG 1.4.11
+   asks it for 3:1 against what sits either side of it. `--pd-hairline-strong` is
+   a divider tone and misses on all four counts - 1.67:1 against the button's own
+   fill and 1.84:1 against the page in dark, 1.92:1 and 1.78:1 in light. The
+   neutral ramp has nothing between a hairline and dimmed ink, so `--pd-ink-dim`
+   is the nearest existing token that clears the bar and it clears it wide:
+   6.74:1 on the fill and 7.45:1 on the page in dark, 8.15:1 and 7.56:1 in light.
+   Overshooting is the safe direction for a boundary. Hover then has to step past
+   it, which puts it on `--pd-ink` (11.97:1 on the raised fill dark, 15.47:1
+   light) - still a step up the same neutral ramp, still no hue. */
+.pd-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.15rem;
+  border: 1px solid var(--pd-ink-dim);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-surface);
+  color: var(--pd-ink);
+  font-size: 0.96rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pd-btn:hover,
+.pd-btn:focus-visible {
+  border-color: var(--pd-ink);
+  background-color: var(--pd-surface-raised);
+  color: var(--pd-ink);
+  text-decoration: none;
+}
+
+.pd-btn-primary {
+  border-color: var(--pd-ink);
+  background-color: var(--pd-ink);
+  color: var(--pd-void);
+}
+
+/* Hover has to brighten, like every other surface here. `--pd-ink` is already
+   the end of the ink ramp, so the step past it is the heading colour this file
+   sets in both theme blocks: #eef0ff dark, #0b0d1c light. 14.71:1 -> 16.85:1
+   dark and 16.55:1 -> 17.91:1 light. */
+.pd-btn-primary:hover,
+.pd-btn-primary:focus-visible {
+  border-color: var(--bs-heading-color);
+  background-color: var(--bs-heading-color);
+  color: var(--pd-void);
+}
+
+/* ------------------------------------------------------------- transform -- */
+
+.pd-panes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+/* One column below the point where three panes stop fitting: the three steps
+   read top-to-bottom just as well as left-to-right, and two columns would break
+   the sequence in half. */
+@media (max-width: 900px) {
+  .pd-panes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A <figure>, so the bar below can caption the payload rather than float beside
+   it; `margin: 0` drops the browser default that comes with the element. */
+.pd-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-surface);
+  overflow: hidden;
+}
+
+.pd-pane-bar {
+  display: block;
+  padding: 0.5rem 0.9rem;
+  border-bottom: 1px solid var(--pd-hairline);
+  background-color: var(--pd-surface-raised);
+  color: var(--pd-ink-dim);
+  font-family: var(--pd-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Pane bodies sit one step down from body ink, and it is the two `.pd-snowflake`
+   marks - and only those two - that come out brighter than the text around them:
+   1.35:1 in dark, 1.43:1 in light. Neither `.pd-row-id` does. In dark it runs the
+   other way, the mark reading 1.23:1 *darker* than the pane text; in light it is
+   1.01:1, luminance-identical. So a row id is never separated by lightness: what
+   separates it is chroma plus the wash cell it sits in, and it stays legible on
+   that cell at 4.55:1 dark and 7.23:1 light. */
+.pd-pane pre {
+  margin: 0;
+  padding: 0.85rem 0.9rem;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  color: var(--pd-ink-dim);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+
+/* The id came off the gateway, so it is lavender on the left; by the third pane
+   it is a value in a column, so it is violet and sits in a cell of wash. Hue is
+   the whole signal, so neither mark is bolded - weight would make them read as
+   emphasis rather than as two different kinds of thing. */
+.pd-snowflake {
+  border-radius: 4px;
+  padding: 0 0.18em;
+  color: var(--pd-lavender);
+}
+
+.pd-row-id {
+  border-radius: 4px;
+  padding: 0 0.18em;
+  background-color: var(--pd-violet-wash);
+  color: var(--pd-violet);
+}
+
+/* The site's entire motion budget: a lavender wash fading out from behind the
+   snowflake, in place. Nothing translates - a mark that travelled between the
+   panes would imply the value is being carried and changed, which is the one
+   thing the transform must not suggest. Everything else on the site is static.
+   The wash is lavender, not violet - it is on the gateway side of the transform
+   and has not reached a column yet. */
+@media (prefers-reduced-motion: no-preference) {
+  .pd-transform .pd-snowflake {
+    animation: pd-carry 900ms ease-out both;
+  }
+}
+
+@keyframes pd-carry {
+  from {
+    background-color: var(--pd-lavender-wash);
+  }
+
+  to {
+    background-color: transparent;
+  }
+}
+
+/* --------------------------------------------------------------- install -- */
+
+.pd-install {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 34rem;
+  margin: 0 0 2.6rem;
+  padding: 0.5rem 0.6rem 0.5rem 1rem;
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-surface);
+}
+
+.pd-prompt {
+  color: var(--pd-ink-dim);
+  font-family: var(--pd-mono);
+  user-select: none;
+}
+
+/* Undoes the global inline-code wash: this is a command to run, not a value
+   that reaches the database. */
+.pd-install > code {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  background-color: transparent;
+  color: var(--pd-ink);
+  font-size: 0.94rem;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+/* Same 1.4.11 boundary rule as `.pd-btn` above, and the same fix: on
+   `--pd-hairline-strong` this button measured 1.50:1 against its own fill and
+   1.67:1 against the install strip in dark, 1.66:1 and 1.92:1 in light - a
+   control whose only edge is invisible. `--pd-ink-dim` takes it to 6.06:1 and
+   6.74:1 dark, 7.07:1 and 8.15:1 light. Hover then steps to `--pd-ink`, as it
+   does on `.pd-btn`, so the state still moves once the base has taken the tone
+   hover used to occupy. */
+.pd-copy {
+  flex: 0 0 auto;
+  padding: 0.34rem 0.75rem;
+  border: 1px solid var(--pd-ink-dim);
+  border-radius: 6px;
+  background-color: var(--pd-surface-raised);
+  color: var(--pd-ink-dim);
+  font-family: var(--pd-sans);
+  font-size: 0.84rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pd-copy:hover {
+  border-color: var(--pd-ink);
+  color: var(--pd-ink);
+}
+
+/* `main.js` sets `data-copied` on the button, so the accent appears only once
+   something has actually been written to the clipboard. */
+.pd-copy[data-copied='true'] {
+  color: var(--pd-violet-soft);
+  border-color: var(--pd-violet);
+}
+
+/* ----------------------------------------------------------------- stats -- */
+
+/* The 1px grid gap over a hairline background draws the dividers, so the cells
+   need no borders of their own. */
+.pd-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 1px;
+  margin: 0 0 3rem;
+  padding: 0;
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-hairline);
+  overflow: hidden;
+}
+
+.pd-stat {
+  padding: 1.05rem 1.2rem;
+  background-color: var(--pd-surface);
+}
+
+.pd-stat dt {
+  color: var(--pd-ink);
+  font-family: var(--pd-mono);
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pd-stat dd {
+  margin: 0.4rem 0 0;
+  color: var(--pd-ink-dim);
+  font-size: 0.86rem;
+}
+
+/* -------------------------------------------------------------- sections -- */
+
+.pd-section {
+  margin: 0 0 3.2rem;
+}
+
+.pd-section > h2 {
+  margin: 0 0 0.55rem;
+  font-size: 1.5rem;
+}
+
+.pd-section > p {
+  margin: 0 0 1.5rem;
+  max-width: 74ch;
+  color: var(--pd-ink-dim);
+}
+
+.pd-section > .pd-note {
+  margin: 1.15rem 0 0;
+  max-width: 78ch;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--pd-ink-dim);
+}
+
+.pd-section > .pd-note strong {
+  color: var(--pd-ink);
+}
+
+/* -------------------------------------------------------------- packages -- */
+
+.pd-packages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.5rem;
+}
+
+.pd-package-group > h3 {
+  margin: 0 0 0.65rem;
+  color: var(--pd-ink-dim);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.pd-package-group > ul {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ------------------------------------------------------- packages, cards -- */
+
+.pd-package,
+.pd-card {
+  display: block;
+  position: relative;
+  height: 100%;
+  padding: 0.75rem 0.95rem;
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-surface);
+  color: var(--pd-ink);
+  text-decoration: none;
+}
+
+.pd-package:hover,
+.pd-package:focus-visible,
+.pd-card:hover,
+.pd-card:focus-visible {
+  border-color: var(--pd-hairline-strong);
+  background-color: var(--pd-surface-raised);
+  color: var(--pd-ink);
+  text-decoration: none;
+}
+
+.pd-package > code,
+.pd-card > strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Keeps the longest package name clear of the pinned off-site glyph. */
+.pd-package.external > code {
+  padding-right: 1.3rem;
+}
+
+/* The global inline-code wash is violet, which on this page means "this reaches
+   the database". Package names, capability titles, the lede and the transform's
+   annotation all name language and API chrome - `ConfigureConventions`,
+   `unchecked` - so a wash on them would spend the accent on nothing, directly
+   beneath the one `.pd-row-id` mark that is supposed to mean it. */
+.pd-hero-lede code,
+.pd-note code,
+.pd-package code,
+.pd-card code {
+  padding: 0;
+  background-color: transparent;
+  color: inherit;
+  font-size: 0.94em;
+}
+
+/* docfx marks off-site links with a trailing glyph. The description above it is
+   a block, so left alone the glyph claims a line of its own at the foot of the
+   card; pin it to the corner instead. Only the package links leave the site. */
+.pd-package.external::after {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.85rem;
+  margin: 0;
+  color: var(--pd-ink-dim);
+}
+
+.pd-package > span,
+.pd-card > span {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--pd-ink-dim);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.pd-cards,
+.pd-next {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
+  gap: 0.8rem;
+}
+
+/* Focus is state, not decoration — the same exception the active TOC entry
+   earns above. */
+.pd-btn:focus-visible,
+.pd-copy:focus-visible,
+.pd-package:focus-visible,
+.pd-card:focus-visible {
+  outline: 2px solid var(--pd-violet);
+  outline-offset: 2px;
+}

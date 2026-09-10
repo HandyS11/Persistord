@@ -56,7 +56,7 @@ null source argument.
 
 ## Versioning
 
-This package declares a Discord.Net version range of `[3.20.0, 4.0.0)`. You may
+This package declares a Discord.Net version range of `[3.20.1, 4.0.0)`. You may
 upgrade Discord.Net freely within its current major version; a breaking `4.0` is
 held back. A new adapter release follows each Discord.Net breaking major.
 
@@ -64,3 +64,4 @@ held back. A new adapter release follows each Discord.Net breaking major.
 
 - [Messages](messages.md) — `MessageEntity` shape and embed storage decisions.
 - [History](history.md) — `MessageHistoryEntity` and `HistoryChangeType`.
+- [Choosing an Adapter](adapters.md) — compares all three adapters side by side.

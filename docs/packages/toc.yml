@@ -1,0 +1,25 @@
+- name: 📦 The stack
+- name: Persistord
+  href: ../../src/Persistord/README.md
+- name: Persistord.Core
+  href: ../../src/Persistord.Core/README.md
+- name: Persistord.Messages
+  href: ../../src/Persistord.Messages/README.md
+- name: Persistord.History
+  href: ../../src/Persistord.History/README.md
+
+- name: 🔌 Adapters
+- name: Persistord.Adapters.DiscordNet
+  href: ../../src/Persistord.Adapters.DiscordNet/README.md
+- name: Persistord.Adapters.DSharpPlus
+  href: ../../src/Persistord.Adapters.DSharpPlus/README.md
+- name: Persistord.Adapters.NetCord
+  href: ../../src/Persistord.Adapters.NetCord/README.md
+
+- name: 🧩 Opt-in
+- name: Persistord.Managed
+  href: ../../src/Persistord.Managed/README.md
+- name: Persistord.Protection
+  href: ../../src/Persistord.Protection/README.md
+- name: Persistord.Testing
+  href: ../../src/Persistord.Testing/README.md

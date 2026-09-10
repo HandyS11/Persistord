@@ -36,9 +36,11 @@ properties in your model — including those in module entities — are handled.
 
 ### Keys
 
-The conversion above covers *values*: it makes a `ulong` storable at all. It says
-nothing about whether EF should generate that value or expect the caller to supply
-it. A separate `SnowflakeKeyConvention`, also registered by `DiscordDbContext`,
+The conversion above covers *values*: it decides how a `ulong` is stored — a
+signed `bigint` rather than the 20-digit fixed-point column (`numeric(20,0)` on
+Npgsql, `decimal(20,0)` on SQL Server) these providers otherwise fall back to. It
+says nothing about whether EF should generate that value or expect the caller to
+supply it. A separate `SnowflakeKeyConvention`, also registered by `DiscordDbContext`,
 handles that half: it marks every `ulong` or `ulong?` property that is part of a
 primary key `ValueGeneratedNever()`, so EF never treats a snowflake key as a
 store-generated identity column. This runs for the skeleton entities and for the

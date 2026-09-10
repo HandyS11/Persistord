@@ -206,6 +206,8 @@ PublishScripts/
 **/[Pp]ackages/*
 # except build/, which is used as an MSBuild target.
 !**/[Pp]ackages/build/
+# except docs/packages/, the hand-written DocFX TOC for the Packages tab.
+!docs/packages/*
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files
@@ -413,7 +415,8 @@ appsettings.*.json
 
 # DocFX generated output
 docs/_site/
-docs/api/
+docs/api/*
+!docs/api/index.md
 docs/obj/
 
 # Stryker mutation testing output
