@@ -511,10 +511,17 @@ body[data-layout='landing'] .content article h2 {
   overflow-x: auto;
 }
 
+/* Same 1.4.11 boundary rule as `.pd-btn` above, and the same fix: on
+   `--pd-hairline-strong` this button measured 1.50:1 against its own fill and
+   1.67:1 against the install strip in dark, 1.66:1 and 1.92:1 in light - a
+   control whose only edge is invisible. `--pd-ink-dim` takes it to 6.06:1 and
+   6.74:1 dark, 7.07:1 and 8.15:1 light. Hover then steps to `--pd-ink`, as it
+   does on `.pd-btn`, so the state still moves once the base has taken the tone
+   hover used to occupy. */
 .pd-copy {
   flex: 0 0 auto;
   padding: 0.34rem 0.75rem;
-  border: 1px solid var(--pd-hairline-strong);
+  border: 1px solid var(--pd-ink-dim);
   border-radius: 6px;
   background-color: var(--pd-surface-raised);
   color: var(--pd-ink-dim);
@@ -526,7 +533,7 @@ body[data-layout='landing'] .content article h2 {
 }
 
 .pd-copy:hover {
-  border-color: var(--pd-ink-dim);
+  border-color: var(--pd-ink);
   color: var(--pd-ink);
 }
 
