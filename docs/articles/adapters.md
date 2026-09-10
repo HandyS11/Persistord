@@ -31,7 +31,7 @@ that follow from it:
 | | Discord.Net | DSharpPlus | NetCord |
 | --- | --- | --- | --- |
 | Binds to | Interfaces (`IGuild`, `IMessage`, …) | Concrete classes (`DiscordGuild`, …) | Mixed: `Rest*` bases, unified classes, `IGuildChannel` |
-| Gateway *and* REST | Yes, via interfaces | Single class per entity | Yes, via base types |
+| Gateway *and* REST | Yes, via interfaces | Single class per entity | Guild and message only, via `Rest*` bases; the rest are unified types |
 | Extra parameters | none | `ToMemberEntity(guildId)`, `ToRoleEntity(guildId)` | none |
 | Version range | `[3.20.1, 4.0.0)` | `[4.5.3, 5.0.0)` | `[1.0.0-beta.19, 2.0.0)` |
 | Transitive weight | — | `Newtonsoft.Json` (netstandard2.0) | prerelease-only |
