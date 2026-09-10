@@ -77,7 +77,6 @@
   --pd-hairline-strong: #363e63;
   --pd-ink: #dfe1f2;
   --pd-ink-dim: #9aa0c4;
-  --pd-mute: #6f769b;
 
   --pd-violet: #8685f4;
   --pd-violet-soft: #a9a8f8;
@@ -118,7 +117,6 @@
   --pd-hairline-strong: #b9b9d4;
   --pd-ink: #14162a;
   --pd-ink-dim: #4a4d6e;
-  --pd-mute: #6d7093;
 
   --pd-violet: #4635c2;
   --pd-violet-soft: #3d26b8;
@@ -395,8 +393,11 @@ body[data-layout='landing'] .content article h2 {
   text-transform: uppercase;
 }
 
-/* Pane bodies sit one step down from body ink so the two marked ids read as
-   lifted out of their surroundings rather than merely coloured in. */
+/* Pane bodies sit one step down from body ink, so three of the four marks are
+   brighter than the text around them: 1.35:1 and 1.23:1 in dark, 1.43:1 for the
+   light snowflake. The fourth, `.pd-row-id` in light mode, is 1.01:1 against
+   this text - luminance-identical, so what separates it there is hue plus the
+   wash cell it sits in, and it stays legible on that cell at 7.23:1. */
 .pd-pane pre {
   margin: 0;
   padding: 0.85rem 0.9rem;
