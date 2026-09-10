@@ -209,12 +209,39 @@ has no landing page, and `docfx.json` points at a file that does not exist.
 
 ### 4.2 Change
 
-All three adapters expose an identical seven-method surface — `ToGuildEntity`,
-`ToChannelEntity`, `ToUserEntity`, `ToMemberEntity`, `ToRoleEntity`, `ToMessageEntity`, and
-`ToHistoryEntity(changeType)`. The existing `articles/discord-net-adapter.md` already documents
-that surface well; it is the **template** the two new guides mirror, not a page needing repair.
-Its structure — install, usage, mapper table, what mappers copy and leave alone, versioning,
-see-also — is reused verbatim as a skeleton.
+All three adapters expose the **same seven methods** — `ToGuildEntity`, `ToChannelEntity`,
+`ToUserEntity`, `ToMemberEntity`, `ToRoleEntity`, `ToMessageEntity`, and
+`ToHistoryEntity(changeType)` — but their signatures are **not** identical:
+
+```csharp
+// Discord.Net and NetCord
+MemberEntity ToMemberEntity(this IGuildUser member)
+RoleEntity   ToRoleEntity(this IRole role)
+
+// DSharpPlus — the guild id must be passed in
+MemberEntity ToMemberEntity(this DiscordMember member, ulong guildId)
+RoleEntity   ToRoleEntity(this DiscordRole role, ulong guildId)
+```
+
+`DiscordMember` and `DiscordRole` do not expose their guild id (it is an internal field, and
+`DiscordMember.Guild` throws for an uncached member), while `MemberEntity.GuildId` is half of a
+composite primary key. The caller supplies it.
+
+The existing `articles/discord-net-adapter.md` already documents its surface well; it is the
+**template** the two new guides mirror, not a page needing repair. Its structure — install,
+usage, mapper table, what mappers copy and leave alone, versioning, see-also — is reused as a
+skeleton, extended per adapter with the channel-type collapsing table and coverage gaps that
+the DSharpPlus and NetCord READMEs already document.
+
+`adapters.md` must state the differences that are real and avoid inventing a capability
+ranking. The genuine axes of difference are: the two DSharpPlus signatures above; source types
+(interface-based for Discord.Net, concrete classes for DSharpPlus, base gateway/REST types for
+NetCord); coverage gaps (DSharpPlus leaves `UserEntity.GlobalName` null and yields
+`ChannelEntity.GuildId == 0` for DM channels; `ToUserEntity()` throws on an uncached
+`DiscordMember`); how each collapses its channel kinds onto Persistord's four-member
+`ChannelType`; and dependency consequences (DSharpPlus 4.5.x targets `netstandard2.0` and pulls
+in `Newtonsoft.Json` transitively; NetCord is prerelease-only). No adapter maps an entity the
+others cannot.
 
 New files:
 
@@ -226,9 +253,6 @@ New files:
 | `articles/packages.md` | Package matrix; a Mermaid dependency graph; an install decision guide; why `.Managed`, `.Protection`, and `.Testing` are excluded from the meta package |
 | `api/index.md` | API reference landing page: the namespace map and where to start |
 | `license.md` | MIT licence text, linked from the footer |
-
-Because the three adapter surfaces are identical, `adapters.md` compares **source types and
-gotchas**, not capabilities. It must not imply one adapter can do more than another.
 
 Content for the two new adapter guides is derived from the existing package READMEs
 (`src/Persistord.Adapters.DSharpPlus/README.md`, `src/Persistord.Adapters.NetCord/README.md`)
@@ -301,9 +325,18 @@ as a warning and exits zero, so a broken navigation tree ships green.
 
 DocFX's `--warningsAsErrors` flag exists but is global — there is no per-category form. The
 build on `develop` at `f446685` is **not** warning-clean: it emits two `InvalidCref` warnings
-for `"O:DbContext.SaveChanges"` and `"O:DbContext.SaveChangesAsync"` in
-`src/Persistord.Core/Interception/TimestampInterceptor.cs`. Until those are resolved the flag
-cannot serve as a gate, because it would fail on pre-existing noise unrelated to this work.
+for `"O:DbContext.SaveChanges"` and `"O:DbContext.SaveChangesAsync"`, attributed to
+`SavingChanges` and `SavingChangesAsync` in
+`src/Persistord.Core/Interception/TimestampInterceptor.cs` (lines 31 and 41). Until those are
+resolved the flag cannot serve as a gate, because it would fail on pre-existing noise unrelated
+to this work.
+
+**The invalid crefs are not ours.** Both members carry `/// <inheritdoc />`, and the offending
+cref lives in EF Core 10.0.0's own shipped XML documentation — `ISaveChangesInterceptor.SavingChanges`
+contains `<see cref="O:DbContext.SaveChanges" />`, which DocFX cannot resolve. Our
+`<inheritdoc />` pulls it in through the inheritance chain. There is therefore no cref in this
+repository to correct: the only fix available to us is to stop inheriting the broken
+documentation.
 
 The same build logs `No files are found with glob pattern images/**` — a third dangling
 reference in `docfx.json`, alongside the missing `api/index.md` from section 4.
@@ -312,9 +345,16 @@ reference in `docfx.json`, alongside the missing `api/index.md` from section 4.
 
 Verification for this work is:
 
-0. The two `InvalidCref` values are corrected so the baseline build is warning-clean, and the
-   dead `images/**` resource glob is removed from `docfx.json` — `icon.png` arrives through the
-   `src: ".."` resource entry added in section 1 instead. Both are prerequisites for step 1.
+0. The `/// <inheritdoc />` on `TimestampInterceptor.SavingChanges` and `SavingChangesAsync` is
+   replaced with explicit `<summary>`, `<param>`, and `<returns>` documentation, so DocFX never
+   walks into EF Core's unresolvable cref. This improves the published API reference as a side
+   effect: those two members currently render with EF Core's generic interceptor prose rather
+   than anything about stamping timestamps. The dead `images/**` resource glob is also removed
+   from `docfx.json` — `icon.png` arrives through the `src: ".."` resource entry added in
+   section 1 instead. Both are prerequisites for step 1.
+
+   Note for future maintainers: any `<inheritdoc />` placed on an EF Core member whose
+   documentation uses an `O:` (overloads) cref will reintroduce this warning and break the gate.
 1. `dotnet docfx docs/docfx.json --warningsAsErrors` exits zero, so a wrong `../../` depth in
    section 5 fails the check instead of shipping.
 2. The built site served locally and driven with Playwright to screenshot, in **both** light and
