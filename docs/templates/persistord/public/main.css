@@ -113,7 +113,7 @@
   --pd-violet: #4635c2;
   --pd-violet-soft: #3d26b8;
   --pd-violet-wash: rgba(70, 53, 194, 0.08);
-  --pd-lavender: #3d26b8;
+  --pd-lavender: #7c3aed;
 
   --bs-body-bg: var(--pd-void);
   --bs-body-color: var(--pd-ink);
@@ -141,7 +141,7 @@ code,
 pre,
 kbd,
 samp,
-.text-monospace {
+.font-monospace {
   font-family: var(--pd-mono);
 }
 
@@ -160,15 +160,15 @@ h1 {
   letter-spacing: -0.021em;
 }
 
-article.content h2 {
+.content article h2 {
   margin-top: 2.4rem;
   padding-top: 1.6rem;
   border-top: 1px solid var(--pd-hairline);
 }
 
-article.content > p,
-article.content > ul,
-article.content > ol {
+.content article > p,
+.content article > ul,
+.content article > ol {
   max-width: var(--pd-measure);
 }
 
