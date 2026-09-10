@@ -44,10 +44,11 @@ so `Gateway.Guild` and `Gateway.Message` map through the same methods as their
 ## What mappers copy (and what they leave alone)
 
 Mappers are pure functions over data fields. They never set `IsDeleted`/`DeletedAt`,
-never set EF-generated surrogate keys (`Embed.Id`, `ReactionEntity.Id`), and never set
-child foreign keys — children are added to the parent's navigation collection and EF
-fills the keys on save. `GuildEntity.JoinedAt`/`LeftAt` are also left alone: they
-track your bot's membership lifecycle, which your persistence logic owns.
+never set EF-generated surrogate keys (`Embed.Id`, `EmbedField.Id`, `ReactionEntity.Id`),
+and never set child foreign keys — children are added to the parent's navigation
+collection and EF fills the keys on save. `GuildEntity.JoinedAt`/`LeftAt` are also
+left alone: they track your bot's membership lifecycle, which your persistence
+logic owns.
 
 ## Channel types
 

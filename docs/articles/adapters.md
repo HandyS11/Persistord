@@ -54,9 +54,12 @@ and `DiscordMember.Guild` resolves through the client's guild cache and throws f
 uncached member. `MemberEntity.GuildId` is half of a composite primary key and
 `RoleEntity.GuildId` is likewise required, so DSharpPlus's mappers ask the caller for
 the id it already has at the point of mapping, rather than trying to recover it from
-an object that can't reliably supply it. Discord.Net's `IGuildUser`/`IRole` and
-NetCord's `GuildUser`/`Role` both carry their guild id directly, so their
-`ToMemberEntity()`/`ToRoleEntity()` need no extra parameter.
+an object that can't reliably supply it. The other two adapters read the id off the
+object the caller already holds: Discord.Net's `IGuildUser` and NetCord's `GuildUser`
+and `Role` expose a `GuildId` property outright, and Discord.Net's `IRole` is one hop
+away — `role.Guild.Id`, through the parent guild the role was fetched with, not a
+client cache the mapper has to query. Either way nothing extra has to be passed in, so
+their `ToMemberEntity()`/`ToRoleEntity()` keep their single-argument shape.
 
 ### Channel types
 

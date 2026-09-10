@@ -28,7 +28,17 @@ function selectContents(node) {
   return true
 }
 
-/** Copies the adjacent command, then reports the result on the button itself. */
+/**
+ * Copies the adjacent command, then reports the result on the button itself.
+ *
+ * The button carries `aria-live="polite"` (set in the markup, so the contract holds
+ * even if this module never loads), which makes every message below - the success,
+ * the shortcut prompt, and the manual-selection fallback - reach a screen reader
+ * instead of only the sighted reader. It deliberately does NOT carry `role="status"`:
+ * an explicit role replaces the implicit one, so `<button role="status">` is exposed
+ * as a status and stops being announced as a button at all. `aria-live` on its own
+ * adds the announcement and leaves the role intact.
+ */
 function wireCopyButtons() {
   for (const button of document.querySelectorAll('.pd-copy')) {
     const code = button.parentElement?.querySelector('code')

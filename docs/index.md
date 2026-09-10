@@ -44,7 +44,7 @@ Content    TEXT     'gg'</pre>
   <p class="pd-note"><strong>PostgreSQL and SQL Server have no native unsigned 64-bit type, so Persistord converts every snowflake into a signed <code>BIGINT</code>. The same 64 bits go in and come back out — for every <code>ulong</code>, not just the ones that fit.</strong> Without the conversion the model still builds; the snowflake just lands in a 20-digit fixed-point column — <code>numeric(20,0)</code> on PostgreSQL, <code>decimal(20,0)</code> on SQL Server — instead of a 64-bit integer one. <code>DiscordDbContext</code> registers <code>UlongToLongConverter</code> in <code>ConfigureConventions</code>, so every <code>ulong</code> and <code>ulong?</code> in your model converts globally and you never annotate an id. The cast is <code>unchecked</code>, so it is bit-faithful across all 2<sup>64</sup> values — including the ones past 2<sup>63</sup> that a Discord snowflake will not reach until roughly 2084. <a href="articles/snowflake-conversion.md">How the conversion works</a></p>
 </section>
 
-<div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord</code><button class="pd-copy" type="button">Copy</button></div>
+<div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord</code><button class="pd-copy" type="button" aria-live="polite">Copy</button></div>
 
 <dl class="pd-stats">
   <div class="pd-stat"><dt>3</dt><dd>Discord libraries adapted</dd></div>
@@ -111,6 +111,6 @@ Content    TEXT     'gg'</pre>
     <a class="pd-card" href="articles/providers.md"><strong>Providers</strong><span>What changes on PostgreSQL, SQL Server and SQLite — and what does not.</span></a>
     <a class="pd-card" href="articles/recipes.md"><strong>Recipes</strong><span>Short answers to the questions that come up once the model is wired.</span></a>
     <a class="pd-card" href="articles/troubleshooting.md"><strong>Troubleshooting</strong><span>The errors you are most likely to hit, and what each one actually means.</span></a>
-    <a class="pd-card" href="api/index.md"><strong>API Reference</strong><span>Generated from the XML doc comments across all ten packages.</span></a>
+    <a class="pd-card" href="api/index.md"><strong>API Reference</strong><span>Generated from the XML doc comments across the nine packages that ship code.</span></a>
   </div>
 </section>

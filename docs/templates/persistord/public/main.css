@@ -11,6 +11,19 @@
  * If it does not reach the database and did not come off the gateway, it is
  * chrome, and chrome is never accented.
  *
+ * Inline code is the one deliberate exception. `:not(pre) > code` gets a violet
+ * wash on every article, so `dotnet add package` and `netstandard2.0` are washed
+ * alongside `MessageEntity`, and by the rule above they should not be. It is kept
+ * because a tinted cell behind inline code is a documentation convention readers
+ * already parse as "this is code", not as "this is persisted" - the rule is about
+ * where the eye is *pulled*, and a wash this faint on every code span reads as
+ * texture rather than as a mark. Where that stops being true the wash is turned
+ * off rather than reinterpreted: on `.pd-hero-lede`, `.pd-note`, `.pd-package`
+ * and `.pd-card` the surrounding text is dense with language and API names, and a
+ * wash on those would sit next to the `.pd-row-id` mark that does mean something
+ * and dilute it. Those opt-outs are below; the colour rule itself is not softened
+ * for anything else.
+ *
  * The ramp is sampled from icon.png: ink #181a27, violet #3d26b8 / #4635c2,
  * mid-violet #8685f4, pale lavender #e0dfff. Sampled values are a starting
  * point, not a contract - the icon's pale lavender is unusable as a dark-theme
@@ -226,13 +239,18 @@ blockquote {
 }
 
 /* The active TOC entry is the one thing in the sidebar that earns an accent:
-   it is a position marker, not decoration. */
-.toc .nav > li > a:hover,
-.toc .nav > li > a:focus {
+   it is a position marker, not decoration.
+
+   docfx renders the sidebar tree from JS as `<nav class="toc"><ul><li class=" active ">
+   <a>`: a bare `<ul>` with no `.nav` on it and no class on the anchors. Selectors
+   written against Bootstrap's `.nav` shape match nothing in that tree - the handles
+   are the `<li>` and the `active` class docfx puts on the current page's entry. */
+.toc li > a:hover,
+.toc li > a:focus {
   color: var(--pd-violet-soft);
 }
 
-.toc .nav > li.active > a {
+.toc li.active > a {
   color: var(--pd-violet-soft);
   border-left: 2px solid var(--pd-violet);
   padding-left: 0.5rem;
@@ -312,12 +330,23 @@ body[data-layout='landing'] .content article h2 {
 
 /* Primary is distinguished by weight, not by hue: the accents are reserved for
    things that reach the database or came off the gateway, and a button is
-   neither. */
+   neither.
+
+   The boundary is the whole of a secondary button's affordance, so WCAG 1.4.11
+   asks it for 3:1 against what sits either side of it. `--pd-hairline-strong` is
+   a divider tone and misses on all four counts - 1.67:1 against the button's own
+   fill and 1.84:1 against the page in dark, 1.92:1 and 1.78:1 in light. The
+   neutral ramp has nothing between a hairline and dimmed ink, so `--pd-ink-dim`
+   is the nearest existing token that clears the bar and it clears it wide:
+   6.74:1 on the fill and 7.45:1 on the page in dark, 8.15:1 and 7.56:1 in light.
+   Overshooting is the safe direction for a boundary. Hover then has to step past
+   it, which puts it on `--pd-ink` (11.97:1 on the raised fill dark, 15.47:1
+   light) - still a step up the same neutral ramp, still no hue. */
 .pd-btn {
   display: inline-flex;
   align-items: center;
   padding: 0.6rem 1.15rem;
-  border: 1px solid var(--pd-hairline-strong);
+  border: 1px solid var(--pd-ink-dim);
   border-radius: var(--pd-radius);
   background-color: var(--pd-surface);
   color: var(--pd-ink);
@@ -328,7 +357,7 @@ body[data-layout='landing'] .content article h2 {
 
 .pd-btn:hover,
 .pd-btn:focus-visible {
-  border-color: var(--pd-ink-dim);
+  border-color: var(--pd-ink);
   background-color: var(--pd-surface-raised);
   color: var(--pd-ink);
   text-decoration: none;
@@ -393,11 +422,13 @@ body[data-layout='landing'] .content article h2 {
   text-transform: uppercase;
 }
 
-/* Pane bodies sit one step down from body ink, so three of the four marks are
-   brighter than the text around them: 1.35:1 and 1.23:1 in dark, 1.43:1 for the
-   light snowflake. The fourth, `.pd-row-id` in light mode, is 1.01:1 against
-   this text - luminance-identical, so what separates it there is hue plus the
-   wash cell it sits in, and it stays legible on that cell at 7.23:1. */
+/* Pane bodies sit one step down from body ink, and it is the two `.pd-snowflake`
+   marks - and only those two - that come out brighter than the text around them:
+   1.35:1 in dark, 1.43:1 in light. Neither `.pd-row-id` does. In dark it runs the
+   other way, the mark reading 1.23:1 *darker* than the pane text; in light it is
+   1.01:1, luminance-identical. So a row id is never separated by lightness: what
+   separates it is chroma plus the wash cell it sits in, and it stays legible on
+   that cell at 4.55:1 dark and 7.23:1 light. */
 .pd-pane pre {
   margin: 0;
   padding: 0.85rem 0.9rem;

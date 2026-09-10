@@ -42,12 +42,18 @@
       "_appTitle": "Persistord",
       "_appLogoPath": "icon.png",
       "_appFaviconPath": "icon.png",
-      "_appFooter": "<div class=\"pd-footer\"><span>Persistord &mdash; the EF Core model your Discord bot keeps rewriting</span><nav><a href=\"https://github.com/HandyS11/Persistord\">GitHub</a><a href=\"https://www.nuget.org/packages/Persistord\">NuGet</a><a href=\"https://github.com/HandyS11/Persistord/releases\">Releases</a><a href=\"https://github.com/HandyS11/Persistord/blob/develop/LICENSE\">MIT licence</a></nav></div>",
+      "_appFooter": "<div class=\"pd-footer\"><span>Persistord &mdash; the EF Core model your Discord bot keeps rewriting</span><nav><a href=\"https://github.com/HandyS11/Persistord\">GitHub</a><a href=\"https://www.nuget.org/packages/Persistord\">NuGet</a><a href=\"https://github.com/HandyS11/Persistord/releases\">Releases</a><a href=\"license.html\">MIT licence</a></nav></div>",
       "_enableSearch": true,
       "pdf": false,
       "_gitContribute": {
         "repo": "https://github.com/HandyS11/Persistord",
         "branch": "develop"
+      }
+    },
+    "fileMetadata": {
+      "_appFooter": {
+        "{*/*,../samples/README.md}": "<div class=\"pd-footer\"><span>Persistord &mdash; the EF Core model your Discord bot keeps rewriting</span><nav><a href=\"https://github.com/HandyS11/Persistord\">GitHub</a><a href=\"https://www.nuget.org/packages/Persistord\">NuGet</a><a href=\"https://github.com/HandyS11/Persistord/releases\">Releases</a><a href=\"../license.html\">MIT licence</a></nav></div>",
+        "{*/*/*,../src/*/README.md}": "<div class=\"pd-footer\"><span>Persistord &mdash; the EF Core model your Discord bot keeps rewriting</span><nav><a href=\"https://github.com/HandyS11/Persistord\">GitHub</a><a href=\"https://www.nuget.org/packages/Persistord\">NuGet</a><a href=\"https://github.com/HandyS11/Persistord/releases\">Releases</a><a href=\"../../license.html\">MIT licence</a></nav></div>"
       }
     }
   }
