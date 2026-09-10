@@ -71,4 +71,51 @@ internal static class DSharpPlusFakes
         int color = 0xFF00FF) =>
         Make<DiscordRole>(
             $"{{\"id\":\"{id}\",\"name\":\"{name}\",\"permissions\":{permissions},\"color\":{color}}}");
+
+    /// <summary>
+    /// Builds a message. <paramref name="attachments"/>, <paramref name="reactions"/> and
+    /// <paramref name="embeds"/> take raw JSON array bodies so a test can omit a key
+    /// entirely (pass <see langword="null"/>) and exercise the absent-collection path.
+    /// </summary>
+    internal static DiscordMessage MakeMessage(
+        ulong id = 555UL,
+        ulong channelId = 111UL,
+        ulong authorId = 789UL,
+        string? content = "hello",
+        string? editedAt = null,
+        string? attachments = null,
+        string? reactions = null,
+        string? embeds = null)
+    {
+        var parts = new List<string>
+        {
+            $"\"id\":\"{id}\"",
+            $"\"channel_id\":\"{channelId}\"",
+            $"\"author\":{{\"id\":\"{authorId}\",\"username\":\"author\"}}",
+        };
+
+        if (content is not null) { parts.Add($"\"content\":\"{content}\""); }
+        if (editedAt is not null) { parts.Add($"\"edited_timestamp\":\"{editedAt}\""); }
+        if (attachments is not null) { parts.Add($"\"attachments\":{attachments}"); }
+        if (reactions is not null) { parts.Add($"\"reactions\":{reactions}"); }
+        if (embeds is not null) { parts.Add($"\"embeds\":{embeds}"); }
+
+        return Make<DiscordMessage>($"{{{string.Join(",", parts)}}}");
+    }
+
+    internal const string OneAttachment =
+        """[{"id":"900","filename":"shot.png","url":"https://cdn.example/shot.png"}]""";
+
+    internal const string UnicodeAndCustomReactions =
+        """[{"count":3,"emoji":{"id":null,"name":"thumbsup"}},{"count":1,"emoji":{"id":"12345","name":"blob"}}]""";
+
+    internal const string FullEmbed =
+        """
+        [{"title":"a title","description":"a description","color":1122867,
+          "footer":{"text":"a footer","icon_url":"https://cdn.example/i.png"},
+          "author":{"name":"an author","url":"https://example/a"},
+          "fields":[{"name":"fname","value":"fvalue","inline":true}]}]
+        """;
+
+    internal const string BareEmbed = """[{"title":"a title"}]""";
 }

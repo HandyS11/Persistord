@@ -1,5 +1,8 @@
 using DSharpPlus.Entities;
 using Persistord.Core.Entities;
+using Persistord.History.Entities;
+using Persistord.Messages.Entities;
+using Persistord.Messages.Owned;
 using ChannelType = Persistord.Core.Entities.ChannelType;
 using DSharpPlusChannelType = DSharpPlus.ChannelType;
 
@@ -122,6 +125,78 @@ public static class DSharpPlusMappingExtensions
     }
 
     /// <summary>
+    /// Maps a DSharpPlus message to a <see cref="MessageEntity"/>, including embeds,
+    /// attachments, and reactions. Soft-delete state and EF-generated keys are left
+    /// at their defaults; child foreign keys are filled by EF from the navigation
+    /// collections on save.
+    /// </summary>
+    /// <remarks>
+    /// <c>DiscordMessage</c> has no author id of its own, so the id comes from
+    /// <c>Author</c>, which is <see langword="null"/> on a payload that omits it.
+    /// </remarks>
+    /// <param name="message">The message to map.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="message"/> is <see langword="null"/>.</exception>
+    public static MessageEntity ToMessageEntity(this DiscordMessage message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        var entity = new MessageEntity
+        {
+            Id = message.Id,
+            ChannelId = message.ChannelId,
+            AuthorId = message.Author?.Id ?? 0UL,
+            Content = message.Content,
+            EditedAt = message.EditedTimestamp,
+        };
+
+        foreach (var attachment in message.Attachments ?? [])
+        {
+            entity.Attachments.Add(new AttachmentEntity
+            {
+                Id = attachment.Id,
+                FileName = attachment.FileName ?? string.Empty,
+                Url = attachment.Url ?? string.Empty,
+            });
+        }
+
+        foreach (var reaction in message.Reactions ?? [])
+        {
+            entity.Reactions.Add(new ReactionEntity
+            {
+                Emoji = FormatEmoji(reaction.Emoji), Count = reaction.Count,
+            });
+        }
+
+        foreach (var embed in message.Embeds ?? [])
+        {
+            entity.Embeds.Add(MapEmbed(embed));
+        }
+
+        return entity;
+    }
+
+    /// <summary>
+    /// Builds a <see cref="MessageHistoryEntity"/> snapshot of a message for the given
+    /// change type. <see cref="MessageHistoryEntity.RecordedAt"/> is stamped with the
+    /// current UTC time; the surrogate key is left for EF to assign.
+    /// </summary>
+    /// <param name="message">The message to snapshot.</param>
+    /// <param name="changeType">The kind of change this snapshot records.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="message"/> is <see langword="null"/>.</exception>
+    public static MessageHistoryEntity ToHistoryEntity(this DiscordMessage message, HistoryChangeType changeType)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        return new MessageHistoryEntity
+        {
+            MessageId = message.Id,
+            Content = message.Content,
+            RecordedAt = DateTimeOffset.UtcNow,
+            ChangeType = changeType,
+        };
+    }
+
+    /// <summary>
     /// Maps a DSharpPlus channel kind to a Persistord <see cref="ChannelType"/>.
     /// <para>
     /// DSharpPlus has fourteen channel kinds and Persistord has four, so the
@@ -141,4 +216,70 @@ public static class DSharpPlusMappingExtensions
             or DSharpPlusChannelType.PrivateThread => ChannelType.Thread,
         _ => ChannelType.Text,
     };
+
+    /// <summary>
+    /// Formats a reaction emoji for storage: custom emoji become <c>name:id</c>
+    /// (preserving the snowflake), while unicode emoji are stored as their raw name.
+    /// Matches the other adapters' format so stored values are portable between them.
+    /// </summary>
+    /// <remarks>
+    /// DSharpPlus distinguishes the two by a zero id, not by a null one —
+    /// <c>DiscordEmoji.Id</c> is a non-nullable <c>ulong</c> and is <c>0</c> for a
+    /// unicode emoji. Written as a switch expression rather than nested conditionals,
+    /// which the repo's analyzers reject (S3358 / RCS1238).
+    /// </remarks>
+    /// <param name="emoji">The reaction's emoji, if the payload carried one.</param>
+    private static string FormatEmoji(DiscordEmoji? emoji) => emoji switch
+    {
+        null => string.Empty,
+        { Id: 0UL } => emoji.Name ?? string.Empty,
+        _ => $"{emoji.Name}:{emoji.Id}",
+    };
+
+    /// <summary>Maps a DSharpPlus embed to a Persistord <see cref="Embed"/>.</summary>
+    /// <remarks>
+    /// Three shapes differ from Persistord's: <c>Color</c> is an
+    /// <c>Optional&lt;DiscordColor&gt;</c> (so the doubled <c>.Value</c> below unwraps
+    /// the optional, then reads the colour's integer), the footer's icon is a
+    /// <c>DiscordUri</c> and the author's link a <c>Uri</c> rather than strings, and
+    /// <c>Fields</c> is <see langword="null"/> — not empty — when the embed carries none.
+    /// </remarks>
+    /// <param name="embed">The DSharpPlus embed to map.</param>
+    private static Embed MapEmbed(DiscordEmbed embed)
+    {
+        var mapped = new Embed
+        {
+            Title = embed.Title,
+            Description = embed.Description,
+            Color = embed.Color.HasValue ? embed.Color.Value.Value : null,
+        };
+
+        if (embed.Footer is { } footer)
+        {
+            mapped.Footer = new EmbedFooter
+            {
+                Text = footer.Text, IconUrl = footer.IconUrl?.ToString(),
+            };
+        }
+
+        if (embed.Author is { } author)
+        {
+            mapped.Author = new EmbedAuthor
+            {
+                Name = author.Name, Url = author.Url?.ToString(),
+            };
+        }
+
+        foreach (var field in embed.Fields ?? [])
+        {
+            mapped.Fields.Add(new EmbedField
+            {
+                Name = field.Name ?? string.Empty,
+                Value = field.Value ?? string.Empty,
+                Inline = field.Inline,
+            });
+        }
+
+        return mapped;
+    }
 }
