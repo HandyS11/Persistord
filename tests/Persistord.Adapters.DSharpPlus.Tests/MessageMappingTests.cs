@@ -112,6 +112,15 @@ public class MessageMappingTests
     }
 
     [Fact]
+    public void ToMessageEntity_falls_back_to_zero_author_id_when_the_author_key_is_absent()
+    {
+        // A message-delete gateway event carries no "author" key at all.
+        var entity = MakeMessage(authorId: null).ToMessageEntity();
+
+        Assert.Equal(0UL, entity.AuthorId);
+    }
+
+    [Fact]
     public void ToMessageEntity_tolerates_a_bare_message()
     {
         // Gateway payloads are routinely partial — a message-delete event carries little

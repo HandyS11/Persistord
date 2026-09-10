@@ -76,11 +76,13 @@ internal static class DSharpPlusFakes
     /// Builds a message. <paramref name="attachments"/>, <paramref name="reactions"/> and
     /// <paramref name="embeds"/> take raw JSON array bodies so a test can omit a key
     /// entirely (pass <see langword="null"/>) and exercise the absent-collection path.
+    /// <paramref name="authorId"/> passed as <see langword="null"/> omits the "author" key
+    /// entirely, exercising the author-less payload path (e.g. a message-delete event).
     /// </summary>
     internal static DiscordMessage MakeMessage(
         ulong id = 555UL,
         ulong channelId = 111UL,
-        ulong authorId = 789UL,
+        ulong? authorId = 789UL,
         string? content = "hello",
         string? editedAt = null,
         string? attachments = null,
@@ -91,9 +93,9 @@ internal static class DSharpPlusFakes
         {
             $"\"id\":\"{id}\"",
             $"\"channel_id\":\"{channelId}\"",
-            $"\"author\":{{\"id\":\"{authorId}\",\"username\":\"author\"}}",
         };
 
+        if (authorId is { } aid) { parts.Add($"\"author\":{{\"id\":\"{aid}\",\"username\":\"author\"}}"); }
         if (content is not null) { parts.Add($"\"content\":\"{content}\""); }
         if (editedAt is not null) { parts.Add($"\"edited_timestamp\":\"{editedAt}\""); }
         if (attachments is not null) { parts.Add($"\"attachments\":{attachments}"); }
