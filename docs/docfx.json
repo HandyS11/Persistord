@@ -9,6 +9,7 @@
             "Persistord.Messages/**.csproj",
             "Persistord.History/**.csproj",
             "Persistord.Adapters.DiscordNet/**.csproj",
+            "Persistord.Adapters.DSharpPlus/**.csproj",
             "Persistord.Adapters.NetCord/**.csproj",
             "Persistord.Managed/**.csproj",
             "Persistord.Protection/**.csproj",

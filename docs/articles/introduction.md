@@ -47,13 +47,13 @@ The following are explicit non-goals in v1:
 - No diff-based history (full content snapshot per change in v1).
 
 Mapping from Discord.Net / DSharpPlus / NetCord model types to Persistord entities
-is the user's responsibility — though the optional `Persistord.Adapters.DiscordNet`
-and `Persistord.Adapters.NetCord` packages provide ready-made mappers for those two
-libraries. A DSharpPlus adapter is not yet available.
+is the user's responsibility — though the optional `Persistord.Adapters.DiscordNet`,
+`Persistord.Adapters.DSharpPlus` and `Persistord.Adapters.NetCord` packages provide
+ready-made mappers for all three libraries.
 
 ## Packages
 
-Persistord is split into nine NuGet packages:
+Persistord is split into ten NuGet packages:
 
 **`Persistord`** — the convenience meta package. Installing it pulls in the full
 library-neutral stack (`Core`, `Messages`, and `History`) in one reference. This is
@@ -79,6 +79,12 @@ interface types (`IGuild`, `IMessage`, etc.) to Persistord entities via `.To*Ent
 extension methods. Install only if you use Discord.Net; the core packages never
 reference a Discord client library.
 
+**`Persistord.Adapters.DSharpPlus`** — an optional adapter that maps DSharpPlus model
+types (`DiscordGuild`, `DiscordMessage`, etc.) to Persistord entities via `.To*Entity()`
+extension methods. Install only if you use DSharpPlus; the core packages never
+reference a Discord client library. `ToMemberEntity` and `ToRoleEntity` take the guild
+id as an argument, because DSharpPlus does not expose it on those two types.
+
 **`Persistord.Adapters.NetCord`** — an optional adapter that maps NetCord model
 types (`RestGuild`, `RestMessage`, etc.) to Persistord entities via `.To*Entity()`
 extension methods. Install only if you use NetCord; the core packages never
@@ -103,8 +109,9 @@ fixtures, so the meta package stays the library-neutral mirror stack (`Core`,
 `Messages`, `History`) and nothing more.
 
 The dependency graph is not linear: `Messages` depends on `Core`, `History` depends
-on `Messages`, and both `Adapters.DiscordNet` and `Adapters.NetCord` depend on all
-three — that chain is the one the meta package bundles. `Managed`, `Protection`, and
-`Testing` each depend on `Core` alone, independently of that chain and of each other.
+on `Messages`, and all three of `Adapters.DiscordNet`, `Adapters.DSharpPlus` and
+`Adapters.NetCord` depend on all three — that chain is the one the meta package
+bundles. `Managed`, `Protection`, and `Testing` each depend on `Core` alone,
+independently of that chain and of each other.
 
 To get started, see [Getting Started](getting-started.md).

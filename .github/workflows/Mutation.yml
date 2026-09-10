@@ -27,6 +27,8 @@ jobs:
             testdir: tests/Persistord.History.Tests
           - source: Persistord.Adapters.DiscordNet.csproj
             testdir: tests/Persistord.Adapters.DiscordNet.Tests
+          - source: Persistord.Adapters.DSharpPlus.csproj
+            testdir: tests/Persistord.Adapters.DSharpPlus.Tests
           - source: Persistord.Adapters.NetCord.csproj
             testdir: tests/Persistord.Adapters.NetCord.Tests
           - source: Persistord.Managed.csproj

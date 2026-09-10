@@ -35,6 +35,12 @@ updates:
       # already a prerelease, so leaving this unignored would let Dependabot offer
       # prerelease bumps and silently raise the published floor.
       - dependency-name: "NetCord"
+      # Published floor for Persistord.Adapters.DSharpPlus, not a tested version — see
+      # the shipped-floors comment in Directory.Packages.props. DSharpPlus's highest
+      # SemVer version on NuGet (5.0.0) is unlisted and its v5 line is prerelease-only,
+      # so an automated bump would either fail to restore or silently move the published
+      # floor onto the in-progress rewrite.
+      - dependency-name: "DSharpPlus"
 
   - package-ecosystem: "github-actions"
     directory: "/"
