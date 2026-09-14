@@ -82,15 +82,15 @@ function wireCopyButtons() {
 }
 
 export default {
-  defaultTheme: 'dark',
+  /* Follow the reader's OS preference; both themes are designed. */
+  defaultTheme: 'auto',
 
-  /* docfx merges this over its own `{ startOnLoad, theme }`, picking the base
-     theme from the current light/dark setting. Only theme-agnostic values are
-     set here: anything with a fixed lightness would be wrong in one of the two
-     themes, so surfaces and text are left to mermaid's own ramp. */
+  /* docfx merges this over its own `{ startOnLoad, theme }`. Only the font is
+     set here - colours come from components.css, which recolours the rendered
+     SVG from the design tokens so a diagram follows a theme switch. */
   mermaid: {
     fontFamily:
-      "'Persistord Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace",
+      "'Persistord Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
   },
 
   iconLinks: [

@@ -1,0 +1,155 @@
+/*
+ * Design tokens. Every colour on the site resolves to a token declared here;
+ * site-check (tests/tokens.test.mjs) fails if any other stylesheet writes one.
+ *
+ * Sampled from icon.png: ink tile #181a27, tile rim #303050, bubble gradient
+ * #3d26b8 -> #6258d8 -> #8685f4, highlight #e0dfff. Values move only when the
+ * contrast suite demands it, and the reason is recorded next to the value.
+ *
+ * The icon's full gradient cannot be one token: white on its light end is
+ * 3.15:1, and its dark end is 1.96:1 on the dark page. It is split into
+ * --pd-gradient-fill, which carries white labels (every stop >= 5.38:1), and
+ * the per-theme --pd-gradient-ink, whose stops stay >= 4.5:1 on that theme's
+ * page (gradient text and indicator bars).
+ *
+ * Both themes are designed; neither is derived from the other.
+ */
+
+:root {
+  --pd-sans: 'Persistord Sans', system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --pd-mono: 'Persistord Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Mono',
+    Consolas, monospace;
+
+  --pd-radius-sm: 6px;
+  --pd-radius: 12px;
+  --pd-measure: 72ch;
+  --pd-shell-width: 1440px;
+  --pd-landing-width: 1120px;
+  --pd-sidebar-width: 260px;
+  --pd-affix-width: 220px;
+  --pd-header-height: 60px;
+  --pd-ease: 150ms ease;
+
+  --pd-on-fill: #ffffff;
+  --pd-gradient-fill: linear-gradient(135deg, #3d26b8, #6258d8);
+}
+
+[data-bs-theme='dark'] {
+  color-scheme: dark;
+
+  --pd-page: #0f1019;
+  --pd-surface: #181a27;
+  --pd-raised: #20233a;
+  --pd-hairline: #2d3050;
+  --pd-heading: #f3f3fb;
+  --pd-heading-rgb: 243, 243, 251;
+  --pd-text: #e6e6f2;
+  --pd-muted: #9a9cb8;
+  --pd-muted-rgb: 154, 156, 184;
+  --pd-accent: #8685f4;
+  --pd-accent-rgb: 134, 133, 244;
+  --pd-accent-hover: #b8b6f5;
+  --pd-accent-wash: rgb(134 133 244 / 0.12);
+  --pd-selection: rgb(134 133 244 / 0.35);
+  --pd-gradient-ink: linear-gradient(135deg, #8685f4, #b8b6f5);
+
+  --pd-note: #9d9cf7;
+  --pd-tip: #4fd1c0;
+  --pd-warning: #f0b54f;
+  --pd-caution: #f58398;
+
+  --pd-code-keyword: #aeadf9;
+  --pd-code-string: #7fd6c6;
+  --pd-code-number: #f2bd72;
+  --pd-code-comment: #8588a8;
+  --pd-code-title: #e0dfff;
+  --pd-code-attr: #a5c8f0;
+
+  /* Landing proof panes only: the snowflake came off the gateway, the row id
+     is in a column. The icon's own #e0dfff is luminance-identical to body
+     text, so the snowflake mark is darkened to separate from it. */
+  --pd-snowflake: #b7b5ff;
+  --pd-snowflake-wash: rgb(183 181 255 / 0.13);
+  --pd-row-id: #8685f4;
+  --pd-row-id-wash: rgb(134 133 244 / 0.13);
+
+  --bs-body-bg: var(--pd-page);
+  --bs-body-bg-rgb: 15, 16, 25;
+  --bs-body-color: var(--pd-text);
+  --bs-body-color-rgb: 230, 230, 242;
+  --bs-emphasis-color: var(--pd-heading);
+  --bs-emphasis-color-rgb: var(--pd-heading-rgb);
+  --bs-secondary-color: var(--pd-muted);
+  --bs-secondary-color-rgb: var(--pd-muted-rgb);
+  --bs-tertiary-color: var(--pd-muted);
+  --bs-tertiary-color-rgb: var(--pd-muted-rgb);
+  --bs-secondary-bg: var(--pd-raised);
+  --bs-tertiary-bg: var(--pd-surface);
+  --bs-border-color: var(--pd-hairline);
+  --bs-heading-color: var(--pd-heading);
+  --bs-code-color: var(--pd-text);
+  --bs-link-color: var(--pd-accent);
+  --bs-link-color-rgb: var(--pd-accent-rgb);
+  --bs-link-hover-color: var(--pd-accent-hover);
+  --bs-link-hover-color-rgb: 184, 182, 245;
+  --bs-focus-ring-color: rgb(134 133 244 / 0.4);
+}
+
+[data-bs-theme='light'] {
+  color-scheme: light;
+
+  --pd-page: #f7f7fb;
+  --pd-surface: #ffffff;
+  --pd-raised: #f0f0f8;
+  --pd-hairline: #e2e2ee;
+  --pd-heading: #0f1019;
+  --pd-heading-rgb: 15, 16, 25;
+  --pd-text: #181a27;
+  --pd-muted: #5b5d78;
+  --pd-muted-rgb: 91, 93, 120;
+  --pd-accent: #4635c2;
+  --pd-accent-rgb: 70, 53, 194;
+  --pd-accent-hover: #3d26b8;
+  --pd-accent-wash: rgb(70 53 194 / 0.08);
+  --pd-selection: rgb(70 53 194 / 0.2);
+  --pd-gradient-ink: linear-gradient(135deg, #3d26b8, #6258d8);
+
+  --pd-note: #4635c2;
+  --pd-tip: #0f766e;
+  --pd-warning: #9a5b06;
+  --pd-caution: #be123c;
+
+  --pd-code-keyword: #4635c2;
+  --pd-code-string: #0f766e;
+  --pd-code-number: #9a5b06;
+  --pd-code-comment: #6a6d88;
+  --pd-code-title: #6d28d9;
+  --pd-code-attr: #334155;
+
+  --pd-snowflake: #7c3aed;
+  --pd-snowflake-wash: rgb(124 58 237 / 0.08);
+  --pd-row-id: #4635c2;
+  --pd-row-id-wash: rgb(70 53 194 / 0.08);
+
+  --bs-body-bg: var(--pd-page);
+  --bs-body-bg-rgb: 247, 247, 251;
+  --bs-body-color: var(--pd-text);
+  --bs-body-color-rgb: 24, 26, 39;
+  --bs-emphasis-color: var(--pd-heading);
+  --bs-emphasis-color-rgb: var(--pd-heading-rgb);
+  --bs-secondary-color: var(--pd-muted);
+  --bs-secondary-color-rgb: var(--pd-muted-rgb);
+  --bs-tertiary-color: var(--pd-muted);
+  --bs-tertiary-color-rgb: var(--pd-muted-rgb);
+  --bs-secondary-bg: var(--pd-raised);
+  --bs-tertiary-bg: var(--pd-surface);
+  --bs-border-color: var(--pd-hairline);
+  --bs-heading-color: var(--pd-heading);
+  --bs-code-color: var(--pd-text);
+  --bs-link-color: var(--pd-accent);
+  --bs-link-color-rgb: var(--pd-accent-rgb);
+  --bs-link-hover-color: var(--pd-accent-hover);
+  --bs-link-hover-color-rgb: 61, 38, 184;
+  --bs-focus-ring-color: rgb(70 53 194 / 0.35);
+}
