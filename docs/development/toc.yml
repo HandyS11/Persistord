@@ -1,2 +1,4 @@
 - name: Building & Contributing
   href: index.md
+- name: Component Reference
+  href: components.md

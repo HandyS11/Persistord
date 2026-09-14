@@ -1,3 +1,7 @@
+---
+description: Build, test, format, and mutation-test Persistord locally, and check this documentation site before pushing.
+---
+
 # Building & Contributing
 
 ## Requirements
@@ -88,3 +92,21 @@ Build and serve locally (live-reload at `http://localhost:8080`):
 ```bash
 dotnet docfx docs/docfx.json --serve
 ```
+
+### Checking the site
+
+`docs/tools/site-check` builds the site and verifies it in a real browser: layout, contrast in both
+themes, internal links, the 404 page, and keyboard focus. It needs Node 22 or later.
+
+```bash
+cd docs/tools/site-check
+npm ci
+npx playwright install chromium   # first run only
+npm run build                     # dotnet docfx docs/docfx.json --warningsAsErrors
+npm test
+npm run shots                     # screenshot matrix into docs/tools/site-check/out/
+```
+
+`npm run build:fast` skips API metadata generation and rebuilds in a few seconds once a full build
+has run. When writing pages, see the [Component Reference](components.md) for the syntax of every
+styled component.
