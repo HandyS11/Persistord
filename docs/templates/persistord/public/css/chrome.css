@@ -364,6 +364,12 @@ body > header.bg-body {
   .next-article > div {
     flex-basis: auto;
   }
+
+  /* In a column, the auto margin that pushes a lone Next card right would
+     also shrink it to its text. */
+  .next-article > div.next {
+    margin-left: 0;
+  }
 }
 
 /* ---------------------------------------------------------------- footer -- */

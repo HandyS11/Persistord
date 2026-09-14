@@ -185,6 +185,23 @@ test('previous and next render as whole-card links', async () => {
   }
 })
 
+test('on a phone, previous and next stack as full-width cards', async () => {
+  const { page, close } = await site.open(ARTICLE, { width: 375 })
+  try {
+    await page.waitForSelector('.next-article > div.prev')
+    await page.waitForSelector('.next-article > div.next')
+    const { row, cards } = await page.$eval('.next-article', element => ({
+      row: element.getBoundingClientRect().width,
+      cards: [...element.children].map(card => [card.className, card.getBoundingClientRect().width]),
+    }))
+    for (const [name, width] of cards) {
+      assert.ok(Math.abs(width - row) <= 1, `${name} card is ${width}px of a ${row}px row`)
+    }
+  } finally {
+    await close()
+  }
+})
+
 for (const theme of THEMES) {
   test(`${theme}: the edit link is muted`, async () => {
     const { page, close } = await site.open(ARTICLE, { theme })
