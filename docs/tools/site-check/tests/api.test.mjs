@@ -53,6 +53,9 @@ test('parameters and returns lay out as a framed definition grid', async () => {
 
     const label = await computed(page, 'article h4.section', ['text-transform'])
     assert.equal(label['text-transform'], 'uppercase')
+
+    const term = await computed(page, 'article dl.parameters > dt', ['margin'])
+    assert.equal(term.margin, '0px', 'docfx sets margin: 1em 0 on dl.parameters>dt, misaligning it against dd in the grid row')
   } finally {
     await close()
   }
@@ -61,7 +64,13 @@ test('parameters and returns lay out as a framed definition grid', async () => {
 test('the facts line sits inline under the title', async () => {
   const { page, close } = await site.open(CLASS_PAGE)
   try {
-    assert.equal((await computed(page, 'article .facts', ['display'])).display, 'flex')
+    const facts = await computed(page, 'article .facts', ['display', 'margin-top', 'font-size'])
+    assert.equal(facts.display, 'flex')
+    assert.equal(facts['margin-top'], '0px', 'docfx sets margin-top: 2rem on div.facts; api.css must outrank it')
+    assert.equal(facts['font-size'], '13px', 'docfx sets font-size: 14px on div.facts; api.css must outrank it')
+
+    const dd = await computed(page, 'article .facts dd', ['margin-left'])
+    assert.equal(dd['margin-left'], '0px', 'docfx sets margin-left: .25rem on div.facts>dl>dd; api.css must outrank it')
   } finally {
     await close()
   }
