@@ -304,16 +304,29 @@
 
 /* --------------------------------------------------------------- mermaid -- */
 
+/* `safe` keeps a diagram wider than its frame anchored left, so all of it
+   stays within scroll reach. */
 :where(.content article) pre.mermaid {
   display: flex;
-  justify-content: center;
+  justify-content: safe center;
   padding: 1.25rem;
   overflow-x: auto;
 }
 
+/* main.js turns off Mermaid's useMaxWidth, so each SVG carries its natural
+   width and height. Wide screens scale it down to the column; phones keep the
+   natural size and scroll it inside the frame, like code, rather than shrink
+   the labels past legibility. */
 :where(.content article) pre.mermaid > svg {
+  flex: none;
   max-width: 100%;
   height: auto;
+}
+
+@media (max-width: 575.98px) {
+  :where(.content article) pre.mermaid > svg {
+    max-width: none;
+  }
 }
 
 /* Mermaid scopes its generated theme to the diagram's id (#mermaid-123 .node

@@ -223,12 +223,20 @@ export default {
   /* Follow the reader's OS preference; both themes are designed. */
   defaultTheme: 'auto',
 
-  /* docfx merges this over its own `{ startOnLoad, theme }`. Only the font is
-     set here - colours come from components.css, which recolours the rendered
-     SVG from the design tokens so a diagram follows a theme switch. */
+  /* docfx merges this over its own `{ startOnLoad, theme }`. No colours are
+     set here - components.css recolours the rendered SVG from the design
+     tokens so a diagram follows a theme switch. useMaxWidth: false gives each
+     SVG its natural width and height instead of `width: 100%`, so
+     components.css can let a wide diagram scroll on a phone rather than shrink
+     its labels past legibility. */
   mermaid: {
     fontFamily:
       "'Persistord Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    flowchart: { useMaxWidth: false },
+    sequence: { useMaxWidth: false },
+    er: { useMaxWidth: false },
+    class: { useMaxWidth: false },
+    state: { useMaxWidth: false },
   },
 
   iconLinks: [

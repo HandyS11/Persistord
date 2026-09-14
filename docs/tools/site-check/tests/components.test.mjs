@@ -154,6 +154,46 @@ for (const theme of THEMES) {
   })
 }
 
+test('on a phone, diagrams keep their natural size and scroll inside their frame', async () => {
+  const { page, close } = await site.open(PAGE, { width: 375, height: 800 })
+  try {
+    await diagramsRendered(page)
+    const diagrams = await page.$$eval('pre.mermaid', frames =>
+      frames.map(frame => {
+        const svg = frame.querySelector(':scope > svg')
+        const box = svg.getBoundingClientRect()
+        return {
+          natural: svg.viewBox.baseVal.width,
+          width: box.width,
+          clipped: box.left < frame.getBoundingClientRect().left,
+          scrolls: frame.scrollWidth > frame.clientWidth,
+          fits: svg.viewBox.baseVal.width <= frame.clientWidth,
+        }
+      })
+    )
+    for (const [index, diagram] of diagrams.entries()) {
+      assert.ok(diagram.width >= diagram.natural - 1, `diagram ${index} shrank to ${diagram.width}px of ${diagram.natural}px`)
+      assert.equal(diagram.clipped, false, `diagram ${index} starts left of its frame, out of scroll reach`)
+      if (!diagram.fits) {
+        assert.ok(diagram.scrolls, `diagram ${index} is wider than its frame but does not scroll`)
+      }
+    }
+  } finally {
+    await close()
+  }
+})
+
+test('on a wide screen, diagrams never overflow the reading column', async () => {
+  const { page, close } = await site.open(PAGE)
+  try {
+    await diagramsRendered(page)
+    const overflows = await page.$$eval('pre.mermaid', frames => frames.map(frame => frame.scrollWidth - frame.clientWidth))
+    assert.deepEqual(overflows.filter(overflow => overflow > 0), [])
+  } finally {
+    await close()
+  }
+})
+
 test('code blocks are labelled with their language', async () => {
   const { page, close } = await site.open(PAGE)
   try {
