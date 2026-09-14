@@ -97,13 +97,21 @@ on (section 6).
 | `--pd-text` | `#e6e6f2` | `#181a27` | highlight / ink |
 | `--pd-muted` | `#9a9cb8` | `#5b5d78` | — |
 | `--pd-accent` | `#8685f4` | `#4635c2` | light / deep end of the gradient |
-| `--pd-gradient` | `linear-gradient(135deg, #3d26b8, #6258d8, #8685f4)` | same | the bubble fill |
+| `--pd-gradient-fill` | `linear-gradient(135deg, #3d26b8, #6258d8)` | same | the bubble fill, deep half |
+| `--pd-gradient-ink` | `linear-gradient(135deg, #8685f4, #b8b6f5)` | `linear-gradient(135deg, #3d26b8, #6258d8)` | the bubble fill, the half that holds contrast on that theme's page |
 
 The values above are starting points. Section 6's contrast check is the contract: any token that
 fails its pairing is adjusted, and the adjusted value is recorded in the stylesheet.
 
-**The gradient has exactly three uses:** the landing hero eyebrow wordmark, the primary button, and
-the active-page indicator (sidebar bar and navbar tab underline). It appears nowhere else.
+The icon's full `#3d26b8 → #6258d8 → #8685f4` gradient cannot be used as one token. Measured during
+planning, white text on its light end is 3.15:1 and its dark end is 1.96:1 against the dark page, so
+it fails both as a button fill and as a mark on the page. It is therefore split: `--pd-gradient-fill`
+carries white labels (every stop ≥ 5.38:1), and `--pd-gradient-ink` is the per-theme half that stays
+≥ 4.5:1 against its own page, for gradient text and indicator bars.
+
+**The gradient has exactly three uses:** the landing hero eyebrow wordmark (`--pd-gradient-ink`),
+the primary button (`--pd-gradient-fill`), and the active-page indicator — sidebar bar and navbar
+tab underline (`--pd-gradient-ink`). It appears nowhere else.
 
 **Status colours** for callouts, each with a dark and a light value tuned to sit beside violet:
 note = accent violet, tip = teal, warning = amber, caution = rose. IMPORTANT reuses the note colour
@@ -142,8 +150,8 @@ non-user-triggered animation and is gated behind `prefers-reduced-motion: no-pre
 ### 1.3 Acceptance
 
 - Every token pairing listed in section 6 meets WCAG AA in both themes.
-- The gradient appears in exactly the three places named above (checked by grepping `main.css` for
-  `--pd-gradient`).
+- The gradient tokens are consumed in exactly the three places named above (checked by grepping
+  the theme stylesheets for `var(--pd-gradient-`).
 - No hard-coded colour outside the token block; toggling the theme leaves nothing unswitched.
 
 ## 2. Page frame and components
@@ -197,8 +205,11 @@ Everything here styles markup DocFX `modern` 2.78.5 already emits. Verified pres
 
 - Links: accent colour, no underline, underline on hover.
 - Vertical rhythm between the page h1 and its "Namespaces" / "Classes" / member sections.
-- Each member rendered as a bordered block: signature in a code panel, description, parameters as a
-  two-column definition grid, returns.
+- Each member reads as a distinct block: DocFX emits members as flat siblings (`h3[data-uid]`,
+  summary, `.codewrapper`, `h4.section`, `dl.parameters`) with no wrapping element, so the block is
+  drawn in CSS — a hairline rule and spacing above each member `h3` — rather than by re-parenting
+  nodes in JavaScript, which would disturb DocFX's affix and anchors. The signature sits in a code
+  panel, parameters and returns as a two-column definition grid.
 - Inheritance, "Implements", and assembly lines in small muted text.
 - Namespace pages lay out their type lists as a two-column grid of name + summary.
 
@@ -220,8 +231,9 @@ no horizontal page overflow.
 
 - No page in the section 6 screenshot matrix shows a double-framed code block, an underlined API
   link at rest, emoji in the sidebar, or horizontal page overflow at 375 px.
-- Every callout type and a tab group render correctly in both themes (a fixture section on one
-  article, or the enriched articles from section 4, covers each).
+- Every callout type and a tab group render correctly in both themes. PR 1 adds
+  `docs/development/components.md`, a contributor-facing component reference that exercises every
+  component in this section and doubles as the visual test corpus before PR 3 enriches the articles.
 - `/` focuses search; the copy button is reachable and announced by keyboard.
 - The README back-link line is hidden on the site and still present in the README source.
 
@@ -392,8 +404,9 @@ theme with an inline script; and links to Docs, Packages, API, and the home page
 - Built pages carry `lang="en"`. No built page has more than one `<meta name="description">`; after
   PR 3, every page in `_site` has exactly one.
 - The 404 renders fully styled in both themes when served at a deep missing path. GitHub Pages'
-  behaviour is reproduced by serving `_site` under a `/Persistord/` prefix and copying `404.html` to
-  a nested path such as `/Persistord/articles/missing/deeper.html` before loading it.
+  behaviour is reproduced by a local static server that serves `_site` under a `/Persistord/`
+  prefix and answers any missing path with `404.html` and status 404, as Pages does; the page is
+  loaded at `/Persistord/articles/missing/deeper.html`.
 
 ## 6. Verification
 
