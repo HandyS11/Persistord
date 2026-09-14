@@ -51,6 +51,37 @@ public class ManagedModelTests
     }
 
     [Fact]
+    public void Key_is_a_required_bounded_column()
+    {
+        using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        using var context = database.CreateContext<ManagedContext>(o => new ManagedContext(o));
+
+        var key = context.Model.FindEntityType(typeof(ManagedChannel))!.FindProperty(nameof(ManagedChannel.Key))!;
+
+        Assert.False(key.IsNullable);
+        Assert.Equal(64, key.GetMaxLength());
+    }
+
+    [Fact]
+    public void Content_hash_fits_a_sha256_hex_digest()
+    {
+        using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        using var context = database.CreateContext<ManagedContext>(o => new ManagedContext(o));
+
+        var hash = context.Model.FindEntityType(typeof(ManagedMessage))!
+            .FindProperty(nameof(ManagedMessage.ContentHash))!;
+
+        Assert.Equal(64, hash.GetMaxLength());
+    }
+
+    [Fact]
+    public void Required_strings_default_to_empty()
+    {
+        Assert.Equal(string.Empty, new ManagedChannel().Key);
+        Assert.Equal(string.Empty, new ManagedWebhook().Token);
+    }
+
+    [Fact]
     public void Resources_cascade_from_the_guild_root()
     {
         using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);

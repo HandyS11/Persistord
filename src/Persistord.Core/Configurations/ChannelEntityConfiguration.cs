@@ -12,8 +12,10 @@ public sealed class ChannelEntityConfiguration : IEntityTypeConfiguration<Channe
     public void Configure(EntityTypeBuilder<ChannelEntity> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
+        // Stryker disable once Statement : equivalent — EF's key discovery convention already keys on Id.
         builder.HasKey(c => c.Id);
         builder.Property(c => c.Id).ValueGeneratedNever();
+        // Stryker disable once Statement : equivalent — a non-nullable reference type is already required by convention.
         builder.Property(c => c.Name).IsRequired();
         builder.HasIndex(c => c.GuildId);
         builder.HasOne<ChannelEntity>()

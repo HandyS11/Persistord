@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistord.Core;
 using Persistord.Core.Abstractions;
 using Persistord.Core.Entities;
@@ -13,6 +13,9 @@ public class ModelAssertionsTests
     private static AssertionContext Context(SqliteTestDatabase database) =>
         database.CreateContext<AssertionContext>(o => new AssertionContext(o));
 
+    // The assertions carry no test-framework dependency, so a failure's message is the whole report a
+    // consumer gets: the failure tests below pin each message verbatim.
+
     [Fact]
     public void AssertUniqueIndex_passes_on_a_matching_index()
     {
@@ -23,16 +26,17 @@ public class ModelAssertionsTests
     }
 
     [Fact]
-    public void AssertUniqueIndex_names_the_entity_and_the_columns_when_it_fails()
+    public void AssertUniqueIndex_names_the_entity_the_columns_and_every_index_found_when_it_fails()
     {
         using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
         using var context = Context(database);
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
-            context.AssertUniqueIndex<ScopedRow>(nameof(ScopedRow.Key)));
+            context.AssertUniqueIndex<ScopedRow>(nameof(ScopedRow.Key), nameof(ScopedRow.GuildId)));
 
-        Assert.Contains(nameof(ScopedRow), exception.Message, StringComparison.Ordinal);
-        Assert.Contains(nameof(ScopedRow.Key), exception.Message, StringComparison.Ordinal);
+        Assert.Equal(
+            "ScopedRow has no unique index over (Key, GuildId). Indexes found: (Label), unique (GuildId, Key).",
+            exception.Message);
     }
 
     [Fact]
@@ -43,6 +47,18 @@ public class ModelAssertionsTests
 
         Assert.Throws<InvalidOperationException>(() =>
             context.AssertUniqueIndex<ScopedRow>(nameof(ScopedRow.Label)));
+    }
+
+    [Fact]
+    public void AssertUniqueIndex_reports_none_for_an_entity_without_indexes()
+    {
+        using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        using var context = Context(database);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            context.AssertUniqueIndex<UnrelatedRow>(nameof(UnrelatedRow.Id)));
+
+        Assert.Equal("UnrelatedRow has no unique index over (Id). Indexes found: none.", exception.Message);
     }
 
     [Fact]
@@ -60,7 +76,10 @@ public class ModelAssertionsTests
         using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
         using var context = Context(database);
 
-        Assert.Throws<InvalidOperationException>(() => context.AssertCascade<UnrelatedRow, GuildEntity>());
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            context.AssertCascade<UnrelatedRow, GuildEntity>());
+
+        Assert.Equal("UnrelatedRow has no foreign key to GuildEntity.", exception.Message);
     }
 
     [Fact]
@@ -72,7 +91,7 @@ public class ModelAssertionsTests
         var exception = Assert.Throws<InvalidOperationException>(() =>
             context.AssertCascade<RestrictedRow, GuildEntity>());
 
-        Assert.Contains(nameof(DeleteBehavior.Restrict), exception.Message, StringComparison.Ordinal);
+        Assert.Equal("RestrictedRow -> GuildEntity deletes with Restrict, not Cascade.", exception.Message);
     }
 
     [Fact]
@@ -84,8 +103,11 @@ public class ModelAssertionsTests
         var exception = Assert.Throws<InvalidOperationException>(() =>
             context.AssertCascade<AmbiguousChildRow, ParentRow>());
 
-        Assert.Contains(nameof(AmbiguousChildRow.AParentId), exception.Message, StringComparison.Ordinal);
-        Assert.Contains(nameof(AmbiguousChildRow.ZParentId), exception.Message, StringComparison.Ordinal);
+        Assert.Equal(
+            "AmbiguousChildRow has 2 foreign keys to ParentRow, so it is ambiguous which one to check: "
+            + "(AParentId) -> Cascade, (ZParentId, ZParentCode) -> Restrict. A type with two relationships to the same "
+            + "principal needs a more specific assertion than AssertCascade.",
+            exception.Message);
     }
 
     [Fact]
@@ -103,7 +125,23 @@ public class ModelAssertionsTests
         using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
         using var context = Context(database);
 
-        Assert.Throws<InvalidOperationException>(() => context.AssertSnowflakeKey<UnrelatedRow>());
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            context.AssertSnowflakeKey<CompositeSurrogateRow>());
+
+        Assert.Equal(
+            "CompositeSurrogateRow's primary key has no ulong property: (TenantId, Number).",
+            exception.Message);
+    }
+
+    [Fact]
+    public void AssertSnowflakeKey_fails_on_a_keyless_entity()
+    {
+        using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        using var context = Context(database);
+
+        var exception = Assert.Throws<InvalidOperationException>(() => context.AssertSnowflakeKey<KeylessRow>());
+
+        Assert.Equal("KeylessRow has no primary key.", exception.Message);
     }
 
     [Fact]
@@ -115,7 +153,9 @@ public class ModelAssertionsTests
         var exception = Assert.Throws<InvalidOperationException>(() =>
             context.AssertSnowflakeKey<StoreGeneratedRow>());
 
-        Assert.Contains(nameof(ValueGenerated.OnAdd), exception.Message, StringComparison.Ordinal);
+        Assert.Equal(
+            "StoreGeneratedRow.Id is OnAdd, not Never: EF would treat it as an identity column.",
+            exception.Message);
     }
 
     [Fact]
@@ -126,8 +166,23 @@ public class ModelAssertionsTests
 
         var exception = Assert.Throws<InvalidOperationException>(() => context.AssertSnowflakeKey<PlainRow>());
 
-        Assert.Contains("provider type: none", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("DiscordDbContext", exception.Message, StringComparison.Ordinal);
+        Assert.Equal(
+            "PlainRow.Id is not stored as a long (provider type: none). Is the context a DiscordDbContext?",
+            exception.Message);
+    }
+
+    [Fact]
+    public void AssertSnowflakeKey_names_the_provider_type_a_key_is_stored_as()
+    {
+        using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        using var context = Context(database);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            context.AssertSnowflakeKey<StringStoredRow>());
+
+        Assert.Equal(
+            "StringStoredRow.Id is not stored as a long (provider type: String). Is the context a DiscordDbContext?",
+            exception.Message);
     }
 
     [Fact]
@@ -136,7 +191,24 @@ public class ModelAssertionsTests
         using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
         using var context = Context(database);
 
-        Assert.Throws<InvalidOperationException>(() => context.AssertSnowflakeKey<NotMapped>());
+        var exception = Assert.Throws<InvalidOperationException>(() => context.AssertSnowflakeKey<NotMapped>());
+
+        Assert.Equal("NotMapped is not part of the model.", exception.Message);
+    }
+
+    [Fact]
+    public void Assertions_guard_their_arguments()
+    {
+        using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        using var context = Context(database);
+
+        Assert.Throws<ArgumentNullException>(
+            "context",
+            () => ((DbContext)null!).AssertUniqueIndex<ScopedRow>(nameof(ScopedRow.Key)));
+        Assert.Throws<ArgumentNullException>("propertyNames", () => context.AssertUniqueIndex<ScopedRow>(null!));
+        Assert.Throws<ArgumentNullException>("context",
+            () => ((DbContext)null!).AssertCascade<ScopedRow, GuildEntity>());
+        Assert.Throws<ArgumentNullException>("context", () => ((DbContext)null!).AssertSnowflakeKey<GuildEntity>());
     }
 
     [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
@@ -184,6 +256,8 @@ public class ModelAssertionsTests
     internal sealed class ParentRow
     {
         public long Id { get; set; }
+
+        public string Code { get; set; } = string.Empty;
     }
 
     [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
@@ -194,6 +268,8 @@ public class ModelAssertionsTests
         public long AParentId { get; set; }
 
         public long ZParentId { get; set; }
+
+        public string ZParentCode { get; set; } = string.Empty;
     }
 
     [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
@@ -206,6 +282,26 @@ public class ModelAssertionsTests
     internal sealed class PlainRow
     {
         public ulong Id { get; set; }
+    }
+
+    [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
+    internal sealed class CompositeSurrogateRow
+    {
+        public long TenantId { get; set; }
+
+        public long Number { get; set; }
+    }
+
+    [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
+    internal sealed class StringStoredRow
+    {
+        public ulong Id { get; set; }
+    }
+
+    [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
+    internal sealed class KeylessRow
+    {
+        public ulong Value { get; set; }
     }
 
     private sealed class PlainContext(DbContextOptions<PlainContext> options) : DbContext(options)
@@ -237,9 +333,26 @@ public class ModelAssertionsTests
             modelBuilder.Entity<AmbiguousChildRow>(b =>
             {
                 b.HasOne<ParentRow>().WithMany().HasForeignKey(r => r.AParentId).OnDelete(DeleteBehavior.Cascade);
-                b.HasOne<ParentRow>().WithMany().HasForeignKey(r => r.ZParentId).OnDelete(DeleteBehavior.Restrict);
+                b.HasOne<ParentRow>()
+                    .WithMany()
+                    .HasForeignKey(r => new
+                    {
+                        r.ZParentId, r.ZParentCode
+                    })
+                    .HasPrincipalKey(p => new
+                    {
+                        p.Id, p.Code
+                    })
+                    .OnDelete(DeleteBehavior.Restrict);
             });
             modelBuilder.Entity<StoreGeneratedRow>().Property(r => r.Id).ValueGeneratedOnAdd();
+            modelBuilder.Entity<CompositeSurrogateRow>().HasKey(r => new
+            {
+                r.TenantId, r.Number
+            });
+            modelBuilder.Entity<StringStoredRow>().Property(r => r.Id)
+                .HasConversion(new NumberToStringConverter<ulong>());
+            modelBuilder.Entity<KeylessRow>().HasNoKey();
             modelBuilder.ApplyGuildRoot();
         }
     }

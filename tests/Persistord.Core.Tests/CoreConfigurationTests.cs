@@ -83,9 +83,13 @@ public class CoreConfigurationTests
             var guildKey = context.Model.FindEntityType(typeof(GuildEntity))!.FindProperty(nameof(GuildEntity.Id))!;
             var channelKey = context.Model.FindEntityType(typeof(ChannelEntity))!
                 .FindProperty(nameof(ChannelEntity.Id))!;
+            var userKey = context.Model.FindEntityType(typeof(UserEntity))!.FindProperty(nameof(UserEntity.Id))!;
+            var roleKey = context.Model.FindEntityType(typeof(RoleEntity))!.FindProperty(nameof(RoleEntity.Id))!;
 
             Assert.Equal(ValueGenerated.Never, guildKey.ValueGenerated);
             Assert.Equal(ValueGenerated.Never, channelKey.ValueGenerated);
+            Assert.Equal(ValueGenerated.Never, userKey.ValueGenerated);
+            Assert.Equal(ValueGenerated.Never, roleKey.ValueGenerated);
         }
     }
 

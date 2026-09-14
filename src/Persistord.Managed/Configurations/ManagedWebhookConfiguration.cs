@@ -13,6 +13,7 @@ public sealed class ManagedWebhookConfiguration : IEntityTypeConfiguration<Manag
         ArgumentNullException.ThrowIfNull(builder);
         ManagedResourceConfiguration.ConfigureCommon(builder, "ManagedWebhooks");
 
+        // Stryker disable once Statement : equivalent — a non-nullable reference type is already required by convention.
         builder.Property(w => w.Token).IsRequired();
     }
 }

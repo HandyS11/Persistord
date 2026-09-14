@@ -11,8 +11,10 @@ public sealed class UserEntityConfiguration : IEntityTypeConfiguration<UserEntit
     public void Configure(EntityTypeBuilder<UserEntity> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
+        // Stryker disable once Statement : equivalent — EF's key discovery convention already keys on Id.
         builder.HasKey(u => u.Id);
         builder.Property(u => u.Id).ValueGeneratedNever();
+        // Stryker disable once Statement : equivalent — a non-nullable reference type is already required by convention.
         builder.Property(u => u.Username).IsRequired();
     }
 }

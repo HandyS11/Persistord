@@ -40,6 +40,16 @@ Replace `tests/Persistord.Core.Tests` and `--project Persistord.Core.csproj` to 
 different module (e.g. `tests/Persistord.Messages.Tests` / `Persistord.Messages.csproj`).
 Each library test project contains its own `stryker-config.json`.
 
+A mutant no test can kill because it does not change behaviour — `HasKey(e => e.Id)`, say,
+which EF's key-discovery convention reproduces — is marked where it lives with
+`// Stryker disable once <Mutator> : equivalent — <why>`. Keep the reason specific: a mutant
+that is merely hard to kill needs a test, not a comment.
+
+`ConfigureAwait(false)` → `true` mutants are *not* equivalent. `tests/Shared` holds a
+`SynchronizationContextProbe` and a `YieldingInterceptor` that make one chosen database
+round-trip complete asynchronously and count the library continuations posted back to the
+caller's context; see the `*_never_resumes_on_the_callers_synchronization_context` tests.
+
 The **full mutation suite** runs weekly (Mondays 03:00 UTC) and on manual dispatch in CI
 via the Mutation workflow (`.github/workflows/Mutation.yml`).
 

@@ -113,6 +113,7 @@ public static class DatabaseMaintenanceExtensions
         CancellationToken cancellationToken)
         where TEntity : class
     {
+        // Stryker disable once String : equivalent — a lambda parameter's name never reaches the SQL.
         var parameter = Expression.Parameter(typeof(TEntity), "e");
         var propertyAccess = Expression.Lambda<Func<TEntity, TProperty>>(
             Expression.Property(parameter, propertyName),

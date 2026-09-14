@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Persistord.Core.Abstractions;
 using Persistord.Core.Interception;
 using Xunit;
@@ -26,6 +27,30 @@ public class TimestampTests
             var note = await context.Notes.SingleAsync();
             Assert.Equal(Start, note.CreatedAt);
             Assert.Equal(Start, note.UpdatedAt);
+        }
+    }
+
+    [Fact]
+    public void A_synchronous_save_stamps_too()
+    {
+        var clock = new TestTimeProvider(Start);
+        var (database, context) = SqliteFixture.Create<StampContext>(o => new StampContext(o, clock));
+        using (database)
+        using (context)
+        {
+            context.Notes.Add(new NoteEntity
+            {
+                Text = "hello"
+            });
+            context.SaveChanges();
+
+            clock.Now = Start.AddMinutes(5);
+            context.Notes.Local.Single().Text = "changed";
+            context.SaveChanges();
+
+            var note = context.Notes.Single();
+            Assert.Equal(Start, note.CreatedAt);
+            Assert.Equal(Start.AddMinutes(5), note.UpdatedAt);
         }
     }
 
@@ -118,6 +143,35 @@ public class TimestampTests
     [Fact]
     public void Interceptor_guards_its_time_provider() =>
         Assert.Throws<ArgumentNullException>(() => new TimestampInterceptor(null!));
+
+    [Fact]
+    public async Task Interceptor_guards_its_event_data()
+    {
+        var interceptor = new TimestampInterceptor();
+
+        Assert.Throws<ArgumentNullException>("eventData", () => interceptor.SavingChanges(null!, default));
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            "eventData",
+            async () => await interceptor.SavingChangesAsync(null!, default));
+    }
+
+    [Fact]
+    public void Interceptor_passes_a_synchronous_event_without_a_context_through()
+    {
+        var result = InterceptionResult<int>.SuppressWithResult(7);
+
+        Assert.Equal(7, new TimestampInterceptor().SavingChanges(ContextlessEvent(), result).Result);
+    }
+
+    [Fact]
+    public async Task Interceptor_passes_an_asynchronous_event_without_a_context_through()
+    {
+        var result = InterceptionResult<int>.SuppressWithResult(7);
+
+        Assert.Equal(7, (await new TimestampInterceptor().SavingChangesAsync(ContextlessEvent(), result)).Result);
+    }
+
+    private static DbContextEventData ContextlessEvent() => new(null!, null!, null);
 
     [Fact]
     public async Task Parameterless_constructor_stamps_from_the_system_clock()

@@ -44,6 +44,16 @@ public class NullFallbackTests
     }
 
     [Fact]
+    public void ToMessageEntity_treats_explicitly_null_collections_as_empty()
+    {
+        var entity = WithUnsetCollections(MakeMessage()).ToMessageEntity();
+
+        Assert.Empty(entity.Attachments);
+        Assert.Empty(entity.Reactions);
+        Assert.Empty(entity.Embeds);
+    }
+
+    [Fact]
     public void ToMessageEntity_coalesces_null_embed_field_strings_to_empty()
     {
         const string embed = """[{"fields":[{"name":null,"value":null,"inline":false}]}]""";

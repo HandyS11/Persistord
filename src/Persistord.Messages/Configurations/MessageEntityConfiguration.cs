@@ -12,6 +12,7 @@ public sealed class MessageEntityConfiguration(bool filterDeleted) : IEntityType
     public void Configure(EntityTypeBuilder<MessageEntity> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
+        // Stryker disable once Statement : equivalent — EF's key discovery convention already keys on Id.
         builder.HasKey(m => m.Id);
         builder.Property(m => m.Id).ValueGeneratedNever();
         builder.HasIndex(m => new

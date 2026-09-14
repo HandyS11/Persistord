@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Persistord.Testing;
+using Persistord.Tests.Shared;
 using Xunit;
 
 namespace Persistord.Core.Tests;
@@ -26,6 +27,23 @@ public class UpsertTests
 
             Assert.Equal(42UL, row.DiscordId);
             Assert.Single(await context.Widgets.ToListAsync());
+        }
+    }
+
+    [Fact]
+    public async Task UpsertIfChanged_reports_a_change_when_it_creates_the_row()
+    {
+        var (database, context) = SqliteFixture.Create<UpsertContext>(o => new UpsertContext(o));
+        using (database)
+        await using (context)
+        {
+            var result = await context.Widgets.UpsertIfChangedAsync(
+                w => w.GuildId == 1UL && w.Key == "dash",
+                () => NewWidget(1UL, "dash"),
+                _ => { });
+
+            Assert.True(result.Changed);
+            Assert.Equal(EntityState.Unchanged, context.Entry(result.Entity).State);
         }
     }
 
@@ -294,13 +312,71 @@ public class UpsertTests
         using (database)
         await using (context)
         {
-            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            await Assert.ThrowsAsync<ArgumentNullException>("set", () =>
+                ((DbSet<WidgetEntity>)null!).UpsertAsync(w => w.Key == "d", () => NewWidget(1UL, "d"), _ => { }));
+            await Assert.ThrowsAsync<ArgumentNullException>("naturalKey", () =>
                 context.Widgets.UpsertAsync(null!, () => NewWidget(1UL, "d"), _ => { }));
-            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            await Assert.ThrowsAsync<ArgumentNullException>("create", () =>
                 context.Widgets.UpsertAsync(w => w.Key == "d", null!, _ => { }));
-            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            await Assert.ThrowsAsync<ArgumentNullException>("update", () =>
                 context.Widgets.UpsertAsync(w => w.Key == "d", () => NewWidget(1UL, "d"), null!));
         }
+    }
+
+    [Theory]
+    [InlineData("SELECT")]
+    [InlineData("INSERT")]
+    public async Task Upsert_never_resumes_on_the_callers_synchronization_context_when_it_creates(string yieldOn)
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context =
+            database.CreateContext<UpsertContext>(o => new UpsertContext(o), new YieldingInterceptor(yieldOn));
+
+        var posts = await SynchronizationContextProbe.CountPostsAsync(() => context.Widgets.UpsertAsync(
+            w => w.GuildId == 1UL && w.Key == "dash",
+            () => NewWidget(1UL, "dash"),
+            w => w.DiscordId = 42UL));
+
+        Assert.Equal(0, posts);
+    }
+
+    [Fact]
+    public async Task Upsert_never_resumes_on_the_callers_synchronization_context_when_it_updates()
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context =
+            database.CreateContext<UpsertContext>(o => new UpsertContext(o), new YieldingInterceptor("UPDATE"));
+        await context.Widgets.AddAsync(NewWidget(1UL, "dash"));
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var posts = await SynchronizationContextProbe.CountPostsAsync(() => context.Widgets.UpsertAsync(
+            w => w.GuildId == 1UL && w.Key == "dash",
+            () => NewWidget(1UL, "dash"),
+            w => w.DiscordId = 42UL));
+
+        Assert.Equal(0, posts);
+    }
+
+    [Theory]
+    [InlineData("SELECT", 2)] // the re-read of the winner
+    [InlineData("UPDATE", 1)] // the mutation applied to it
+    public async Task Upsert_never_resumes_on_the_callers_synchronization_context_when_it_loses_the_race(
+        string yieldOn,
+        int occurrence)
+    {
+        await using var database = SqliteTestDatabase.Shared(schema: TestSchema.EnsureCreated);
+        await using var context = database.CreateContext<UpsertContext>(
+            o => new UpsertContext(o),
+            new InterferingInsertInterceptor(database),
+            new YieldingInterceptor(yieldOn, occurrence));
+
+        var posts = await SynchronizationContextProbe.CountPostsAsync(() => context.Widgets.UpsertAsync(
+            w => w.GuildId == 1UL && w.Key == "dash",
+            () => NewWidget(1UL, "dash"),
+            w => w.DiscordId = 99UL));
+
+        Assert.Equal(0, posts);
     }
 
     /// <summary>Inserts the same natural key from a second context while the first one saves.</summary>

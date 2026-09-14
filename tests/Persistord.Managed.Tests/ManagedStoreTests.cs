@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Persistord.Managed.Entities;
 using Persistord.Testing;
+using Persistord.Tests.Shared;
 using Xunit;
 
 namespace Persistord.Managed.Tests;
@@ -129,6 +130,74 @@ public class ManagedStoreTests
         }
 
         Assert.Equal(1, await context.Channels.CountAsync());
+    }
+
+    [Fact]
+    public async Task DeleteScope_rolls_every_delete_back_when_one_fails()
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context = database.CreateContext<ManagedContext>(
+            o => new ManagedContext(o),
+            new FailingCommandInterceptor("DELETE FROM \"ManagedCategories\""));
+
+        await context.UpsertManagedAsync<ManagedMessage>(1UL, "server-1", "dash", 1UL);
+        await context.UpsertManagedAsync<ManagedWebhook>(1UL, "server-1", "bridge", 2UL, w => w.Token = "t");
+        await context.UpsertManagedAsync<ManagedChannel>(1UL, "server-1", "chat", 3UL);
+        context.ChangeTracker.Clear();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => context.DeleteScopeAsync(1UL, "server-1"));
+
+        Assert.Equal(1, await context.Messages.CountAsync());
+        Assert.Equal(1, await context.Webhooks.CountAsync());
+        Assert.Equal(1, await context.Channels.CountAsync());
+    }
+
+    [Theory]
+    [InlineData("BEGIN")]
+    [InlineData("DELETE FROM \"ManagedMessages\"")]
+    [InlineData("DELETE FROM \"ManagedWebhooks\"")]
+    [InlineData("DELETE FROM \"ManagedChannels\"")]
+    [InlineData("DELETE FROM \"ManagedCategories\"")]
+    [InlineData("COMMIT")]
+    public async Task DeleteScope_never_resumes_on_the_callers_synchronization_context(string yieldOn)
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context =
+            database.CreateContext<ManagedContext>(o => new ManagedContext(o), new YieldingInterceptor(yieldOn));
+
+        Assert.Equal(0,
+            await SynchronizationContextProbe.CountPostsAsync(() => context.DeleteScopeAsync(1UL, "server-1")));
+    }
+
+    [Fact]
+    public async Task ListScopes_reads_every_resource_table()
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context = database.CreateContext<ManagedContext>(o => new ManagedContext(o));
+
+        await context.UpsertManagedAsync<ManagedCategory>(1UL, "from-category", "rust", 1UL);
+        await context.UpsertManagedAsync<ManagedChannel>(1UL, "from-channel", "chat", 2UL);
+        await context.UpsertManagedAsync<ManagedMessage>(1UL, "from-message", "dash", 3UL);
+        await context.UpsertManagedAsync<ManagedWebhook>(1UL, "from-webhook", "bridge", 4UL, w => w.Token = "t");
+        context.ChangeTracker.Clear();
+
+        Assert.Equal(
+            ["from-category", "from-channel", "from-message", "from-webhook"],
+            await context.ListScopesAsync(1UL));
+    }
+
+    [Theory]
+    [InlineData("FROM \"ManagedCategories\"")]
+    [InlineData("FROM \"ManagedChannels\"")]
+    [InlineData("FROM \"ManagedMessages\"")]
+    [InlineData("FROM \"ManagedWebhooks\"")]
+    public async Task ListScopes_never_resumes_on_the_callers_synchronization_context(string yieldOn)
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context =
+            database.CreateContext<ManagedContext>(o => new ManagedContext(o), new YieldingInterceptor(yieldOn));
+
+        Assert.Equal(0, await SynchronizationContextProbe.CountPostsAsync(() => context.ListScopesAsync(1UL)));
     }
 
     [Fact]
