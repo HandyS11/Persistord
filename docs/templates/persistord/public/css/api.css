@@ -1,0 +1,180 @@
+/*
+ * API reference pages. docfx emits members as flat siblings - h3[data-uid],
+ * summary, .codewrapper, h4.section, dl.parameters - with no wrapping element,
+ * so a member "block" is drawn with a rule above its heading rather than by
+ * re-parenting nodes, which would disturb docfx's anchors and in-page rail.
+ *
+ * body:is(...) carries the same specificity as docfx's
+ * body[data-yaml-mime=ManagedReference] rules, so source order decides.
+ */
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article {
+  --bs-secondary-rgb: var(--pd-muted-rgb);
+}
+
+/* Cross-references are most of the text on these pages; underlining every one
+   turns it to noise. */
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article a.xref {
+  text-decoration: none;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article a.xref:hover,
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article a.xref:focus-visible {
+  text-decoration: underline;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article h1[data-uid] {
+  margin-bottom: 0.5rem;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article .facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  margin: 0 0 1.5rem;
+  font-size: 0.8125rem;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article .facts dl {
+  display: flex;
+  gap: 0.375rem;
+  margin: 0;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article .facts dt {
+  color: var(--pd-muted);
+  font-weight: 600;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article .facts dd {
+  margin: 0;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article > .markdown.summary:not(.level1) {
+  max-width: var(--pd-measure);
+  font-size: 1.0625rem;
+}
+
+/* Signatures wrap rather than scroll: a reader should see the whole parameter
+   list without dragging a scrollbar. */
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article .codewrapper pre > code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.typelist {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: 0.25rem 1rem;
+  margin: 0 0 0.5rem;
+  color: var(--pd-muted);
+  font-size: 0.8125rem;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.typelist > dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.125rem 0.875rem;
+  margin: 0;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article h2.section {
+  margin-top: 3.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--pd-hairline);
+  font-size: 1.375rem;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article h3[data-uid] {
+  margin-top: 2.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--pd-hairline);
+  font-family: var(--pd-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article h2.section + h3[data-uid],
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article h2.section + a + h3[data-uid] {
+  margin-top: 1.25rem;
+  padding-top: 0;
+  border-top: 0;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article h4.section {
+  margin: 1.5rem 0 0.5rem;
+  color: var(--pd-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.parameters {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) minmax(0, 1fr);
+  gap: 0.5rem 1.25rem;
+  margin: 0 0 1rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-surface);
+  font-size: 0.9rem;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.parameters > dt {
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.parameters > dt > code:first-child {
+  font-weight: 600;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.parameters > dd {
+  margin: 0;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.parameters > dd > :last-child {
+  margin-bottom: 0;
+}
+
+/* Namespace pages: section headings ("Classes", "Structs") and one dl.jumplist
+   per type. The same two-column grid on every jumplist lines names and
+   summaries up like table rows. */
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article > h3:not([data-uid]) {
+  margin: 2.5rem 0 0.5rem;
+  font-size: 1.2rem;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.jumplist {
+  display: grid;
+  grid-template-columns: minmax(12rem, 22rem) minmax(0, 1fr);
+  gap: 0.25rem 1.5rem;
+  margin: 0;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--pd-hairline);
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.jumplist > dt {
+  font-family: var(--pd-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.jumplist > dd {
+  margin: 0;
+  color: var(--pd-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 767.98px) {
+  body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.typelist,
+  body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.parameters,
+  body:is([data-yaml-mime='ManagedReference'], [data-yaml-mime='ApiPage']) article dl.jumplist {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
