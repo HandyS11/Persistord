@@ -33,15 +33,22 @@
       { "src": "..", "files": [ "src/*/README.md", "samples/README.md" ] }
     ],
     "resource": [
-      { "src": "..", "files": [ "icon.png" ] }
+      { "src": "..", "files": [ "icon.png" ] },
+      { "files": [ "404.html" ] }
     ],
     "output": "_site",
+    "sitemap": {
+      "baseUrl": "https://handys11.github.io/Persistord/",
+      "changefreq": "weekly",
+      "priority": 0.5
+    },
     "template": [ "default", "modern", "templates/persistord" ],
     "globalMetadata": {
       "_appName": "Persistord",
       "_appTitle": "Persistord",
       "_appLogoPath": "icon.png",
       "_appFaviconPath": "icon.png",
+      "_lang": "en",
       "_appFooter": "<div class=\"pd-footer\"><div class=\"pd-footer-links\"><nav class=\"pd-footer-group\" aria-label=\"Docs\"><p class=\"pd-footer-title\">Docs</p><ul><li><a href=\"articles/getting-started.html\">Getting started</a></li><li><a href=\"articles/introduction.html\">Introduction</a></li><li><a href=\"api/index.html\">API reference</a></li></ul></nav><nav class=\"pd-footer-group\" aria-label=\"Packages\"><p class=\"pd-footer-title\">Packages</p><ul><li><a href=\"articles/packages.html\">All packages</a></li><li><a href=\"https://www.nuget.org/packages/Persistord\">NuGet</a></li><li><a href=\"https://github.com/HandyS11/Persistord/releases\">Releases</a></li></ul></nav><nav class=\"pd-footer-group\" aria-label=\"Community\"><p class=\"pd-footer-title\">Community</p><ul><li><a href=\"https://github.com/HandyS11/Persistord\">GitHub</a></li><li><a href=\"https://github.com/HandyS11/Persistord/issues\">Issues</a></li><li><a href=\"development/index.html\">Contributing</a></li></ul></nav></div><div class=\"pd-footer-meta\"><span>Persistord &mdash; the EF Core model your Discord bot keeps rewriting</span><span>Released under the <a href=\"license.html\">MIT licence</a></span></div></div>",
       "_enableSearch": true,
       "pdf": false,
@@ -54,6 +61,12 @@
       "_appFooter": {
         "{*/*,../samples/README.md}": "<div class=\"pd-footer\"><div class=\"pd-footer-links\"><nav class=\"pd-footer-group\" aria-label=\"Docs\"><p class=\"pd-footer-title\">Docs</p><ul><li><a href=\"../articles/getting-started.html\">Getting started</a></li><li><a href=\"../articles/introduction.html\">Introduction</a></li><li><a href=\"../api/index.html\">API reference</a></li></ul></nav><nav class=\"pd-footer-group\" aria-label=\"Packages\"><p class=\"pd-footer-title\">Packages</p><ul><li><a href=\"../articles/packages.html\">All packages</a></li><li><a href=\"https://www.nuget.org/packages/Persistord\">NuGet</a></li><li><a href=\"https://github.com/HandyS11/Persistord/releases\">Releases</a></li></ul></nav><nav class=\"pd-footer-group\" aria-label=\"Community\"><p class=\"pd-footer-title\">Community</p><ul><li><a href=\"https://github.com/HandyS11/Persistord\">GitHub</a></li><li><a href=\"https://github.com/HandyS11/Persistord/issues\">Issues</a></li><li><a href=\"../development/index.html\">Contributing</a></li></ul></nav></div><div class=\"pd-footer-meta\"><span>Persistord &mdash; the EF Core model your Discord bot keeps rewriting</span><span>Released under the <a href=\"../license.html\">MIT licence</a></span></div></div>",
         "{*/*/*,../src/*/README.md}": "<div class=\"pd-footer\"><div class=\"pd-footer-links\"><nav class=\"pd-footer-group\" aria-label=\"Docs\"><p class=\"pd-footer-title\">Docs</p><ul><li><a href=\"../../articles/getting-started.html\">Getting started</a></li><li><a href=\"../../articles/introduction.html\">Introduction</a></li><li><a href=\"../../api/index.html\">API reference</a></li></ul></nav><nav class=\"pd-footer-group\" aria-label=\"Packages\"><p class=\"pd-footer-title\">Packages</p><ul><li><a href=\"../../articles/packages.html\">All packages</a></li><li><a href=\"https://www.nuget.org/packages/Persistord\">NuGet</a></li><li><a href=\"https://github.com/HandyS11/Persistord/releases\">Releases</a></li></ul></nav><nav class=\"pd-footer-group\" aria-label=\"Community\"><p class=\"pd-footer-title\">Community</p><ul><li><a href=\"https://github.com/HandyS11/Persistord\">GitHub</a></li><li><a href=\"https://github.com/HandyS11/Persistord/issues\">Issues</a></li><li><a href=\"../../development/index.html\">Contributing</a></li></ul></nav></div><div class=\"pd-footer-meta\"><span>Persistord &mdash; the EF Core model your Discord bot keeps rewriting</span><span>Released under the <a href=\"../../license.html\">MIT licence</a></span></div></div>"
+      },
+      "description": {
+        "api/**": "Persistord API reference, generated from the XML documentation of the nine packages that ship code.",
+        "../src/*/README.md": "A Persistord NuGet package: what it ships, how to install it, and where its guide lives.",
+        "../samples/README.md": "The runnable Persistord sample projects and what each one demonstrates.",
+        "license.md": "The MIT licence Persistord is released under."
       }
     }
   }
