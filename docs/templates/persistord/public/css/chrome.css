@@ -374,7 +374,9 @@ body > header.bg-body {
 
 /* ---------------------------------------------------------------- footer -- */
 
-body > footer {
+/* [data-layout] matches docfx's `body[data-layout=landing] > footer`, which
+   pins the landing footer to 60px, so source order decides on every layout. */
+body[data-layout] > footer {
   height: auto;
   margin-top: 4rem;
   padding: 2.5rem 0 2rem;
@@ -382,7 +384,7 @@ body > footer {
   font-size: 0.875rem;
 }
 
-body > footer > div {
+body[data-layout] > footer > div {
   align-items: stretch;
 }
 

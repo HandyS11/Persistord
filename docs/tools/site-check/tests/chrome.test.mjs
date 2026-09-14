@@ -233,3 +233,21 @@ test('the footer has three link groups whose links resolve from every depth', as
     }
   }
 })
+
+/* docfx pins the footer to 60px, and repeats the rule for the landing layout
+   with a more specific selector; a footer that keeps that height paints its
+   background behind the first row only. */
+test('the footer grows to hold its content on every layout', async () => {
+  for (const path of ['index.html', ARTICLE]) {
+    const { page, close } = await site.open(path)
+    try {
+      const overhang = await page.$eval(
+        'body > footer',
+        footer => footer.querySelector('.pd-footer').getBoundingClientRect().bottom - footer.getBoundingClientRect().bottom
+      )
+      assert.ok(overhang <= 0, `${path}: footer content runs ${overhang}px past the footer`)
+    } finally {
+      await close()
+    }
+  }
+})
