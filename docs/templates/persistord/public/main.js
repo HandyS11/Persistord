@@ -81,6 +81,52 @@ function wireCopyButtons() {
   }
 }
 
+/* Display names for the fence languages the docs use. A language missing here
+   simply gets no label. */
+const LANGUAGE_LABELS = {
+  bash: 'Shell',
+  console: 'Shell',
+  cs: 'C#',
+  csharp: 'C#',
+  css: 'CSS',
+  diff: 'Diff',
+  html: 'HTML',
+  ini: 'INI',
+  javascript: 'JavaScript',
+  js: 'JavaScript',
+  json: 'JSON',
+  markdown: 'Markdown',
+  md: 'Markdown',
+  powershell: 'PowerShell',
+  pwsh: 'PowerShell',
+  sh: 'Shell',
+  shell: 'Shell',
+  sql: 'SQL',
+  toml: 'TOML',
+  xml: 'XML',
+  yaml: 'YAML',
+  yml: 'YAML',
+}
+
+/**
+ * Tags each fenced code block with a display name for its language, which
+ * components.css renders as a caption. API signatures (.codewrapper) are always
+ * C# and stay unlabelled.
+ */
+function labelCodeBlocks() {
+  for (const code of document.querySelectorAll('.content article pre > code[class*="lang-"]')) {
+    const pre = code.parentElement
+    if (pre.closest('.codewrapper')) {
+      continue
+    }
+    const language = [...code.classList].find(name => name.startsWith('lang-'))?.slice(5)
+    const label = LANGUAGE_LABELS[language]
+    if (label) {
+      pre.dataset.pdLang = label
+    }
+  }
+}
+
 /** Runs a callback once the document has parsed. */
 function onReady(callback) {
   if (document.readyState === 'loading') {
@@ -201,6 +247,7 @@ export default {
   start: () => {
     onReady(() => {
       wireCopyButtons()
+      labelCodeBlocks()
       wireSearchShortcut()
       trackAffix()
     })
