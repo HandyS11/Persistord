@@ -16,6 +16,17 @@ const CALLOUTS = [
 
 const SYNTAX = ['.hljs-keyword', '.hljs-string', '.hljs-number', '.hljs-comment', '.hljs-title', '.hljs-attr', '.hljs-link']
 
+/* Resolves once every Mermaid fence on the page has been replaced by its SVG. */
+const diagramsRendered = page =>
+  page.waitForFunction(
+    () => {
+      const diagrams = document.querySelectorAll('pre.mermaid')
+      return diagrams.length > 0 && [...diagrams].every(pre => pre.querySelector(':scope > svg'))
+    },
+    null,
+    { timeout: 15000 }
+  )
+
 let site
 
 before(async () => {
@@ -119,6 +130,24 @@ for (const theme of THEMES) {
       assert.ok(sameColor(parseColor(node.fill), parseColor(values.raised)), `node fill is ${node.fill}`)
       const label = await computed(page, 'pre.mermaid .nodeLabel', ['color'])
       assert.ok(sameColor(parseColor(label.color), parseColor(values.text)), `node label is ${label.color}`)
+    } finally {
+      await close()
+    }
+  })
+
+  /* Markers live in <defs>, so they are never "visible" to waitForSelector. */
+  test(`${theme}: Mermaid markers are recoloured from the tokens`, async () => {
+    const { page, close } = await site.open(PAGE, { theme })
+    try {
+      await diagramsRendered(page)
+      const values = await tokens(page, ['surface', 'muted'])
+
+      const zero = await computed(page, 'pre.mermaid marker[id*="er-zeroOr"] circle', ['fill', 'stroke'])
+      assert.ok(sameColor(parseColor(zero.fill), parseColor(values.surface)), `ER zero marker fill is ${zero.fill}`)
+      assert.ok(sameColor(parseColor(zero.stroke), parseColor(values.muted)), `ER zero marker stroke is ${zero.stroke}`)
+
+      const head = await computed(page, 'pre.mermaid marker[id$="arrowhead"] path', ['fill'])
+      assert.ok(sameColor(parseColor(head.fill), parseColor(values.muted)), `sequence arrowhead fill is ${head.fill}`)
     } finally {
       await close()
     }

@@ -368,13 +368,22 @@ pre.mermaid .loopLine {
   stroke: var(--pd-muted) !important;
 }
 
-pre.mermaid marker path {
+pre.mermaid marker path,
+pre.mermaid marker circle {
   stroke: var(--pd-muted) !important;
 }
 
 pre.mermaid .arrowheadPath,
-pre.mermaid marker.flowchart-v2 path {
+pre.mermaid marker.flowchart-v2 path,
+pre.mermaid marker.flowchart-v2 circle,
+pre.mermaid marker[id$='arrowhead'] path,
+pre.mermaid marker[id$='filled-head'] path {
   fill: var(--pd-muted) !important;
+}
+
+/* The ER "zero" cardinality is an open ring; Mermaid fills it white. */
+pre.mermaid marker[id*='er-zeroOr'] circle {
+  fill: var(--pd-surface) !important;
 }
 
 /* ------------------------------------------------- images and quotations -- */
