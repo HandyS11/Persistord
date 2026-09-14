@@ -86,7 +86,8 @@
 [data-bs-theme] .hljs-string,
 [data-bs-theme] .hljs-regexp,
 [data-bs-theme] .hljs-addition,
-[data-bs-theme] .hljs-template-string {
+[data-bs-theme] .hljs-template-string,
+[data-bs-theme] .hljs-link {
   color: var(--pd-code-string);
 }
 

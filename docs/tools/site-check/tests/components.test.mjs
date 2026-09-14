@@ -14,7 +14,7 @@ const CALLOUTS = [
   ['CAUTION', 'caution'],
 ]
 
-const SYNTAX = ['.hljs-keyword', '.hljs-string', '.hljs-number', '.hljs-comment', '.hljs-title', '.hljs-attr']
+const SYNTAX = ['.hljs-keyword', '.hljs-string', '.hljs-number', '.hljs-comment', '.hljs-title', '.hljs-attr', '.hljs-link']
 
 let site
 
