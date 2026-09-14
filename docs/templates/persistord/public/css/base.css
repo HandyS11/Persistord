@@ -6,8 +6,20 @@
  * !important, while they still beat docfx's bare h1-h4 rules by source order.
  */
 
+/* docfx itself sets `scroll-margin-top: 60px` (== --pd-header-height) on every
+   heading inside .content article at >= 768px, to clear the sticky header on
+   anchor navigation. Below 768px it does not, so scroll-padding-top there
+   carries the full header clearance; at and above it, only the extra
+   breathing room is needed - the two insets are additive, and stacking the
+   full clearance twice would land anchors --pd-header-height too far down. */
 html {
   scroll-padding-top: calc(var(--pd-header-height) + 1rem);
+}
+
+@media (min-width: 768px) {
+  html {
+    scroll-padding-top: 1rem;
+  }
 }
 
 body {
