@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Persistord.Core;
 using Persistord.Core.Configurations;
+using Persistord.Core.Conventions;
 using Xunit;
 
 namespace Persistord.Core.Tests;
@@ -55,6 +56,22 @@ public class CoreNullGuardTests
     public void OnConfiguring_throws_on_null() =>
         Assert.Throws<ArgumentNullException>(() => new ProbeContext().ProbeConfiguring(null));
 
+    [Fact]
+    public void TimeProvider_constructor_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>("timeProvider", () => new ClockProbeContext(null!));
+
+    [Fact]
+    public void SnowflakeKeyConvention_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>(
+            "modelBuilder",
+            () => new SnowflakeKeyConvention().ProcessModelFinalizing(null!, null!));
+
+    [Fact]
+    public void GuildScopeConvention_throws_on_null() =>
+        Assert.Throws<ArgumentNullException>(
+            "modelBuilder",
+            () => new GuildScopeConvention().ProcessModelFinalizing(null!, null!));
+
     /// <summary>Concrete context that exposes the protected overrides for null-guard testing.</summary>
     private sealed class ProbeContext()
         : DiscordGraphDbContext(new DbContextOptionsBuilder<ProbeContext>().UseSqlite("DataSource=:memory:").Options)
@@ -66,4 +83,10 @@ public class CoreNullGuardTests
 
         public void ProbeConfiguring(DbContextOptionsBuilder? optionsBuilder) => OnConfiguring(optionsBuilder!);
     }
+
+    /// <summary>Concrete context over the clock-taking constructor.</summary>
+    private sealed class ClockProbeContext(TimeProvider timeProvider)
+        : DiscordGraphDbContext(
+            new DbContextOptionsBuilder<ClockProbeContext>().UseSqlite("DataSource=:memory:").Options,
+            timeProvider);
 }

@@ -3,6 +3,10 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistord.Core.Abstractions;
 using Persistord.Testing;
 using Xunit;
@@ -105,6 +109,20 @@ public class ProtectionTests
         var stored = await ReadColumnAsync(context, "Secrets", "Label");
 
         Assert.Equal("public", stored);
+    }
+
+    [Fact]
+    public void An_unannotated_property_without_a_getter_is_left_alone()
+    {
+        // No getter means no accessor to look up in an interface map: the walker must answer "not
+        // protected" rather than guess.
+        using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        using var context =
+            database.CreateContext<WriteOnlyContext>(o => new WriteOnlyContext(o, new ReversingProvider()));
+
+        var token = context.Model.FindEntityType(typeof(WriteOnlyRow))!.FindProperty(nameof(WriteOnlyRow.Token))!;
+
+        Assert.Null(token.GetValueConverter());
     }
 
     [Fact]
@@ -255,6 +273,41 @@ public class ProtectionTests
             ((ModelBuilder)null!).ApplyProtection(new ReversingProvider()));
         Assert.Throws<ArgumentNullException>(() =>
             new ModelBuilder().ApplyProtection(null!));
+    }
+
+    [Fact]
+    public async Task The_convention_is_not_overridden_by_a_later_convention_level_conversion()
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context =
+            database.CreateContext<CompetingConventionContext>(o =>
+                new CompetingConventionContext(o, new ReversingProvider()));
+
+        await context.Secrets.AddAsync(new SecretRow
+        {
+            Token = "super-secret", Label = "public"
+        });
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        // The competing convention did run — it prefixed the unannotated column — but [Protected] is
+        // a data annotation, and a convention-level call cannot replace it.
+        Assert.Equal("PFX:public", await ReadColumnAsync(context, "Secrets", "Label"));
+        var stored = await ReadColumnAsync(context, "Secrets", "Token");
+        Assert.DoesNotContain("super-secret", stored, StringComparison.Ordinal);
+        Assert.False(stored!.StartsWith("PFX:", StringComparison.Ordinal));
+
+        Assert.Equal("super-secret", (await context.Secrets.SingleAsync()).Token);
+    }
+
+    [Fact]
+    public void The_convention_and_the_converter_guard_their_arguments()
+    {
+        Assert.Throws<ArgumentNullException>("dataProtectionProvider", () => new ProtectedStringConvention(null!));
+        Assert.Throws<ArgumentNullException>(
+            "modelBuilder",
+            () => new ProtectedStringConvention(new ReversingProvider()).ProcessModelFinalizing(null!, null!));
+        Assert.Throws<ArgumentNullException>("protector", () => new ProtectedStringConverter(null!));
     }
 
     [Fact]
@@ -438,6 +491,78 @@ public sealed class LateRegistrationContext(
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyProtection(dataProtectionProvider);
         modelBuilder.Entity<LateSecretRow>().ToTable("LateSecrets");
+    }
+}
+
+/// <summary>
+/// Runs <see cref="ProtectedStringConvention"/>, then a second finalizing convention that puts a
+/// convention-precedence conversion on every string property.
+/// </summary>
+public sealed class CompetingConventionContext(
+    DbContextOptions<CompetingConventionContext> options,
+    IDataProtectionProvider dataProtectionProvider) : Persistord.Core.DiscordDbContext(options)
+{
+    public DbSet<SecretRow> Secrets => Set<SecretRow>();
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+        configurationBuilder.Conventions.Add(_ => new ProtectedStringConvention(dataProtectionProvider));
+        configurationBuilder.Conventions.Add(_ => new PrefixEveryStringConvention());
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<SecretRow>().ToTable("Secrets");
+    }
+
+    private sealed class PrefixEveryStringConvention : IModelFinalizingConvention
+    {
+        private static readonly ValueConverter<string, string> Prefix = new(v => "PFX:" + v, v => v.Substring(4));
+
+        public void ProcessModelFinalizing(
+            IConventionModelBuilder modelBuilder,
+            IConventionContext<IConventionModelBuilder> context)
+        {
+            var strings = modelBuilder.Metadata.GetEntityTypes()
+                .SelectMany(entityType => entityType.GetProperties())
+                .Where(property => property.ClrType == typeof(string))
+                .ToList();
+
+            foreach (var property in strings)
+            {
+                property.Builder.HasConversion(Prefix);
+            }
+        }
+    }
+}
+
+public sealed class WriteOnlyRow
+{
+    private string _token = string.Empty;
+
+    public long Id { get; set; }
+
+    [SuppressMessage("Major Code Smell", "S2376", Justification = "Write-only on purpose: the shape under test.")]
+    [SuppressMessage("Design", "CA1044", Justification = "Write-only on purpose: the shape under test.")]
+    public string Token
+    {
+        set => _token = value;
+    }
+
+    public override string ToString() => _token;
+}
+
+public sealed class WriteOnlyContext(
+    DbContextOptions<WriteOnlyContext> options,
+    IDataProtectionProvider dataProtectionProvider) : Persistord.Core.DiscordDbContext(options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<WriteOnlyRow>().Property<string>(nameof(WriteOnlyRow.Token)).HasField("_token");
+        modelBuilder.ApplyProtection(dataProtectionProvider);
     }
 }
 

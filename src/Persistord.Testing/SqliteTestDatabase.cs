@@ -56,6 +56,7 @@ public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
     public TestSchema Schema { get; }
 
     /// <inheritdoc />
+    // Stryker disable once Boolean : equivalent — SqliteConnection disposes synchronously, so there is no continuation to marshal.
     public async ValueTask DisposeAsync() => await _connection.DisposeAsync().ConfigureAwait(false);
 
     /// <inheritdoc />
@@ -141,6 +142,7 @@ public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
         where TContext : DbContext
     {
         ArgumentNullException.ThrowIfNull(factory);
+        // Stryker disable once Statement : equivalent — Options guards interceptors identically before factory runs.
         ArgumentNullException.ThrowIfNull(interceptors);
 
         var context = factory(Options<TContext>(interceptors));
@@ -170,7 +172,9 @@ public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
         where TContext : DbContext
     {
         ArgumentNullException.ThrowIfNull(factory);
+        // Stryker disable once Statement : equivalent — Options guards configure identically before factory runs.
         ArgumentNullException.ThrowIfNull(configure);
+        // Stryker disable once Statement : equivalent — Options guards interceptors identically before factory runs.
         ArgumentNullException.ThrowIfNull(interceptors);
 
         var context = factory(Options(configure, interceptors));
@@ -195,6 +199,7 @@ public sealed class SqliteTestDatabase : IAsyncDisposable, IDisposable
             builder.UseSqlite(_connection);
         }
 
+        // Stryker disable once Equality : `>= 0` is equivalent — AddInterceptors over an empty array registers nothing.
         if (interceptors.Length > 0)
         {
             builder.AddInterceptors(interceptors);

@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Persistord.Core.Abstractions;
 using Persistord.Core.Entities;
 using Xunit;
@@ -71,6 +73,43 @@ public class GuildRootTests
     }
 
     [Fact]
+    public void ApplyGuildRoot_configures_the_guild_even_without_a_DbSet_or_the_conventions()
+    {
+        // No DbSet<GuildEntity> to discover it and no SnowflakeKeyConvention to fix its key: the root
+        // is only in the model, caller-supplied, because ApplyGuildRoot applies its configuration.
+        var (database, context) =
+            SqliteFixture.Create<BareRootContext>(o => new BareRootContext(o), createSchema: false);
+        using (database)
+        using (context)
+        {
+            var guild = context.Model.FindEntityType(typeof(GuildEntity));
+
+            Assert.NotNull(guild);
+            Assert.Equal(ValueGenerated.Never, guild.FindProperty(nameof(GuildEntity.Id))!.ValueGenerated);
+        }
+    }
+
+    [Fact]
+    public void ApplyGuildRoot_adds_the_guild_fk_beside_a_GuildId_fk_to_another_principal()
+    {
+        var (database, context) = SqliteFixture.Create<TenantContext>(o => new TenantContext(o), createSchema: false);
+        using (database)
+        using (context)
+        {
+            var row = context.Model.FindEntityType(typeof(TenantScopedRow))!;
+
+            var guildFk = Assert.Single(row.GetForeignKeys(),
+                fk => fk.PrincipalEntityType.ClrType == typeof(GuildEntity));
+            Assert.Equal(nameof(TenantScopedRow.GuildId), Assert.Single(guildFk.Properties).Name);
+            Assert.Equal(DeleteBehavior.Cascade, guildFk.DeleteBehavior);
+
+            var tenantFk = Assert.Single(row.GetForeignKeys(),
+                fk => fk.PrincipalEntityType.ClrType == typeof(TenantRow));
+            Assert.Equal(DeleteBehavior.Restrict, tenantFk.DeleteBehavior);
+        }
+    }
+
+    [Fact]
     public async Task Deleting_a_guild_deletes_its_scoped_rows_in_the_database()
     {
         var (database, context) = SqliteFixture.Create<RootContext>(o => new RootContext(o, cascade: true));
@@ -133,6 +172,45 @@ public class GuildRootTests
         public string Label { get; set; } = string.Empty;
 
         public ulong GuildId { get; set; }
+    }
+
+    [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
+    internal sealed class TenantRow
+    {
+        public ulong Id { get; set; }
+    }
+
+    /// <summary>Scoped, but its <c>GuildId</c> already references a consumer-owned tenant table.</summary>
+    [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
+    internal sealed class TenantScopedRow : IGuildScoped
+    {
+        public long Id { get; set; }
+
+        public ulong GuildId { get; set; }
+    }
+
+    private sealed class BareRootContext(DbContextOptions<BareRootContext> options) : DbContext(options)
+    {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.ApplyGuildRoot(cascade: false);
+        }
+    }
+
+    private sealed class TenantContext(DbContextOptions<TenantContext> options)
+        : Persistord.Core.DiscordDbContext(options)
+    {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<TenantScopedRow>()
+                .HasOne<TenantRow>()
+                .WithMany()
+                .HasForeignKey(r => r.GuildId)
+                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.ApplyGuildRoot();
+        }
     }
 
     internal sealed class RootContext(

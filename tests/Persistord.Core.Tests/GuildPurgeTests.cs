@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Persistord.Core.Abstractions;
 using Persistord.Core.Entities;
+using Persistord.Testing;
+using Persistord.Tests.Shared;
 using Xunit;
 
 namespace Persistord.Core.Tests;
@@ -151,6 +153,88 @@ public class GuildPurgeTests
     [Fact]
     public async Task Purge_guards_its_context() =>
         await Assert.ThrowsAsync<ArgumentNullException>(() => ((DbContext)null!).PurgeGuildAsync(1UL));
+
+    [Fact]
+    public async Task Purge_never_deletes_a_non_scoped_row_itself()
+    {
+        var (database, context) = SqliteFixture.Create<AttachmentContext>(o => new AttachmentContext(o));
+        using (database)
+        await using (context)
+        {
+            var note = new ScopedNote
+            {
+                GuildId = 1UL
+            };
+            await context.AddAsync(note);
+            await context.SaveChangesAsync();
+            await context.AddAsync(new UnscopedAttachment
+            {
+                NoteId = note.Id
+            });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            Assert.Equal(1, await context.PurgeGuildAsync(1UL));
+
+            // The database's ON DELETE SET NULL released the attachment; the purge itself left it alone.
+            var attachment = await context.Set<UnscopedAttachment>().SingleAsync();
+            Assert.Null(attachment.NoteId);
+        }
+    }
+
+    [Fact]
+    public async Task Purge_rolls_every_delete_back_when_one_fails()
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context = database.CreateContext<PurgeContext>(
+            o => new PurgeContext(o),
+            new FailingCommandInterceptor("DELETE FROM \"Guilds\""));
+        await SeedAsync(context);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => context.PurgeGuildAsync(1UL));
+
+        Assert.Equal(2, await context.Parents.CountAsync());
+        Assert.Equal(2, await context.Children.CountAsync());
+        Assert.Equal(2, await context.Notes.CountAsync());
+    }
+
+    [Theory]
+    [InlineData("BEGIN")]
+    [InlineData("DELETE FROM")]
+    [InlineData("DELETE FROM \"Guilds\"")]
+    [InlineData("COMMIT")]
+    public async Task Purge_never_resumes_on_the_callers_synchronization_context(string yieldOn)
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context =
+            database.CreateContext<PurgeContext>(o => new PurgeContext(o), new YieldingInterceptor(yieldOn));
+
+        Assert.Equal(0, await SynchronizationContextProbe.CountPostsAsync(() => context.PurgeGuildAsync(1UL)));
+    }
+
+    /// <summary>Not <see cref="IGuildScoped"/>, but it points at a scoped row.</summary>
+    internal sealed class UnscopedAttachment
+    {
+        public long Id { get; set; }
+
+        public long? NoteId { get; set; }
+    }
+
+    internal sealed class AttachmentContext(DbContextOptions<AttachmentContext> options)
+        : Persistord.Core.DiscordDbContext(options)
+    {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<ScopedNote>();
+            modelBuilder.Entity<UnscopedAttachment>()
+                .HasOne<ScopedNote>()
+                .WithMany()
+                .HasForeignKey(a => a.NoteId)
+                .OnDelete(DeleteBehavior.SetNull);
+            modelBuilder.ApplyGuildRoot(cascade: false);
+        }
+    }
 
     internal sealed class ScopedParent : IGuildScoped
     {

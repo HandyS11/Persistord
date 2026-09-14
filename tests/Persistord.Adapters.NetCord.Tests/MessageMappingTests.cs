@@ -20,6 +20,15 @@ public class MessageMappingTests
     }
 
     [Fact]
+    public void Formats_a_reaction_with_neither_id_nor_name_as_empty()
+    {
+        var entity = NetCordFakes.MakeMessage(
+            reactions: [NetCordFakes.MakeReaction(count: 1, emojiId: null, emojiName: null)]).ToMessageEntity();
+
+        Assert.Equal(string.Empty, Assert.Single(entity.Reactions).Emoji);
+    }
+
+    [Fact]
     public void Leaves_soft_delete_state_at_its_default()
     {
         var entity = NetCordFakes.MakeMessage().ToMessageEntity();

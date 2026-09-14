@@ -12,6 +12,7 @@ public sealed class AttachmentEntityConfiguration : IEntityTypeConfiguration<Att
     public void Configure(EntityTypeBuilder<AttachmentEntity> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
+        // Stryker disable once Statement : equivalent — EF's key discovery convention already keys on Id.
         builder.HasKey(a => a.Id);
         builder.Property(a => a.Id).ValueGeneratedNever();
     }

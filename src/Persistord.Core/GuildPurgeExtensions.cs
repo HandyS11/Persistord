@@ -97,6 +97,7 @@ public static class GuildPurgeExtensions
     {
         // Built by hand rather than written as `e => e.GuildId == guildId`: GuildId is declared on
         // IGuildScoped, and EF translates member access against the mapped CLR type.
+        // Stryker disable once String : equivalent — a lambda parameter's name never reaches the SQL.
         var parameter = Expression.Parameter(typeof(TEntity), "e");
         var predicate = Expression.Lambda<Func<TEntity, bool>>(
             Expression.Equal(

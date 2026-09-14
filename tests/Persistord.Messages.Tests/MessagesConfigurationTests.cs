@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Persistord.Messages.Entities;
 using Persistord.Messages.Owned;
+using Persistord.Testing;
 using Xunit;
 
 namespace Persistord.Messages.Tests;
@@ -45,10 +46,37 @@ public class MessagesConfigurationTests
     }
 
     [Fact]
+    public void Snowflake_keys_are_caller_supplied_even_without_the_conventions()
+    {
+        // A bare DbContext runs no SnowflakeKeyConvention, so only the configurations' own
+        // ValueGeneratedNever() keeps these ulong keys from becoming identity columns.
+        using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        using var context = new BareMessagesContext(database.Options<BareMessagesContext>());
+
+        Assert.Equal(
+            ValueGenerated.Never,
+            context.Model.FindEntityType(typeof(MessageEntity))!.FindProperty(nameof(MessageEntity.Id))!
+                .ValueGenerated);
+        Assert.Equal(
+            ValueGenerated.Never,
+            context.Model.FindEntityType(typeof(AttachmentEntity))!.FindProperty(nameof(AttachmentEntity.Id))!
+                .ValueGenerated);
+    }
+
+    [Fact]
     public void EmbedField_uses_explicit_embed_foreign_key()
     {
         var field = BuildModel().FindEntityType(typeof(EmbedField))!;
         var fk = Assert.Single(field.GetForeignKeys(), f => f.PrincipalEntityType.ClrType == typeof(Embed));
         Assert.Equal(nameof(EmbedField.EmbedId), Assert.Single(fk.Properties).Name);
+    }
+
+    private sealed class BareMessagesContext(DbContextOptions<BareMessagesContext> options) : DbContext(options)
+    {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.ApplyMessagesModule();
+        }
     }
 }

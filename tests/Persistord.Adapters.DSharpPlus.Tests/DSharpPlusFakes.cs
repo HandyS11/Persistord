@@ -1,3 +1,4 @@
+using System.Reflection;
 using DSharpPlus.Entities;
 using Newtonsoft.Json;
 
@@ -126,5 +127,26 @@ internal static class DSharpPlusFakes
         if (embeds is not null) { parts.Add($"\"embeds\":{embeds}"); }
 
         return Make<DiscordMessage>($"{{{string.Join(",", parts)}}}");
+    }
+
+    /// <summary>
+    /// Clears the internal lists behind <c>Attachments</c>, <c>Reactions</c> and <c>Embeds</c>, whose
+    /// getters then return <see langword="null"/>. Deserialization always leaves those lists
+    /// initialised — even for an explicit JSON <c>null</c> — so this is the only way to reach the
+    /// mapper's null-collection fallbacks. Throws if a DSharpPlus upgrade renames the fields.
+    /// </summary>
+    internal static DiscordMessage WithUnsetCollections(DiscordMessage message)
+    {
+        foreach (var name in new[]
+                 {
+                     "_attachments", "_reactions", "_embeds"
+                 })
+        {
+            var field = typeof(DiscordMessage).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
+                        ?? throw new InvalidOperationException($"DiscordMessage no longer has a {name} field.");
+            field.SetValue(message, null);
+        }
+
+        return message;
     }
 }

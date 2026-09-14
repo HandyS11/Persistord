@@ -43,7 +43,9 @@ public abstract class DiscordGraphDbContext : DiscordDbContext
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Stryker disable once Statement : equivalent — ApplyCoreGraph below throws the same ArgumentNullException for modelBuilder.
         ArgumentNullException.ThrowIfNull(modelBuilder);
+        // Stryker disable once Statement : equivalent — neither DiscordDbContext nor DbContext configures anything in OnModelCreating.
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyCoreGraph();
     }

@@ -45,6 +45,7 @@ public abstract class DiscordDbContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);
+        // Stryker disable once Statement : equivalent — DbContext.OnConfiguring is empty; the call is kept for derived-context hygiene.
         base.OnConfiguring(optionsBuilder);
 
         if (_timeProvider is not null)
@@ -57,6 +58,7 @@ public abstract class DiscordDbContext : DbContext
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         ArgumentNullException.ThrowIfNull(configurationBuilder);
+        // Stryker disable once Statement : equivalent — DbContext.ConfigureConventions is empty; the call is kept for derived-context hygiene.
         base.ConfigureConventions(configurationBuilder);
         configurationBuilder.Properties<ulong>().HaveConversion<UlongToLongConverter>();
         configurationBuilder.Properties<ulong?>().HaveConversion<NullableUlongToLongConverter>();

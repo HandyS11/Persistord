@@ -42,6 +42,10 @@ public class SnowflakeKeyConventionTests
             ValueGeneratedFor(typeof(SurrogateKeyed), nameof(SurrogateKeyed.ImportedId)));
 
     [Fact]
+    public void Keyless_entity_is_skipped() =>
+        Assert.Null(BuildModel().FindEntityType(typeof(KeylessRow))!.FindPrimaryKey());
+
+    [Fact]
     public void Explicit_configuration_wins_over_the_convention() =>
         Assert.Equal(
             ValueGenerated.OnAdd,
@@ -77,6 +81,12 @@ public class SnowflakeKeyConventionTests
         public ulong Id { get; set; }
     }
 
+    [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
+    internal sealed class KeylessRow
+    {
+        public ulong Value { get; set; }
+    }
+
     private sealed class ConventionProbeContext(DbContextOptions<ConventionProbeContext> options)
         : Persistord.Core.DiscordDbContext(options)
     {
@@ -90,6 +100,7 @@ public class SnowflakeKeyConventionTests
                 e.GuildId, e.Key
             });
             modelBuilder.Entity<ExplicitlyGenerated>().Property(e => e.Id).ValueGeneratedOnAdd();
+            modelBuilder.Entity<KeylessRow>().HasNoKey();
         }
     }
 }
