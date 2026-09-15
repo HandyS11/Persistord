@@ -1,10 +1,13 @@
+---
+description: Encrypt [Protected] string columns at rest with ASP.NET Core Data Protection, and keep the key ring that can decrypt them.
+---
+
 # Protection
 
-`Persistord.Protection` encrypts `[Protected]` string **columns** of a context at
-rest, using [ASP.NET Core Data Protection](https://learn.microsoft.com/aspnet/core/security/data-protection/introduction).
-It replaces hand-rolled `protector.Protect(...)` calls scattered across every write
-path — miss one, and that value silently lands in the database as plaintext — with
-one model-wide declaration.
+`Persistord.Protection` encrypts `[Protected]` string columns of a context at rest, using [ASP.NET Core Data Protection](https://learn.microsoft.com/aspnet/core/security/data-protection/introduction).
+
+It replaces hand-rolled `protector.Protect(...)` calls scattered across every write path — miss
+one, and that value silently lands in the database as plaintext — with one model-wide declaration.
 
 ## What it protects, and what it does not
 
@@ -37,6 +40,30 @@ database tool":
 - The ciphertext is substantially longer than the plaintext — over 130 characters
   for a short secret — which overflows any `HasMaxLength` sized for the plaintext.
   Size the column for ciphertext, not for the value it represents.
+
+## How a value is encrypted and decrypted
+
+```mermaid
+sequenceDiagram
+    participant App as Your code
+    participant EF as EF Core
+    participant Conv as ProtectedStringConverter
+    participant DP as IDataProtector, purpose Persistord.Protection.v1
+    participant DB as Database
+    App->>EF: SaveChangesAsync
+    EF->>Conv: plaintext of a Protected property
+    Conv->>DP: Protect
+    DP-->>Conv: ciphertext, different on every call
+    Conv-->>EF: ciphertext
+    EF->>DB: write the ciphertext to the column
+    App->>EF: query the entity
+    DB-->>EF: ciphertext
+    EF->>Conv: materialize the property
+    Conv->>DP: Unprotect
+    DP-->>Conv: plaintext, or CryptographicException when the key is gone
+    Conv-->>EF: plaintext
+    EF-->>App: entity with the plaintext value
+```
 
 ## Setup
 
@@ -167,14 +194,14 @@ Persistord itself references only `Microsoft.AspNetCore.DataProtection.Abstracti
 — the implementation package, `Microsoft.AspNetCore.DataProtection`, is a
 dependency you add yourself in step 2, and keeping it patched is on you too.
 
-**Losing the key ring means losing every protected value.** There is no recovery
-path: without the key that encrypted a value, `Unprotect` cannot produce it back.
-The default key ring location is a per-user profile folder, which does not travel
-with your database and is easy to lose on redeploy, container recreation, or a
-new host. **Persist it explicitly, next to the database**, with
-`PersistKeysToFileSystem`, and back that folder up on the same schedule as the
-database itself — a database backup without its matching key-ring backup is a
-database full of ciphertext you cannot read.
+> [!CAUTION]
+> Losing the key ring means losing every protected value. There is no recovery path: without the
+> key that encrypted a value, `Unprotect` cannot produce it back. The default key ring location is
+> a per-user profile folder, which does not travel with your database and is easy to lose on
+> redeploy, container recreation, or a new host. Persist it explicitly, next to the database, with
+> `PersistKeysToFileSystem`, and back that folder up on the same schedule as the database itself —
+> a database backup without its matching key-ring backup is a database full of ciphertext you
+> cannot read.
 
 ### What a failure looks like
 
@@ -221,11 +248,11 @@ builds (see [Testing](testing.md)).
 
 ## The plaintext warning
 
-`Persistord.Managed`'s `ManagedWebhook.Token` is annotated `[Protected]`, but the
-attribute alone changes nothing. **Without a reference to `Persistord.Protection`
-and either registering `ProtectedStringConvention` or calling `ApplyProtection`,
-`ManagedWebhook.Token` is stored in plaintext.** See
-[Managed Resources](managed-resources.md) for the entity shape.
+> [!WARNING]
+> `Persistord.Managed`'s `ManagedWebhook.Token` is annotated `[Protected]`, but the attribute alone
+> changes nothing. Without a reference to `Persistord.Protection` and either registering
+> `ProtectedStringConvention` or calling `ApplyProtection`, `ManagedWebhook.Token` is stored in
+> plaintext. See [Managed Resources](managed-resources.md) for the entity shape.
 
 ## See also
 
@@ -233,3 +260,4 @@ and either registering `ProtectedStringConvention` or calling `ApplyProtection`,
   package protects.
 - [Testing](testing.md) — the `IModelCacheKeyFactory` replacement that lets tests
   use a different key ring per context instance.
+- [Troubleshooting](troubleshooting.md#cryptographicexception-when-reading-a-token) — recovering from a missing or revoked key.

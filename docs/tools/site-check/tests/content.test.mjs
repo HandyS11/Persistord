@@ -24,6 +24,9 @@ const ENRICHED = [
   'upsert',
   'guild-lifecycle',
   'recipes',
+  'managed-resources',
+  'protection',
+  'testing',
 ]
 
 /* Tab ids per page, one array per group, in page order (spec 4.2). */

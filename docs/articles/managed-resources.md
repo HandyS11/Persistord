@@ -1,11 +1,15 @@
+---
+description: Remember the categories, channels, messages and webhooks your bot creates, keyed by a name you chose, with Persistord.Managed.
+---
+
 # Managed Resources
 
-`Persistord.Managed` remembers the Discord resources *your bot itself created and
-owns* — a category, a channel, a message it edits in place, a webhook — keyed by a
-name you chose. It is not a mirror: it does not shadow every channel or message in a
-guild the way `Persistord.Core`'s skeleton graph or `Persistord.Messages` do, and it
-never calls Discord. It only makes the record side of "did I already create this?"
-trivial, so your bot stops re-discovering resources by name on every boot.
+`Persistord.Managed` remembers the Discord resources your bot itself created and owns, keyed by a name you chose.
+
+A category, a channel, a message it edits in place, a webhook: it is not a mirror. It does not
+shadow every channel or message in a guild the way `Persistord.Core`'s skeleton graph or
+`Persistord.Messages` do, and it never calls Discord. It only makes the record side of "did I
+already create this?" trivial, so your bot stops re-discovering resources by name on every boot.
 
 ## The four entities
 
@@ -31,7 +35,12 @@ share:
 | `ManagedCategory` | — | just the shared shape |
 | `ManagedChannel` | `ParentDiscordId?` | the category or parent channel it was created under, if any |
 | `ManagedMessage` | `ChannelDiscordId`, `ContentHash?` | also indexed on `DiscordId` alone — a `MessageDeleted` gateway event carries only the message id |
-| `ManagedWebhook` | `ChannelDiscordId`, `Token` | **`Token` is stored in plaintext unless you reference `Persistord.Protection` and call `ApplyProtection`** — see [Protection](protection.md) |
+| `ManagedWebhook` | `ChannelDiscordId`, `Token` | stored in plaintext unless protected — see the warning below |
+
+> [!WARNING]
+> `ManagedWebhook.Token` is stored in plaintext unless you reference `Persistord.Protection` and
+> either register `ProtectedStringConvention` or call `ApplyProtection`. See
+> [Protection](protection.md).
 
 ## Wiring
 
@@ -111,6 +120,20 @@ queries the `DbSet`s directly.
 The module never talks to Discord — "does the resource still exist, and does it
 still look right" is your reconciler's loop. `FindManagedAsync` and
 `UpsertManagedAsync` make the record side of that loop trivial:
+
+```mermaid
+flowchart TD
+    Find["FindManagedAsync(guildId, scope, key)"] --> Found{Record found?}
+    Found -- no --> Send[Send the message in Discord]
+    Found -- yes --> Fetch["Fetch the message from Discord by record.DiscordId"]
+    Fetch --> Exists{Still exists?}
+    Exists -- no --> Send
+    Exists -- yes --> Modify[Edit the message in Discord]
+    Send --> Upsert["UpsertManagedAsync(guildId, scope, key, message.Id, configure)"]
+    Modify --> Upsert
+```
+
+Only the two outer steps are Persistord calls; every Discord step is your reconciler's.
 
 ```csharp
 var record = await db.FindManagedAsync<ManagedMessage>(guildId, scope, "dashboard");
