@@ -329,15 +329,15 @@ keeps resolving.
 | Resources | Samples · Troubleshooting · Upgrading · Release notes · Contributing |
 
 "Release notes" is an external link to `https://github.com/HandyS11/Persistord/releases`.
-"Contributing" links to `development/index.md`. Because DocFX picks a page's sidebar from the nearest
-`toc.yml`, the implementation must confirm that `development/index.md` and `samples/README.md` show
-the Docs sidebar (or an equivalent one) rather than an orphaned single-entry TOC; if they do not, the
-fix is a TOC change, not a file move.
+"Contributing" links to `development/index.md` and nests "Component reference"
+(`development/components.md`); "Samples" nests "All samples" (`samples/README.md`). DocFX gives a
+page the `toc.yml` of its own folder whenever one exists, even if another TOC references the page,
+so `docs/development/toc.yml` and `docs/samples/toc.yml` are deleted; no page file moves.
 
 **New page:** `articles/upgrading.md`, holding the "Upgrading from 1.0.0-beta2" section extracted
 from `articles/core-graph.md` (which keeps a one-line pointer to it). Future upgrade notes go here.
 
-**Enrichment rules, applied to all 22 articles:**
+**Enrichment rules, applied to every article:**
 
 - **Callouts** replace prose that is *already* a note, warning, or caution — for example the
   plaintext warning in `protection.md`, the long-lived-context failure modes in
@@ -347,11 +347,17 @@ from `articles/core-graph.md` (which keeps a one-line pointer to it). Future upg
   provider setup (PostgreSQL / SQL Server / SQLite) in `getting-started.md` and `providers.md`;
   adapter usage (Discord.Net / DSharpPlus / NetCord) in `getting-started.md`, `recipes.md`
   ("Map from …"), and `adapters.md`. Tab ids are shared (`#tab/postgresql`, `#tab/discordnet`, …)
-  so DocFX's tab sync carries a reader's choice across pages.
+  so a reader's choice carries across pages: DocFX syncs same-id groups within a page and honours
+  `?tabs=<id>`, and the theme (`rememberTabChoices()` in `start()`) remembers the reader's choices
+  for the browsing session and applies them on each page; an explicit `?tabs=` wins for the groups
+  it names.
 - **Mermaid diagrams**, themed per section 2:
   `core-graph.md` (entity relationships), `messages.md` (message → embeds, attachments, reactions),
   `history.md` (message → history), `guild-lifecycle.md` (JoinedGuild/LeftGuild sequence),
   `managed-resources.md` (reconcile loop), `protection.md` (encrypt/decrypt path).
+  `packages.md` keeps its existing dependency graph. ER diagrams follow the landing diagram's edge
+  rule (solid = configured foreign key, dotted = id column with no foreign key) and are checked
+  against the same source evidence.
 - **Page skeleton:** every article gets a `description:` front-matter entry (rendered as its
   `<meta name="description">`), a one-sentence lede, and a uniform "See also" list.
   `troubleshooting.md` entries adopt a consistent **Symptom / Cause / Fix** structure.
@@ -368,7 +374,9 @@ from `articles/core-graph.md` (which keeps a one-line pointer to it). Future upg
   `samples/README.html`, and `development/index.html` URL still resolves.
 - `development/index.html` and `samples/README.html` show a sidebar with more than one entry.
 - Every article has a `description:`; `upgrading.md` exists and `core-graph.md` links to it.
-- Tabs and diagrams appear on exactly the pages listed above, and each was reviewed against source.
+- Tabs and diagrams appear on exactly the pages listed above (plus `packages.md`'s dependency
+  graph), and each was reviewed against source; `tests/content.test.mjs` re-checks placement, the
+  ER edges, and the adapter and provider snippets on every run.
 
 ## 5. Site infrastructure
 
@@ -406,7 +414,8 @@ theme with an inline script; and links to Docs, Packages, API, and the home page
 
 - `_site/sitemap.xml` exists and lists absolute URLs under the base URL.
 - Built pages carry `lang="en"`. No built page has more than one `<meta name="description">`; after
-  PR 3, every page in `_site` has exactly one.
+  PR 3, every page in `_site` has exactly one. (`toc.html` sidebar fragments are not pages;
+  `404.html` carries its own.)
 - The 404 renders fully styled in both themes when served at a deep missing path. GitHub Pages'
   behaviour is reproduced by a local static server that serves `_site` under a `/Persistord/`
   prefix and answers any missing path with `404.html` and status 404, as Pages does; the page is

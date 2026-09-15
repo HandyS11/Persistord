@@ -1,38 +1,44 @@
-- name: Get Started
+- name: Start
 - name: Introduction
   href: introduction.md
 - name: Getting Started
   href: getting-started.md
 - name: Packages
   href: packages.md
-- name: Migrations
-  href: migrations.md
 
-- name: Guides
+- name: Concepts
 - name: Snowflake Conversion
   href: snowflake-conversion.md
 - name: Core Graph
   href: core-graph.md
 - name: Messages
   href: messages.md
-- name: Soft-delete & Query Filters
-  href: soft-delete-and-query-filters.md
 - name: History
   href: history.md
+- name: Soft-delete & Query Filters
+  href: soft-delete-and-query-filters.md
 - name: DbContext Lifetime
   href: dbcontext-lifetime.md
+
+- name: Guides
+- name: Migrations
+  href: migrations.md
+- name: Providers
+  href: providers.md
+- name: Upsert
+  href: upsert.md
+- name: Guild Lifecycle
+  href: guild-lifecycle.md
+- name: Recipes
+  href: recipes.md
+
+- name: Add-ons
 - name: Managed Resources
   href: managed-resources.md
 - name: Protection
   href: protection.md
 - name: Testing
   href: testing.md
-- name: Providers
-  href: providers.md
-- name: Guild Lifecycle
-  href: guild-lifecycle.md
-- name: Upsert
-  href: upsert.md
 
 - name: Adapters
 - name: Choosing an Adapter
@@ -47,7 +53,17 @@
 - name: Resources
 - name: Samples
   href: samples.md
-- name: Recipes
-  href: recipes.md
+  items:
+  - name: All samples
+    href: ../../samples/README.md
 - name: Troubleshooting
   href: troubleshooting.md
+- name: Upgrading
+  href: upgrading.md
+- name: Release notes
+  href: https://github.com/HandyS11/Persistord/releases
+- name: Contributing
+  href: ../development/index.md
+  items:
+  - name: Component reference
+    href: ../development/components.md

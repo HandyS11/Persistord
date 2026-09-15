@@ -1,14 +1,36 @@
+---
+description: Keep GuildEntity in step with JoinedGuild and LeftGuild by upserting the root row, then soft-marking or purging it behind a per-guild lock.
+---
+
 # Guild Lifecycle
 
-The recipe for keeping `GuildEntity` in step with the two gateway events that
-bracket a bot's presence in a guild: `JoinedGuild` and `LeftGuild`. It builds on
-`UpsertAsync`, `ApplyGuildRoot`, and `PurgeGuildAsync` — see
+This recipe keeps `GuildEntity` in step with the two gateway events that bracket a bot's presence in a guild: `JoinedGuild` and `LeftGuild`.
+
+It builds on `UpsertAsync`, `ApplyGuildRoot`, and `PurgeGuildAsync` — see
 [Upsert](upsert.md) and [Core Graph](core-graph.md) for those on their own.
 Every snippet assumes a short-lived `DbContext` from `IDbContextFactory` (see
 [DbContext Lifetime](dbcontext-lifetime.md)) built on `DiscordGraphDbContext`, so
 `db.Guilds` is already exposed, and a constructor-injected `TimeProvider clock`
 for the timestamps — the same clock `Persistord.Core`'s own
 `TimestampInterceptor` takes.
+
+```mermaid
+sequenceDiagram
+    participant Gateway as Discord gateway
+    participant Bot as Your handler
+    participant Discord as Discord API
+    participant DB as Database
+    Gateway->>Bot: JoinedGuild
+    Bot->>DB: UpsertAsync the guild row, clearing LeftAt
+    Gateway->>Bot: LeftGuild
+    alt Soft mark
+        Bot->>DB: UpsertAsync the guild row, stamping LeftAt
+    else Hard purge
+        Bot->>Bot: acquire the per-guild lock
+        Bot->>Discord: tear down the guild's Discord resources
+        Bot->>DB: PurgeGuildAsync deletes IGuildScoped rows, then the guild row
+    end
+```
 
 ## On `JoinedGuild`: upsert the root row
 
@@ -57,14 +79,18 @@ them anyway.
 ignores query filters itself, so a guild already hidden by
 `filterLeftGuilds: true` is still reachable and still gets purged.
 
-**Pick one.** With neither policy wired to `LeftGuild`, a left guild's rows
-outlive the guild forever — nothing in Persistord removes them on its own.
+> [!WARNING]
+> Pick one. With neither policy wired to `LeftGuild`, a left guild's rows outlive the guild
+> forever — nothing in Persistord removes them on its own.
 
-`PurgeGuildAsync` only ranks `IGuildScoped` types in its delete order. The five
-skeleton entities from `DiscordGraphDbContext` are deliberately not
-`IGuildScoped` — see [Core Graph](core-graph.md#guildentity) for why — so a
-consumer who also mirrors `ChannelEntity`, `RoleEntity`, `MemberEntity`, and the
-rest must delete those itself, before or after calling `PurgeGuildAsync`.
+<!-- -->
+
+> [!IMPORTANT]
+> `PurgeGuildAsync` only ranks `IGuildScoped` types in its delete order. The five skeleton
+> entities from `DiscordGraphDbContext` are deliberately not `IGuildScoped` — see
+> [Core Graph](core-graph.md#guildentity) for why — so a consumer who also mirrors `ChannelEntity`,
+> `RoleEntity`, `MemberEntity`, and the rest must delete those itself, before or after calling
+> `PurgeGuildAsync`.
 
 ## Purge behind a per-guild lock
 

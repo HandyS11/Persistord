@@ -205,6 +205,72 @@ function wireTabs() {
   }
 }
 
+const TAB_CHOICES = 'pd-tab-choices'
+const TAB_LINKS = '.tabGroup > ul > li > a[data-tab]'
+
+/** The tab ids of the group a tab link belongs to. */
+const groupTabIds = link => [...link.closest('ul').querySelectorAll('a[data-tab]')].map(tab => tab.dataset.tab)
+
+/**
+ * docfx syncs tab groups that share an id within a page and honours a `tabs`
+ * query parameter, but forgets the choice on the next page. This remembers
+ * each tab the reader picks for the browsing session (sessionStorage), a new
+ * pick replacing the one from the same group, and on every page selects the
+ * remembered tab of each group - with the same click docfx dispatches for
+ * `?tabs=`, so docfx keeps syncing groups and the URL. A group the loaded URL
+ * names follows the URL instead. Only a reader's click is a MouseEvent, so the
+ * clicks dispatched here are never recorded as choices.
+ */
+function rememberTabChoices() {
+  const read = () => {
+    try {
+      return JSON.parse(sessionStorage.getItem(TAB_CHOICES)) ?? []
+    } catch {
+      return []
+    }
+  }
+  const explicit = new URLSearchParams(location.search).get('tabs')?.split(',') ?? []
+
+  document.addEventListener('click', event => {
+    const link = event.target instanceof Element ? event.target.closest(TAB_LINKS) : null
+    if (!link || !(event instanceof MouseEvent)) {
+      return
+    }
+    const group = groupTabIds(link)
+    try {
+      sessionStorage.setItem(TAB_CHOICES, JSON.stringify([...read().filter(id => !group.includes(id)), link.dataset.tab]))
+    } catch {
+      /* Storage refused: the choice lasts for this page only. */
+    }
+  })
+
+  /* docfx marks each group with data-bi-name once it has wired it; the markup
+     already selects the first tab, so aria-selected alone proves nothing. */
+  const groups = [...document.querySelectorAll('.tabGroup')]
+  let attempts = 100
+  const apply = () => {
+    if (groups.some(group => group.getAttribute('data-bi-name') !== 'tab-group')) {
+      if (--attempts > 0) {
+        setTimeout(apply, 50)
+      }
+      return
+    }
+    const choices = read()
+    for (const group of groups) {
+      const first = group.querySelector(TAB_LINKS)
+      const ids = first ? groupTabIds(first) : []
+      const id = ids.find(tab => explicit.includes(tab)) ?? [...choices].reverse().find(tab => ids.includes(tab))
+      const link = id && group.querySelector(`:scope > ul > li > a[data-tab="${CSS.escape(id)}"]`)
+      if (link && link.getAttribute('aria-selected') !== 'true') {
+        link.dispatchEvent(new CustomEvent('click', { bubbles: true }))
+      }
+    }
+  }
+  if (groups.length > 0) {
+    apply()
+  }
+}
+
 /** Runs a callback once the document has parsed. */
 function onReady(callback) {
   if (document.readyState === 'loading') {
@@ -334,6 +400,7 @@ export default {
     onReady(() => {
       wireCopyButtons()
       wireTabs()
+      rememberTabChoices()
       labelCodeBlocks()
       wireSearchShortcut()
       trackAffix()

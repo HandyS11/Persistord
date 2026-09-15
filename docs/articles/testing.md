@@ -1,9 +1,12 @@
+---
+description: In-memory SQLite fixtures, schema modes, and model assertions for testing a Persistord-based context with Persistord.Testing.
+---
+
 # Testing
 
-`Persistord.Testing` ships an in-memory SQLite fixture and the model assertions
-built on it, so a schema test is one line instead of a seed-mutate-assert round
-trip against the database. Reference it from test projects only — it ships no
-runtime dependency your bot needs in production.
+`Persistord.Testing` ships an in-memory SQLite fixture and model assertions built on it, so a schema test is one line instead of a seed-mutate-assert round trip.
+
+Reference it from test projects only — it ships no runtime dependency your bot needs in production.
 
 ## `SqliteTestDatabase.Private` vs `.Shared`
 
@@ -41,10 +44,10 @@ await using (var writer = database.CreateContext<MyBotContext>(o => new MyBotCon
 await using var reader = new MyBotContext(database.Options<MyBotContext>());
 ```
 
-**`Options<TContext>()` never builds the schema — only `CreateContext<TContext>()`
-does.** Calling `Options` alone and querying against it before any `CreateContext`
-call has run against the same database fails with a raw
-`SqliteException: no such table`.
+> [!WARNING]
+> `Options<TContext>()` never builds the schema — only `CreateContext<TContext>()` does. Calling
+> `Options` alone and querying against it before any `CreateContext` call has run against the same
+> database fails with a raw `SqliteException: no such table`.
 
 ## `TestSchema.Migrate` vs `TestSchema.EnsureCreated`
 
@@ -126,3 +129,4 @@ context.AssertSnowflakeKey<GuildEntity>();
 - [Protection](protection.md) — why a test that needs its own key ring per
   instance relies on the same `IModelCacheKeyFactory` replacement this package
   installs.
+- [Snowflake Conversion](snowflake-conversion.md) — the key shape `AssertSnowflakeKey` checks.

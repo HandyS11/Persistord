@@ -1,9 +1,13 @@
+---
+description: Map Discord.Net interfaces such as IGuild and IMessage to Persistord entities, from gateway and REST objects alike.
+---
+
 # Discord.Net Adapter
 
-`Persistord.Adapters.DiscordNet` is an opt-in adapter that maps
-[Discord.Net](https://github.com/discord-net/Discord.Net) interface types to
-Persistord entities. The core Persistord packages never reference a Discord client
-library — install this package only if you use Discord.Net.
+`Persistord.Adapters.DiscordNet` maps [Discord.Net](https://github.com/discord-net/Discord.Net) interface types to Persistord entities.
+
+The core Persistord packages never reference a Discord client library — install this package only
+if you use Discord.Net.
 
 ```bash
 dotnet add package Persistord.Adapters.DiscordNet
@@ -47,12 +51,27 @@ their defaults, letting EF Core manage them:
 
 - Persistence-managed fields on `MessageEntity` (`IsDeleted`, `DeletedAt`) — stay
   `false` / `null` on creation.
-- EF-generated surrogate keys on embed, attachment, and reaction child entities.
+- EF-generated surrogate keys on embed, embed field, and reaction child entities
+  (`Embed.Id`, `EmbedField.Id`, `ReactionEntity.Id`). `AttachmentEntity.Id` is the
+  attachment's snowflake, copied from Discord.
 - Child foreign keys — filled by EF Core from the navigation collections on
   `SaveChanges`.
 
-Mappers tolerate partial gateway data (null optional fields) and throw only on a
-null source argument.
+Mappers tolerate partial gateway data (null optional fields) and throw `ArgumentNullException` on a null source argument.
+
+## Channel types
+
+Persistord's `ChannelType` has four members. The mapper tests the channel's Discord.Net interfaces
+in this order and takes the first match, so a channel class Discord.Net adds later is classified
+by the interfaces it implements:
+
+| Discord.Net interface | `ChannelType` |
+| --- | --- |
+| `ICategoryChannel` | `Category` |
+| `IThreadChannel` | `Thread` |
+| `IVoiceChannel` | `Voice` |
+| `ITextChannel` | `Text` |
+| any other `IGuildChannel` | `Text` |
 
 ## Versioning
 
@@ -65,3 +84,4 @@ held back. A new adapter release follows each Discord.Net breaking major.
 - [Messages](messages.md) — `MessageEntity` shape and embed storage decisions.
 - [History](history.md) — `MessageHistoryEntity` and `HistoryChangeType`.
 - [Choosing an Adapter](adapters.md) — compares all three adapters side by side.
+- [Recipes](recipes.md#map-from-your-discord-library) — mapping snippets for all three libraries.

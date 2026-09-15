@@ -1,10 +1,14 @@
+---
+description: The five runnable Persistord sample projects, what each one demonstrates, and how to run one on SQLite with no setup.
+---
+
 # Samples
 
-The `samples/` directory contains five runnable console projects that demonstrate
-Persistord capabilities end-to-end. Every sample uses **SQLite** for zero-setup
-— no database server required. Because Persistord is provider-agnostic, the same
-model and context code runs on PostgreSQL, SQL Server, or any other EF Core 10
-relational provider without changes.
+The `samples/` directory holds five runnable console projects that demonstrate Persistord end to end.
+
+Every sample uses **SQLite** for zero setup — no database server required. Because Persistord is
+provider-agnostic, the same model and context code runs on PostgreSQL, SQL Server, or any other
+EF Core 10 relational provider without changes.
 
 ## Running a sample
 
@@ -28,4 +32,10 @@ Replace `<SampleName>` with one of the project names in the table below.
 
 All sample projects live in the repository's
 [`samples/`](https://github.com/HandyS11/Persistord/tree/develop/samples)
-directory.
+directory; its [README](../../samples/README.md) is also published on this site.
+
+## See also
+
+- [Getting Started](getting-started.md) — the same setup, step by step, in your own project.
+- [Migrations](migrations.md) — generating the migration `Persistord.Sample` ships.
+- [Choosing an Adapter](adapters.md) — the adapters beyond the Discord.Net sample.

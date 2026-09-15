@@ -1,10 +1,13 @@
+---
+description: The ten Persistord NuGet packages, what each adds and depends on, and how to pick the ones your bot needs.
+---
+
 # Packages
 
-Persistord ships ten NuGet packages: a meta package, three packages that make up
-the library-neutral mirror stack it bundles, three Discord-library adapters, and
-three opt-in packages installed separately. This page lists what each one adds,
-what it depends on, how the packages fit together, and how to decide which ones
-your bot needs.
+Persistord ships ten NuGet packages: a meta package, the three-package mirror stack it bundles, three Discord-library adapters, and three opt-in add-ons.
+
+This page lists what each one adds, what it depends on, how the packages fit together, and how to
+decide which ones your bot needs.
 
 ## The matrix
 
@@ -87,8 +90,7 @@ oversight or a package left off a future roadmap.
 
 ## See also
 
-- [Introduction](introduction.md#packages) — a prose walkthrough of the same
-  ten packages.
+- [Introduction](introduction.md) — what Persistord is and what it leaves to your bot.
 - [Getting Started](getting-started.md) — installing Persistord and writing
   your first records.
 - [Choosing an Adapter](adapters.md) — comparing the three Discord-library

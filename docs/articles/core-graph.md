@@ -1,9 +1,12 @@
+---
+description: The conventions-only DiscordDbContext, the DiscordGraphDbContext skeleton, and the shape and relationships of its five entities.
+---
+
 # Core Graph
 
-`Persistord.Core` ships an abstract `DiscordDbContext` with the global snowflake
-convention, and an abstract `DiscordGraphDbContext` that adds five skeleton entity
-types mirroring the core Discord object graph. Derive whichever base class matches
-your context: conventions only, or conventions plus the skeleton.
+`Persistord.Core` ships two abstract base contexts: `DiscordDbContext` for conventions only, and `DiscordGraphDbContext` for conventions plus a five-entity skeleton of Discord's object graph.
+
+Derive whichever base class matches your context.
 
 ## DiscordDbContext
 
@@ -50,6 +53,8 @@ The base implementation calls `ApplyCoreGraph()` (which wires the core entity
 type configurations). Call `ApplyCoreGraph()` yourself from a plain
 `DiscordDbContext` if you'd rather opt in without the extra base class.
 
+Upgrading from `1.0.0-beta2`, where `DiscordDbContext` still mapped the skeleton? See [Upgrading](upgrading.md).
+
 ## Skeleton DbSets
 
 `DiscordGraphDbContext` exposes these `DbSet`s directly — no declaration needed
@@ -63,35 +68,21 @@ public DbSet<MemberEntity>  Members  => Set<MemberEntity>();
 public DbSet<RoleEntity>    Roles    => Set<RoleEntity>();
 ```
 
-## Upgrading from 1.0.0-beta2
+## Relationships
 
-`DiscordDbContext` no longer maps the skeleton. If you use
-`Guilds`/`Channels`/`Users`/`Members`/`Roles`, change your base class to
-`DiscordGraphDbContext`. If you never did but your derived context's committed
-model snapshot still has those five tables in it (any `DiscordDbContext`
-consumer from beta2 does), your next `dotnet ef migrations add` diffs against
-that snapshot and emits `DropTable` for `Guilds`, `Channels`, `Users`,
-`Members` and `Roles` — usually what you want, but **review the generated
-migration before running `database update`**: this is the most likely way to
-lose data on this upgrade. `ApplyCoreConfiguration()` is renamed
-`ApplyCoreGraph()`; the old name forwards for one release.
+A solid line is a foreign key the model configures; a dotted line is a snowflake id column that
+refers to another entity with no foreign key. `ChannelEntity.ParentId` is the skeleton's only
+foreign key.
 
-**Third break: a bare `ulong` primary key is no longer store-generated.** On
-`1.0.0-beta2`, a consumer's own `public ulong Id { get; set; }` primary key
-was `ValueGenerated.OnAdd` by EF's own convention — SQLite emitted `"Id"
-INTEGER NOT NULL ... PRIMARY KEY AUTOINCREMENT` for it. `SnowflakeKeyConvention`
-(see [Snowflake Conversion](snowflake-conversion.md)) now marks every `ulong`
-or `ulong?` primary-key property `ValueGenerated.Never`, because a Discord
-snowflake, a Steam64 id, or any other unsigned 64-bit key is a value the
-caller already owns, never one the database should assign — which is the
-[spec](https://github.com/HandyS11/Persistord)'s intended behaviour, not a
-regression. Two things follow for an upgrading consumer: your next
-`dotnet ef migrations add` drops the identity/autoincrement from that column,
-and code that relied on EF assigning the key (leaving `Id` as `0` on a new
-row before `SaveChangesAsync`) now inserts a literal `0` and collides on the
-second such row. If you genuinely want a store-generated `ulong` key, call
-`.Property(e => e.Id).ValueGeneratedOnAdd()` explicitly on that entity —
-explicit fluent configuration wins over the convention.
+```mermaid
+erDiagram
+    GuildEntity ||..o{ ChannelEntity : "GuildId"
+    GuildEntity ||..o{ RoleEntity : "GuildId"
+    GuildEntity ||..o{ MemberEntity : "GuildId"
+    UserEntity ||..o{ MemberEntity : "UserId"
+    UserEntity |o..o{ GuildEntity : "OwnerId"
+    ChannelEntity |o--o{ ChannelEntity : "ParentId"
+```
 
 ## Entity shapes
 
@@ -119,20 +110,13 @@ outlive their guild row. `filterLeftGuilds: true` adds a global query filter
 that hides guilds with a non-null `LeftAt` from ordinary queries (use
 `IgnoreQueryFilters()` to see them).
 
-**None of the five skeleton entities below implements `IGuildScoped`.** This is
-deliberate — marking them would move an existing consumer's migrations — and a
-consumer cannot retrofit the interface onto Persistord's own types. The
-practical effect: `ApplyGuildRoot` wires no cascading foreign key for
-`ChannelEntity`, `UserEntity`, `MemberEntity` or `RoleEntity`, and
-`PurgeGuildAsync` does not delete them. A consumer who mirrors Discord's graph
-and wants those rows purged with their guild must delete them itself.
-
-**Breaking change from `1.0.0-beta2`:** `Name` and `OwnerId` were required;
-they are now optional, and `JoinedAt`/`LeftAt` are new columns. A consumer
-with an existing `Guilds` table needs a migration — on SQLite, relaxing a
-column to nullable is a table rebuild, which `dotnet ef migrations add` emits
-for you. Code reading `guild.Name` or `guild.OwnerId` now gets a nullable
-value and must handle `null`.
+> [!IMPORTANT]
+> None of the five skeleton entities below implements `IGuildScoped`. This is deliberate —
+> marking them would move an existing consumer's migrations — and a consumer cannot retrofit the
+> interface onto Persistord's own types. The practical effect: `ApplyGuildRoot` wires no cascading
+> foreign key for `ChannelEntity`, `UserEntity`, `MemberEntity` or `RoleEntity`, and
+> `PurgeGuildAsync` does not delete them. A consumer who mirrors Discord's graph and wants those
+> rows purged with their guild must delete them itself.
 
 ### ChannelEntity
 
@@ -141,12 +125,11 @@ value and must handle `null`.
 | `Id` | `ulong` | Primary key, snowflake |
 | `GuildId` | `ulong` | Indexed, not a foreign key — see [GuildEntity](#guildentity) above |
 | `ParentId` | `ulong?` | Nullable self-referencing FK — categories own channels, channels own threads |
-| `Type` | enum | Channel type discriminator (text, voice, category, thread, …) |
+| `Type` | enum | Channel kind: `Text`, `Voice`, `Category` or `Thread` |
 | `Name` | `string` | Channel name |
 
-Channel polymorphism uses **table-per-hierarchy** — a single table with a `Type`
-discriminator column. The self-referencing `ParentId` models the category →
-channel → thread hierarchy.
+`Type` is a plain enum column holding the channel's kind; there is no subclass per kind. The
+self-referencing `ParentId` models the category → channel → thread hierarchy.
 
 ### UserEntity
 
@@ -181,3 +164,5 @@ channel → thread hierarchy.
 
 - [Snowflake Conversion](snowflake-conversion.md) — how `ulong` IDs are stored as `long`.
 - [Messages](messages.md) — the `MessageEntity` module that builds on the core graph.
+- [Guild Lifecycle](guild-lifecycle.md) — `ApplyGuildRoot` and `PurgeGuildAsync` in a bot's event handlers.
+- [Upgrading](upgrading.md) — what changed for the skeleton since `1.0.0-beta2`.

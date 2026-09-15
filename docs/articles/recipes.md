@@ -1,7 +1,12 @@
+---
+description: Copy-paste patterns for common Persistord operations, from persisting a guild to mapping a message from your Discord library.
+---
+
 # Recipes
 
-Copy-pasteable patterns for the most common Persistord operations. Each snippet
-assumes you already have a short-lived `DbContext` obtained from
+Each recipe is a copy-pasteable pattern for one common Persistord operation.
+
+Each snippet assumes you already have a short-lived `DbContext` obtained from
 `IDbContextFactory` — see [DbContext Lifetime](dbcontext-lifetime.md).
 
 ## Persist a guild
@@ -81,13 +86,22 @@ var all = db.Messages.IgnoreQueryFilters().ToList();
 ## Query a message's history chronologically
 
 History rows are indexed on `(MessageId, RecordedAt)`. Order by `RecordedAt` on
-providers that support `DateTimeOffset` ordering (PostgreSQL, SQL Server); order by
-the surrogate `Id` on SQLite.
+providers that support `DateTimeOffset` ordering (PostgreSQL, SQL Server):
 
 ```csharp
 var history = db.MessageHistory
     .Where(h => h.MessageId == id)
     .OrderBy(h => h.RecordedAt)
+    .ToList();
+```
+
+SQLite cannot order by a `DateTimeOffset` column, so order by the surrogate `Id` there
+(see [Providers](providers.md#order-by-on-a-datetimeoffset-column-fails)):
+
+```csharp
+var history = db.MessageHistory
+    .Where(h => h.MessageId == id)
+    .OrderBy(h => h.Id)
     .ToList();
 ```
 
@@ -108,13 +122,49 @@ options.UseSqlite(connectionString);
 options.UseSqlServer(connectionString);
 ```
 
-## Map from Discord.Net
+## Map from your Discord library
 
-Install `Persistord.Adapters.DiscordNet` and call `.ToMessageEntity()` directly on
-the Discord.Net object. See [Discord.Net Adapter](discord-net-adapter.md) for the
-full mapper table.
+Install the adapter for your library and call `.To*Entity()` directly on its objects. Each
+adapter's guide has the full mapper table.
+
+# [Discord.Net](#tab/discordnet)
 
 ```csharp
-db.Messages.Add(socketMessage.ToMessageEntity());
+using Persistord.Adapters.DiscordNet;
+
+db.Messages.Add(message.ToMessageEntity());
 await db.SaveChangesAsync();
 ```
+
+See [Discord.Net Adapter](discord-net-adapter.md).
+
+# [DSharpPlus](#tab/dsharpplus)
+
+```csharp
+using Persistord.Adapters.DSharpPlus;
+
+db.Messages.Add(message.ToMessageEntity());
+db.Members.Add(member.ToMemberEntity(guildId)); // DSharpPlus members and roles need the guild id
+await db.SaveChangesAsync();
+```
+
+See [DSharpPlus Adapter](dsharpplus-adapter.md).
+
+# [NetCord](#tab/netcord)
+
+```csharp
+using Persistord.Adapters.NetCord;
+
+db.Messages.Add(message.ToMessageEntity());
+await db.SaveChangesAsync();
+```
+
+See [NetCord Adapter](netcord-adapter.md).
+
+---
+
+## See also
+
+- [Guild Lifecycle](guild-lifecycle.md) — the guild recipes above, wired to gateway events.
+- [Managed Resources](managed-resources.md) — the reconcile loop around `UpsertManagedAsync`.
+- [Choosing an Adapter](adapters.md) — comparing the three adapters.

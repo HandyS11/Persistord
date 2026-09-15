@@ -1,11 +1,7 @@
-- name: Guides
+- name: Docs
   href: articles/
 - name: Packages
   href: packages/
-- name: Samples
-  href: samples/
-- name: Development
-  href: development/
-- name: API Reference
+- name: API
   href: api/
   homepage: api/index.md
