@@ -1,16 +1,20 @@
 ---
 title: Persistord
 layout: landing
+description: Persistord ships the EF Core 10 model every Discord bot rewrites — guilds, channels, users, members, roles and messages — without choosing your database provider or your Discord library.
 ---
 
 <section class="pd-hero">
+  <p class="pd-eyebrow"><img src="../icon.png" alt="" width="28" height="28"><span class="pd-wordmark">Persistord</span></p>
   <h1>Every Discord bot rewrites the same tables. Persistord ships them.</h1>
-  <p class="pd-hero-lede">An EF Core 10 model for the graph every bot ends up storing — guilds, channels, users, members and roles in <code>Persistord.Core</code>, messages in <code>Persistord.Messages</code>. It never selects your database provider and never references a Discord client library, so the model is the only thing you take.</p>
+  <p class="pd-hero-lede">An EF Core 10 model for guilds, channels, users, members, roles and messages that never picks your database provider or your Discord library.</p>
   <div class="pd-hero-actions">
     <a class="pd-btn pd-btn-primary" href="articles/getting-started.md">Get started</a>
     <a class="pd-btn" href="articles/packages.md">Browse packages</a>
-    <a class="pd-btn" href="https://github.com/HandyS11/Persistord">View source</a>
+    <a class="pd-text-link" href="https://github.com/HandyS11/Persistord">GitHub</a>
   </div>
+  <div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord</code><button class="pd-copy" type="button" aria-live="polite">Copy</button></div>
+  <p class="pd-hero-meta">EF Core 10 · PostgreSQL · SQL Server · SQLite · Discord.Net · DSharpPlus · NetCord</p>
 </section>
 
 <section class="pd-section pd-transform">
@@ -43,15 +47,6 @@ Content    TEXT     'gg'</pre>
   </div>
   <p class="pd-note"><strong>PostgreSQL and SQL Server have no native unsigned 64-bit type, so Persistord converts every snowflake into a signed <code>BIGINT</code>. The same 64 bits go in and come back out — for every <code>ulong</code>, not just the ones that fit.</strong> Without the conversion the model still builds; the snowflake just lands in a 20-digit fixed-point column — <code>numeric(20,0)</code> on PostgreSQL, <code>decimal(20,0)</code> on SQL Server — instead of a 64-bit integer one. <code>DiscordDbContext</code> registers <code>UlongToLongConverter</code> in <code>ConfigureConventions</code>, so every <code>ulong</code> and <code>ulong?</code> in your model converts globally and you never annotate an id. The cast is <code>unchecked</code>, so it is bit-faithful across all 2<sup>64</sup> values — including the ones past 2<sup>63</sup> that a Discord snowflake will not reach until roughly 2084. <a href="articles/snowflake-conversion.md">How the conversion works</a></p>
 </section>
-
-<div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord</code><button class="pd-copy" type="button" aria-live="polite">Copy</button></div>
-
-<dl class="pd-stats">
-  <div class="pd-stat"><dt>3</dt><dd>Discord libraries adapted</dd></div>
-  <div class="pd-stat"><dt>5</dt><dd>core-graph entities</dd></div>
-  <div class="pd-stat"><dt>0</dt><dd>provider dependencies</dd></div>
-  <div class="pd-stat"><dt>10</dt><dd>NuGet packages</dd></div>
-</dl>
 
 <section class="pd-section">
   <h2>Ten packages</h2>

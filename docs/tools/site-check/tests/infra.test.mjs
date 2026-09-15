@@ -16,7 +16,7 @@ const DESCRIBED_BY_METADATA = [
 ]
 
 /* Pages whose front matter carries a description. */
-const DESCRIBED_BY_FRONT_MATTER = ['development/index.html', 'development/components.html']
+const DESCRIBED_BY_FRONT_MATTER = ['index.html', 'development/index.html', 'development/components.html']
 
 let site
 

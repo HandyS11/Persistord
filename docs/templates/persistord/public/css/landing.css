@@ -1,8 +1,9 @@
 /*
- * Landing page (docs/index.md, `layout: landing`) and the button and copy
- * strip it uses. Ported onto the design tokens in PR 1 of the revamp; PR 2
- * rewrites the page. The .pd-snowflake / .pd-row-id marks are the only place
- * the old gateway-vs-column colour rule survives.
+ * Landing page (docs/index.md, `layout: landing`): hero, proof panes, model
+ * diagram, adapter picker, capability list, and start-here cards. The
+ * .pd-snowflake / .pd-row-id marks are the only place the gateway-vs-column
+ * colour rule survives, and only inside the proof panes. Every class here is
+ * used by docs/index.md or main.js (tests/landing.test.mjs).
  */
 
 /* ------------------------------------------------------------- container -- */
@@ -19,7 +20,35 @@ body[data-layout='landing'] > main > .content > article {
 /* ------------------------------------------------------------------ hero -- */
 
 .pd-hero {
-  padding: 2.8rem 0 2.6rem;
+  padding: 3.5rem 0 3.25rem;
+}
+
+.pd-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1.25rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+/* The icon is a mark, not a figure: components.css frames lone images. */
+.pd-eyebrow > img {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--pd-radius-sm);
+}
+
+/* One of the gradient's sanctioned uses (main.css header). Every
+   --pd-gradient-ink stop holds 4.5:1 on its theme's page. */
+.pd-wordmark {
+  background-image: var(--pd-gradient-ink);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .pd-hero h1 {
@@ -30,18 +59,42 @@ body[data-layout='landing'] > main > .content > article {
 }
 
 .pd-hero-lede {
-  margin: 1.15rem 0 0;
-  max-width: 64ch;
+  margin: 1.25rem 0 0;
+  max-width: 66ch;
   color: var(--pd-muted);
-  font-size: 1.1rem;
-  line-height: 1.62;
+  font-size: 1.15rem;
+  line-height: 1.6;
 }
 
 .pd-hero-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.7rem;
   margin-top: 1.9rem;
+}
+
+.pd-text-link {
+  padding: 0.6rem 0.35rem;
+  color: var(--pd-accent);
+  font-size: 0.96rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pd-text-link:hover {
+  color: var(--pd-accent-hover);
+  text-decoration: underline;
+}
+
+.pd-hero .pd-install {
+  margin-top: 1.75rem;
+}
+
+.pd-hero-meta {
+  margin: 1rem 0 0;
+  color: var(--pd-muted);
+  font-size: 0.875rem;
 }
 
 /* --------------------------------------------------------------- buttons -- */
@@ -172,7 +225,7 @@ body[data-layout='landing'] > main > .content > article {
   align-items: center;
   gap: 0.6rem;
   max-width: 34rem;
-  margin: 0 0 2.6rem;
+  margin: 0;
   padding: 0.5rem 0.6rem 0.5rem 1rem;
   border: 1px solid var(--pd-hairline);
   border-radius: var(--pd-radius);
@@ -218,39 +271,6 @@ body[data-layout='landing'] > main > .content > article {
 .pd-copy[data-copied='true'] {
   border-color: var(--pd-accent);
   color: var(--pd-accent);
-}
-
-/* ----------------------------------------------------------------- stats -- */
-
-.pd-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-  gap: 1px;
-  margin: 0 0 3rem;
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--pd-hairline);
-  border-radius: var(--pd-radius);
-  background-color: var(--pd-hairline);
-}
-
-.pd-stat {
-  padding: 1.05rem 1.2rem;
-  background-color: var(--pd-surface);
-}
-
-.pd-stat dt {
-  color: var(--pd-text);
-  font-family: var(--pd-mono);
-  font-size: 1.85rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.pd-stat dd {
-  margin: 0.4rem 0 0;
-  color: var(--pd-muted);
-  font-size: 0.86rem;
 }
 
 /* -------------------------------------------------------------- sections -- */
@@ -345,7 +365,6 @@ body[data-layout='landing'] > main > .content > article {
 
 /* Package names and API names in running landing copy read as texture here,
    so the inline-code tint is dropped. */
-.pd-hero-lede code,
 .pd-note code,
 .pd-package code,
 .pd-card code {

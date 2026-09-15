@@ -21,8 +21,8 @@
  *
  * Gradient budget: --pd-gradient-* has three uses - the active-page indicator
  * (navbar underline and sidebar bar), the primary button, and the landing
- * wordmark. PR 1 ships the first two; the wordmark arrives in PR 2.
- * tests/tokens.test.mjs enforces the list of consuming selectors.
+ * wordmark (.pd-wordmark). tests/tokens.test.mjs enforces the list of
+ * consuming selectors.
  *
  * docfx markup this theme and main.js depend on:
  *   body[data-layout], body[data-layout] > footer, body[data-yaml-mime], body[data-search]
