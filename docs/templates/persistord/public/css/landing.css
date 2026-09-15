@@ -418,6 +418,7 @@ body[data-layout='landing'] > main > .content > article {
 .pd-step > p code,
 .pd-adapter-links code,
 .pd-addons code,
+.pd-feature code,
 .pd-card code {
   padding: 0;
   background-color: transparent;
@@ -597,13 +598,83 @@ body[data-layout='landing'] > main > .content > article {
   line-height: 1.55;
 }
 
-/* ----------------------------------------------------------------- cards -- */
+/* ------------------------------------------------------------------- box -- */
 
+.pd-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.75rem 2rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 900px) {
+  .pd-features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .pd-features {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A left rule and no card chrome. The rule is decorative - the title and
+   sentence carry the item - so it rests as a hairline and takes the accent on
+   hover and focus. */
+.pd-feature {
+  display: block;
+  height: 100%;
+  padding: 0.1rem 0 0.1rem 1rem;
+  border-left: 2px solid var(--pd-hairline);
+  color: var(--pd-text);
+  text-decoration: none;
+  transition: border-color var(--pd-ease);
+}
+
+.pd-feature:hover,
+.pd-feature:focus-visible {
+  border-left-color: var(--pd-accent);
+  color: var(--pd-text);
+  text-decoration: none;
+}
+
+.pd-feature > strong {
+  display: block;
+  color: var(--pd-heading);
+  font-weight: 600;
+}
+
+.pd-feature > span {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--pd-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+/* ----------------------------------------------------------------- start -- */
+
+.pd-start-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .pd-start-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The page's only card chrome (spec 3.3). */
 .pd-card {
   display: block;
-  position: relative;
   height: 100%;
-  padding: 0.75rem 0.95rem;
+  padding: 1.1rem 1.25rem;
   border: 1px solid var(--pd-hairline);
   border-radius: var(--pd-radius);
   background-color: var(--pd-surface);
@@ -622,22 +693,15 @@ body[data-layout='landing'] > main > .content > article {
 
 .pd-card > strong {
   display: block;
-  font-size: 0.95rem;
+  color: var(--pd-heading);
+  font-size: 1.05rem;
   font-weight: 600;
-  overflow-wrap: anywhere;
 }
 
 .pd-card > span {
   display: block;
-  margin-top: 0.25rem;
+  margin-top: 0.35rem;
   color: var(--pd-muted);
-  font-size: 0.85rem;
-  line-height: 1.5;
-}
-
-.pd-cards,
-.pd-next {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
-  gap: 0.8rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
 }

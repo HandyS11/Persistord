@@ -158,31 +158,26 @@ db.Messages.Add(message.ToMessageEntity());</code></pre>
   <p class="pd-more"><a href="articles/packages.md">Compare all ten packages<span aria-hidden="true"> →</span></a></p>
 </section>
 
-<section class="pd-section">
-  <h2>What you get</h2>
-  <p>Every capability below is a guide, not a bullet point.</p>
-  <div class="pd-cards">
-    <a class="pd-card" href="articles/snowflake-conversion.md"><strong>Snowflake conversion</strong><span>Registered once in <code>ConfigureConventions</code>: every <code>ulong</code> and <code>ulong?</code> in your model, never an annotation.</span></a>
-    <a class="pd-card" href="articles/core-graph.md"><strong>Core graph</strong><span>Guilds, channels, users, members and roles — five skeleton entities you opt into, or ignore entirely.</span></a>
-    <a class="pd-card" href="articles/upsert.md"><strong>Upsert</strong><span>Insert-or-update keyed on the snowflake, for the gateway events that arrive out of order.</span></a>
-    <a class="pd-card" href="articles/soft-delete-and-query-filters.md"><strong>Soft-delete &amp; query filters</strong><span>Deleted messages stay addressable so history rows keep a valid foreign key.</span></a>
-    <a class="pd-card" href="articles/history.md"><strong>History</strong><span>Append-only edit history, one row per revision, with a real FK back to the message.</span></a>
-    <a class="pd-card" href="articles/guild-lifecycle.md"><strong>Guild purge</strong><span>Joining and leaving a guild, both directions, without orphan rows.</span></a>
-    <a class="pd-card" href="articles/managed-resources.md"><strong>Managed resources</strong><span>Track the Discord objects your bot created and owns, apart from the ones it only mirrors.</span></a>
-    <a class="pd-card" href="articles/protection.md"><strong>Protection</strong><span>Encrypt marked string columns at rest through ASP.NET Core Data Protection.</span></a>
-    <a class="pd-card" href="articles/testing.md"><strong>Testing fixtures</strong><span>In-memory SQLite contexts and assertions over the built EF Core model.</span></a>
-  </div>
+<section class="pd-section pd-box">
+  <h2>What's in the box</h2>
+  <ul class="pd-features">
+    <li><a class="pd-feature" href="articles/snowflake-conversion.md"><strong>Snowflake conversion</strong><span>Registered once in <code>ConfigureConventions</code>: every <code>ulong</code> and <code>ulong?</code> in your model, never an annotation.</span></a></li>
+    <li><a class="pd-feature" href="articles/core-graph.md"><strong>Core graph</strong><span>Guilds, channels, users, members and roles — five skeleton entities you opt into, or ignore entirely.</span></a></li>
+    <li><a class="pd-feature" href="articles/upsert.md"><strong>Upsert</strong><span>Insert-or-update keyed on the snowflake, for the gateway events that arrive out of order.</span></a></li>
+    <li><a class="pd-feature" href="articles/soft-delete-and-query-filters.md"><strong>Soft-delete &amp; query filters</strong><span>Deleted messages stay addressable so history rows keep a valid foreign key.</span></a></li>
+    <li><a class="pd-feature" href="articles/history.md"><strong>History</strong><span>Append-only edit history, one row per revision, with a real FK back to the message.</span></a></li>
+    <li><a class="pd-feature" href="articles/guild-lifecycle.md"><strong>Guild purge</strong><span>Joining and leaving a guild, both directions, without orphan rows.</span></a></li>
+    <li><a class="pd-feature" href="articles/managed-resources.md"><strong>Managed resources</strong><span>Track the Discord objects your bot created and owns, apart from the ones it only mirrors.</span></a></li>
+    <li><a class="pd-feature" href="articles/protection.md"><strong>Protection</strong><span>Encrypt marked string columns at rest through ASP.NET Core Data Protection.</span></a></li>
+    <li><a class="pd-feature" href="articles/testing.md"><strong>Testing fixtures</strong><span>In-memory SQLite contexts and assertions over the built EF Core model.</span></a></li>
+  </ul>
 </section>
 
-<section class="pd-section">
-  <h2>Where to go next</h2>
-  <div class="pd-next">
+<section class="pd-section pd-start">
+  <h2>Start here</h2>
+  <div class="pd-start-cards">
     <a class="pd-card" href="articles/getting-started.md"><strong>Getting Started</strong><span>Install, derive a context, pick a provider, save your first rows.</span></a>
-    <a class="pd-card" href="articles/core-graph.md"><strong>Core Graph</strong><span>The conventions-only base context, the opt-in graph, and the entities it maps.</span></a>
-    <a class="pd-card" href="articles/adapters.md"><strong>Choosing an Adapter</strong><span>Discord.Net, DSharpPlus and NetCord compared, mapper by mapper.</span></a>
-    <a class="pd-card" href="articles/providers.md"><strong>Providers</strong><span>What changes on PostgreSQL, SQL Server and SQLite — and what does not.</span></a>
-    <a class="pd-card" href="articles/recipes.md"><strong>Recipes</strong><span>Short answers to the questions that come up once the model is wired.</span></a>
-    <a class="pd-card" href="articles/troubleshooting.md"><strong>Troubleshooting</strong><span>The errors you are most likely to hit, and what each one actually means.</span></a>
+    <a class="pd-card" href="articles/introduction.md"><strong>Guides</strong><span>Concepts, providers, adapters, add-ons and recipes, one topic per guide.</span></a>
     <a class="pd-card" href="api/index.md"><strong>API Reference</strong><span>Generated from the XML doc comments across the nine packages that ship code.</span></a>
   </div>
 </section>
