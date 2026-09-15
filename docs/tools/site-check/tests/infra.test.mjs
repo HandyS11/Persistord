@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { after, before, test } from 'node:test'
 import { parseColor, sameColor } from '../lib/color.mjs'
@@ -55,15 +55,19 @@ test('described pages carry exactly one meta description', async () => {
   }
 })
 
-test('no page carries two meta descriptions', async () => {
-  for (const path of ['index.html', 'articles/upsert.html', 'articles/getting-started.html']) {
-    const { page, close } = await site.open(path)
-    try {
-      assert.ok((await page.locator('meta[name="description"]').count()) <= 1, path)
-    } finally {
-      await close()
+test('no page in _site carries two meta descriptions', async () => {
+  const doubled = []
+  for (const entry of await readdir(SITE_ROOT, { recursive: true })) {
+    if (!entry.endsWith('.html')) {
+      continue
+    }
+    const html = await readFile(join(SITE_ROOT, entry), 'utf8')
+    const count = html.match(/<meta\b[^>]*\bname=["']description["'][^>]*>/gi)?.length ?? 0
+    if (count > 1) {
+      doubled.push(`${entry}: ${count}`)
     }
   }
+  assert.deepEqual(doubled, [])
 })
 
 for (const theme of THEMES) {

@@ -19,26 +19,31 @@
  *   landing.css     the landing page
  *   not-found.css   the static 404 page
  *
- * Gradient budget: --pd-gradient-* is consumed by exactly three elements - the
- * landing wordmark, the primary button, and the active-page indicator (sidebar
- * bar and navbar underline). tests/tokens.test.mjs enforces the list.
+ * Gradient budget: --pd-gradient-* has three uses - the active-page indicator
+ * (navbar underline and sidebar bar), the primary button, and the landing
+ * wordmark. PR 1 ships the first two; the wordmark arrives in PR 2.
+ * tests/tokens.test.mjs enforces the list of consuming selectors.
  *
- * docfx markup this theme depends on:
- *   body[data-layout], body[data-yaml-mime]
+ * docfx markup this theme and main.js depend on:
+ *   body[data-layout], body[data-layout] > footer, body[data-yaml-mime], body[data-search]
  *   body > header.bg-body, .navbar-brand > #logo, #navbar .navbar-nav .nav-link(.active)
  *   #search, #search-query, #navbar form.icons
  *   #search-results > .search-list, #search-results > .sr-items .sr-item > .item-title /
  *   .item-href / .item-brief, #search-results .pagination .page-link
  *   main > .toc-offcanvas, #toc span.name-only, .toc li(.active) > a, .toc form.filter,
  *   .toc .no-result
- *   main > .affix, .affix h5, .affix a.link-body-emphasis / a.link-secondary
+ *   main > .affix, #affix, .affix h5, .affix a.link-body-emphasis / a.link-secondary
  *   #breadcrumb .breadcrumb, .contribution a.edit-link, .next-article > div(.prev|.next) > span + a
- *   pre > code.hljs, pre > .code-action, .hljs-*
+ *   pre > code.hljs, pre > code[class*="lang-"], pre > .code-action(.link-success),
+ *   pre > code .line-highlight, .hljs-*
  *   .alert.NOTE / .TIP / .IMPORTANT / .WARNING / .CAUTION > h5
  *   .tabGroup > .nav-tabs .nav-link(.active), .tabGroup > section.card
- *   .table-responsive > table.table, .anchorjs-link, pre.mermaid > svg
- *   article .facts, .codewrapper, dl.typelist, dl.parameters, dl.jumplist,
- *   h2.section, h3[data-uid], h4.section, .header-action
+ *   .table-responsive > table.table, .anchorjs-link
+ *   pre.mermaid > svg, Mermaid marker ids ending `arrowhead` / `filled-head`
+ *   and containing `er-zeroOr`, marker.flowchart-v2
+ *   article div.facts, .codewrapper, dl.typelist, dl.parameters, dl.jumplist,
+ *   .markdown.summary:not(.level1), h1[data-uid], h2.section, h3[data-uid],
+ *   h2.section + a + h3[data-uid], h4.section, a.xref
  *   footer > .container-xxl
  */
 
