@@ -37,7 +37,13 @@ test('every internal link and asset in _site resolves', async () => {
     for (const [, raw] of html.matchAll(/\s(?:href|src)="([^"]*)"/g)) {
       let url = raw
       if (ABSOLUTE.test(url)) {
-        const absolute = new URL(url, PAGES_ORIGIN)
+        let absolute
+        try {
+          absolute = new URL(url, PAGES_ORIGIN)
+        } catch {
+          broken.push(`${relative(SITE_ROOT, file)} -> ${raw} (malformed URL)`)
+          continue
+        }
         if (absolute.origin !== PAGES_ORIGIN || !absolute.pathname.startsWith(BASE)) {
           continue
         }
