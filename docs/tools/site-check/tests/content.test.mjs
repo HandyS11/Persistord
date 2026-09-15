@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readdir, readFile } from 'node:fs/promises'
 import { after, before, test } from 'node:test'
+import { EDGES, edgeKey, flatten } from '../lib/model-edges.mjs'
 import { launchSite } from '../lib/site.mjs'
 
 const ARTICLES = new URL('../../../articles/', import.meta.url)
@@ -8,7 +9,17 @@ const REPO = new URL('../../../../', import.meta.url)
 
 /* Articles that follow the page skeleton. Each content task appends its pages;
    Task 8 asserts this covers every article. */
-const ENRICHED = ['introduction', 'packages', 'getting-started']
+const ENRICHED = [
+  'introduction',
+  'packages',
+  'getting-started',
+  'snowflake-conversion',
+  'core-graph',
+  'messages',
+  'history',
+  'soft-delete-and-query-filters',
+  'dbcontext-lifetime',
+]
 
 /* Tab ids per page, one array per group, in page order (spec 4.2). */
 const TABS = {
@@ -33,8 +44,25 @@ const PROVIDERS = {
   sqlite: { package: 'Microsoft.EntityFrameworkCore.Sqlite', call: 'UseSqlite(' },
 }
 
-/* Whitespace-insensitive source, so a signature split over lines matches. */
-const flatten = text => text.replace(/\s+/g, ' ')
+/* The entities each ER diagram draws; it must draw every model edge between them, and nothing else. */
+const ER_NODES = {
+  'core-graph': ['GuildEntity', 'ChannelEntity', 'UserEntity', 'MemberEntity', 'RoleEntity'],
+  messages: ['MessageEntity', 'Embed', 'EmbedField', 'AttachmentEntity', 'ReactionEntity'],
+  history: ['MessageEntity', 'MessageHistoryEntity'],
+}
+
+/* `Referenced ||--o{ Holder : "Column"`; `--` is a foreign key, `..` a plain id column. */
+const ER_LINE = /^\s*(\w+)\s+[|}o{]{2}(--|\.\.)[|}o{]{2}\s+(\w+)\s*:\s*"(\w+)"\s*$/gm
+
+const diagramsRendered = page =>
+  page.waitForFunction(
+    () => {
+      const diagrams = document.querySelectorAll('pre.mermaid')
+      return diagrams.length > 0 && [...diagrams].every(pre => pre.querySelector(':scope > svg'))
+    },
+    null,
+    { timeout: 15000 }
+  )
 
 const CALLOUT = /^> \[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$/gm
 const TAB_HEADING = /^# \[[^\]]+\]\(#tab\/([\w-]+)\)$/
@@ -287,3 +315,39 @@ test('a carried tab choice opens the matching tab on the next page', async () =>
     await close()
   }
 })
+
+for (const slug of ENRICHED.filter(slug => ER_NODES[slug])) {
+  test(`${slug}: ER relationships match the model`, async () => {
+    const { body } = await article(slug)
+    const source = /^```mermaid\n([\s\S]*?)^```$/m.exec(body)?.[1] ?? ''
+    assert.match(source, /^erDiagram$/m)
+    const drawn = [...source.matchAll(ER_LINE)].map(([, to, line, from, column]) =>
+      edgeKey({ kind: line === '--' ? 'fk' : 'id', from, to, column })
+    )
+    const nodes = ER_NODES[slug]
+    const expected = EDGES.filter(edge => nodes.includes(edge.from) && nodes.includes(edge.to)).map(edgeKey)
+    assert.deepEqual(drawn.toSorted(), expected.toSorted())
+  })
+}
+
+for (const slug of ENRICHED.filter(slug => DIAGRAMS[slug])) {
+  test(`${slug}: diagrams render without a syntax error`, async () => {
+    const { page, close } = await site.open(`articles/${slug}.html`)
+    try {
+      await diagramsRendered(page)
+      const diagrams = await page.$$eval('pre.mermaid', frames =>
+        frames.map(frame => ({
+          error: frame.querySelector('svg[aria-roledescription="error"]') !== null || /Syntax error/i.test(frame.textContent),
+          overflow: frame.scrollWidth - frame.clientWidth,
+        }))
+      )
+      assert.equal(diagrams.length, DIAGRAMS[slug])
+      for (const [index, diagram] of diagrams.entries()) {
+        assert.equal(diagram.error, false, `diagram ${index} failed to parse`)
+        assert.ok(diagram.overflow <= 0, `diagram ${index} overflows the reading column by ${diagram.overflow}px at 1440px`)
+      }
+    } finally {
+      await close()
+    }
+  })
+}

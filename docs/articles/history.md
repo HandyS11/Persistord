@@ -1,7 +1,12 @@
+---
+description: Append-only message history, one full snapshot per change, tied to its message by a foreign key that soft-delete keeps valid.
+---
+
 # History
 
-`Persistord.History` adds append-only message history to your context. It depends
-on `Persistord.Messages` and therefore `Persistord.Core`.
+`Persistord.History` records every change to a message as a new, full-content row.
+
+It depends on `Persistord.Messages` and therefore `Persistord.Core`.
 
 Apply both modules in `OnModelCreating` — the history module requires the messages
 table to be present:
@@ -54,9 +59,27 @@ with `DeleteBehavior.Restrict`. Because messages are soft-deleted (see
 never physically removed from the database. History rows — including the row that
 logs the deletion — always keep a valid reference.
 
-> **History requires the Messages table to be persisted.** It is not a standalone
-> audit log. You cannot use `ApplyHistoryModule()` without also calling
-> `ApplyMessagesModule()`.
+```mermaid
+erDiagram
+    MessageEntity ||--o{ MessageHistoryEntity : "MessageId"
+    MessageEntity {
+        ulong Id PK
+        string Content
+        bool IsDeleted
+    }
+    MessageHistoryEntity {
+        long Id PK
+        ulong MessageId FK
+        string Content
+        DateTimeOffset RecordedAt
+        HistoryChangeType ChangeType
+    }
+```
+
+> [!IMPORTANT]
+> History requires the Messages table to be persisted. It is not a standalone audit log: call
+> `ApplyMessagesModule()` whenever you call `ApplyHistoryModule()`, because the history foreign key
+> points at the messages table.
 
 ## See also
 

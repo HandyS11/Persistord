@@ -1,9 +1,12 @@
+---
+description: The conventions-only DiscordDbContext, the DiscordGraphDbContext skeleton, and the shape and relationships of its five entities.
+---
+
 # Core Graph
 
-`Persistord.Core` ships an abstract `DiscordDbContext` with the global snowflake
-convention, and an abstract `DiscordGraphDbContext` that adds five skeleton entity
-types mirroring the core Discord object graph. Derive whichever base class matches
-your context: conventions only, or conventions plus the skeleton.
+`Persistord.Core` ships two abstract base contexts: `DiscordDbContext` for conventions only, and `DiscordGraphDbContext` for conventions plus a five-entity skeleton of Discord's object graph.
+
+Derive whichever base class matches your context.
 
 ## DiscordDbContext
 
@@ -65,6 +68,22 @@ public DbSet<MemberEntity>  Members  => Set<MemberEntity>();
 public DbSet<RoleEntity>    Roles    => Set<RoleEntity>();
 ```
 
+## Relationships
+
+A solid line is a foreign key the model configures; a dotted line is a snowflake id column that
+refers to another entity with no foreign key. `ChannelEntity.ParentId` is the skeleton's only
+foreign key.
+
+```mermaid
+erDiagram
+    GuildEntity ||..o{ ChannelEntity : "GuildId"
+    GuildEntity ||..o{ RoleEntity : "GuildId"
+    GuildEntity ||..o{ MemberEntity : "GuildId"
+    UserEntity ||..o{ MemberEntity : "UserId"
+    UserEntity |o..o{ GuildEntity : "OwnerId"
+    ChannelEntity |o--o{ ChannelEntity : "ParentId"
+```
+
 ## Entity shapes
 
 All entities are plain POCOs. They carry no Discord client library types.
@@ -91,13 +110,13 @@ outlive their guild row. `filterLeftGuilds: true` adds a global query filter
 that hides guilds with a non-null `LeftAt` from ordinary queries (use
 `IgnoreQueryFilters()` to see them).
 
-**None of the five skeleton entities below implements `IGuildScoped`.** This is
-deliberate — marking them would move an existing consumer's migrations — and a
-consumer cannot retrofit the interface onto Persistord's own types. The
-practical effect: `ApplyGuildRoot` wires no cascading foreign key for
-`ChannelEntity`, `UserEntity`, `MemberEntity` or `RoleEntity`, and
-`PurgeGuildAsync` does not delete them. A consumer who mirrors Discord's graph
-and wants those rows purged with their guild must delete them itself.
+> [!IMPORTANT]
+> None of the five skeleton entities below implements `IGuildScoped`. This is deliberate —
+> marking them would move an existing consumer's migrations — and a consumer cannot retrofit the
+> interface onto Persistord's own types. The practical effect: `ApplyGuildRoot` wires no cascading
+> foreign key for `ChannelEntity`, `UserEntity`, `MemberEntity` or `RoleEntity`, and
+> `PurgeGuildAsync` does not delete them. A consumer who mirrors Discord's graph and wants those
+> rows purged with their guild must delete them itself.
 
 ### ChannelEntity
 
@@ -106,12 +125,11 @@ and wants those rows purged with their guild must delete them itself.
 | `Id` | `ulong` | Primary key, snowflake |
 | `GuildId` | `ulong` | Indexed, not a foreign key — see [GuildEntity](#guildentity) above |
 | `ParentId` | `ulong?` | Nullable self-referencing FK — categories own channels, channels own threads |
-| `Type` | enum | Channel type discriminator (text, voice, category, thread, …) |
+| `Type` | enum | Channel kind: `Text`, `Voice`, `Category` or `Thread` |
 | `Name` | `string` | Channel name |
 
-Channel polymorphism uses **table-per-hierarchy** — a single table with a `Type`
-discriminator column. The self-referencing `ParentId` models the category →
-channel → thread hierarchy.
+`Type` is a plain enum column holding the channel's kind; there is no subclass per kind. The
+self-referencing `ParentId` models the category → channel → thread hierarchy.
 
 ### UserEntity
 
@@ -146,3 +164,5 @@ channel → thread hierarchy.
 
 - [Snowflake Conversion](snowflake-conversion.md) — how `ulong` IDs are stored as `long`.
 - [Messages](messages.md) — the `MessageEntity` module that builds on the core graph.
+- [Guild Lifecycle](guild-lifecycle.md) — `ApplyGuildRoot` and `PurgeGuildAsync` in a bot's event handlers.
+- [Upgrading](upgrading.md) — what changed for the skeleton since `1.0.0-beta2`.
