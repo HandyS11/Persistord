@@ -8,7 +8,7 @@ const REPO = new URL('../../../../', import.meta.url)
 
 /* Articles that follow the page skeleton. Each content task appends its pages;
    Task 8 asserts this covers every article. */
-const ENRICHED = ['introduction', 'packages']
+const ENRICHED = ['introduction', 'packages', 'getting-started']
 
 /* Tab ids per page, one array per group, in page order (spec 4.2). */
 const TABS = {
@@ -20,6 +20,21 @@ const TABS = {
 
 /* Mermaid diagrams per page (spec 4.2, plus packages.md's existing graph). */
 const DIAGRAMS = { packages: 1, 'core-graph': 1, messages: 1, history: 1, 'guild-lifecycle': 1, 'managed-resources': 1, protection: 1 }
+
+const ADAPTERS = {
+  discordnet: { namespace: 'Persistord.Adapters.DiscordNet', source: 'src/Persistord.Adapters.DiscordNet/DiscordNetMappingExtensions.cs' },
+  dsharpplus: { namespace: 'Persistord.Adapters.DSharpPlus', source: 'src/Persistord.Adapters.DSharpPlus/DSharpPlusMappingExtensions.cs' },
+  netcord: { namespace: 'Persistord.Adapters.NetCord', source: 'src/Persistord.Adapters.NetCord/NetCordMappingExtensions.cs' },
+}
+
+const PROVIDERS = {
+  postgresql: { package: 'Npgsql.EntityFrameworkCore.PostgreSQL', call: 'UseNpgsql(' },
+  sqlserver: { package: 'Microsoft.EntityFrameworkCore.SqlServer', call: 'UseSqlServer(' },
+  sqlite: { package: 'Microsoft.EntityFrameworkCore.Sqlite', call: 'UseSqlite(' },
+}
+
+/* Whitespace-insensitive source, so a signature split over lines matches. */
+const flatten = text => text.replace(/\s+/g, ' ')
 
 const CALLOUT = /^> \[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$/gm
 const TAB_HEADING = /^# \[[^\]]+\]\(#tab\/([\w-]+)\)$/
@@ -192,6 +207,82 @@ test('links leave the tabs parameter alone when the reader chose no tab', async 
     await page.waitForSelector('#toc a[href$="articles/getting-started.html"]')
     await page.click('#toc a[href$="articles/getting-started.html"]')
     await page.waitForURL(/articles\/getting-started\.html$/)
+  } finally {
+    await close()
+  }
+})
+
+for (const slug of ENRICHED.filter(slug => TABS[slug])) {
+  test(`${slug}: mapper calls in adapter tabs match the adapter source`, async () => {
+    const panels = tabPanels((await article(slug)).body)
+    for (const [key, markdown] of panels) {
+      const adapter = ADAPTERS[key.split('#')[0]]
+      if (!adapter) {
+        continue
+      }
+      const source = flatten(await readFile(new URL(adapter.source, REPO), 'utf8'))
+      const calls = [...markdown.matchAll(/\.To(\w+)Entity\(([^)]*)\)/g)]
+      assert.ok(calls.length > 0, `${key}: no mapper call`)
+      assert.ok(markdown.includes(`using ${adapter.namespace};`), `${key}: does not import ${adapter.namespace}`)
+      for (const [call, name, args] of calls) {
+        const signature = new RegExp(`public static \\w+ To${name}Entity\\(this [\\w.<>?]+ \\w+((?:, [\\w.<>?]+ \\w+)*)\\)`).exec(source)
+        assert.ok(signature, `${key}: ${call} has no To${name}Entity in ${adapter.source}`)
+        const declared = signature[1] ? signature[1].split(',').length - 1 : 0
+        const passed = args.trim() ? args.split(',').length : 0
+        assert.equal(passed, declared, `${key}: ${call} passes ${passed} argument(s), the mapper takes ${declared}`)
+      }
+    }
+  })
+
+  test(`${slug}: provider tabs install and register their provider`, async () => {
+    const panels = tabPanels((await article(slug)).body)
+    for (const [key, markdown] of panels) {
+      const provider = PROVIDERS[key.split('#')[0]]
+      if (!provider) {
+        continue
+      }
+      assert.ok(markdown.includes(`dotnet add package ${provider.package}`), `${key}: does not install ${provider.package}`)
+      assert.ok(markdown.includes(provider.call), `${key}: does not call ${provider.call}`)
+    }
+  })
+
+  test(`${slug}: the built page renders the tab groups`, async () => {
+    const { page, close } = await site.open(`articles/${slug}.html`)
+    try {
+      await page.waitForSelector('.tabGroup a[data-tab]')
+      const groups = await page.$$eval('.tabGroup', elements =>
+        elements.map(group => [...group.querySelectorAll(':scope > ul a[data-tab]')].map(link => link.dataset.tab))
+      )
+      assert.deepEqual(groups, TABS[slug])
+    } finally {
+      await close()
+    }
+  })
+}
+
+test('getting-started: reads as a tutorial', async () => {
+  const { prose } = await article('getting-started')
+  const headings = [...prose.matchAll(/^## (.+)$/gm)].map(match => match[1])
+  assert.deepEqual(headings, [
+    "What you'll build",
+    'Prerequisites',
+    '1. Install the packages',
+    '2. Derive a context',
+    '3. Register a provider',
+    '4. Write your first records',
+    '5. Map from your Discord library',
+    '6. Run it',
+    'See also',
+  ])
+})
+
+test('a carried tab choice opens the matching tab on the next page', async () => {
+  const { page, close } = await site.open('articles/providers.html?tabs=sqlite')
+  try {
+    await page.waitForSelector('#toc a[href$="articles/getting-started.html"]')
+    await page.click('#toc a[href$="articles/getting-started.html"]')
+    await page.waitForURL(/getting-started\.html\?tabs=sqlite$/)
+    await page.waitForSelector('.tabGroup a[data-tab="sqlite"][aria-selected="true"]')
   } finally {
     await close()
   }
