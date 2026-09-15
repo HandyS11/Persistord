@@ -81,16 +81,162 @@ function wireCopyButtons() {
   }
 }
 
-export default {
-  defaultTheme: 'dark',
+/* Display names for the fence languages the docs use. A language missing here
+   simply gets no label. */
+const LANGUAGE_LABELS = {
+  bash: 'Shell',
+  console: 'Shell',
+  cs: 'C#',
+  csharp: 'C#',
+  css: 'CSS',
+  diff: 'Diff',
+  html: 'HTML',
+  ini: 'INI',
+  javascript: 'JavaScript',
+  js: 'JavaScript',
+  json: 'JSON',
+  markdown: 'Markdown',
+  md: 'Markdown',
+  powershell: 'PowerShell',
+  pwsh: 'PowerShell',
+  sh: 'Shell',
+  shell: 'Shell',
+  sql: 'SQL',
+  toml: 'TOML',
+  xml: 'XML',
+  yaml: 'YAML',
+  yml: 'YAML',
+}
 
-  /* docfx merges this over its own `{ startOnLoad, theme }`, picking the base
-     theme from the current light/dark setting. Only theme-agnostic values are
-     set here: anything with a fixed lightness would be wrong in one of the two
-     themes, so surfaces and text are left to mermaid's own ramp. */
+/**
+ * Tags each fenced code block with a display name for its language, which
+ * components.css renders as a caption. API signatures (.codewrapper) are always
+ * C# and stay unlabelled.
+ */
+function labelCodeBlocks() {
+  for (const code of document.querySelectorAll('.content article pre > code[class*="lang-"]')) {
+    const pre = code.parentElement
+    if (pre.closest('.codewrapper')) {
+      continue
+    }
+    const language = [...code.classList].find(name => name.startsWith('lang-'))?.slice(5)
+    const label = LANGUAGE_LABELS[language]
+    if (label) {
+      pre.dataset.pdLang = label
+    }
+  }
+}
+
+/** Runs a callback once the document has parsed. */
+function onReady(callback) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', callback, { once: true })
+  } else {
+    callback()
+  }
+}
+
+/**
+ * `/` focuses search, as on most documentation sites. It is ignored while the
+ * reader is typing in any field and when the search box is collapsed away on
+ * narrow screens, so it never swallows a literal slash.
+ */
+function wireSearchShortcut() {
+  document.addEventListener('keydown', event => {
+    if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) {
+      return
+    }
+
+    const target = event.target
+    if (
+      target instanceof HTMLElement &&
+      (target.isContentEditable || target.closest('input, textarea, select'))
+    ) {
+      return
+    }
+
+    const search = document.getElementById('search-query')
+    if (!search || search.disabled || search.offsetParent === null) {
+      return
+    }
+
+    event.preventDefault()
+    search.focus()
+  })
+}
+
+/**
+ * Marks the "In this article" link for the section being read. docfx renders
+ * the rail but does not track position. The current section is the last h2/h3
+ * whose top has scrolled above the sticky header plus a small margin. The rail
+ * renders asynchronously, so a MutationObserver re-applies the mark once its
+ * links exist; it watches childList only, so toggling the class cannot loop.
+ */
+function trackAffix() {
+  const headings = [
+    ...document.querySelectorAll('.content article h2[id], .content article h3[id]'),
+  ]
+  const affix = document.getElementById('affix')
+  if (headings.length === 0 || !affix) {
+    return
+  }
+
+  const READING_LINE = 96
+  let queued = false
+
+  const update = () => {
+    queued = false
+
+    let current = headings[0]
+    for (const heading of headings) {
+      if (heading.getBoundingClientRect().top > READING_LINE) {
+        break
+      }
+      current = heading
+    }
+
+    for (const link of affix.querySelectorAll('a')) {
+      const active = decodeURIComponent(link.hash.slice(1)) === current.id
+      link.classList.toggle('pd-current', active)
+      if (active) {
+        link.setAttribute('aria-current', 'location')
+      } else {
+        link.removeAttribute('aria-current')
+      }
+    }
+  }
+
+  const queue = () => {
+    if (!queued) {
+      queued = true
+      requestAnimationFrame(update)
+    }
+  }
+
+  window.addEventListener('scroll', queue, { passive: true })
+  window.addEventListener('resize', queue)
+  new MutationObserver(queue).observe(affix, { childList: true, subtree: true })
+  queue()
+}
+
+export default {
+  /* Follow the reader's OS preference; both themes are designed. */
+  defaultTheme: 'auto',
+
+  /* docfx merges this over its own `{ startOnLoad, theme }`. No colours are
+     set here - components.css recolours the rendered SVG from the design
+     tokens so a diagram follows a theme switch. useMaxWidth: false gives each
+     SVG its natural width and height instead of `width: 100%`, so
+     components.css can let a wide diagram scroll on a phone rather than shrink
+     its labels past legibility. */
   mermaid: {
     fontFamily:
-      "'Persistord Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace",
+      "'Persistord Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    flowchart: { useMaxWidth: false },
+    sequence: { useMaxWidth: false },
+    er: { useMaxWidth: false },
+    class: { useMaxWidth: false },
+    state: { useMaxWidth: false },
   },
 
   iconLinks: [
@@ -107,12 +253,11 @@ export default {
   ],
 
   start: () => {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', wireCopyButtons, {
-        once: true,
-      })
-    } else {
+    onReady(() => {
       wireCopyButtons()
-    }
+      labelCodeBlocks()
+      wireSearchShortcut()
+      trackAffix()
+    })
   },
 }

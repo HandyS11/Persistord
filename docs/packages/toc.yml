@@ -1,4 +1,4 @@
-- name: 📦 The stack
+- name: The stack
 - name: Persistord
   href: ../../src/Persistord/README.md
 - name: Persistord.Core
@@ -8,7 +8,7 @@
 - name: Persistord.History
   href: ../../src/Persistord.History/README.md
 
-- name: 🔌 Adapters
+- name: Adapters
 - name: Persistord.Adapters.DiscordNet
   href: ../../src/Persistord.Adapters.DiscordNet/README.md
 - name: Persistord.Adapters.DSharpPlus
@@ -16,7 +16,7 @@
 - name: Persistord.Adapters.NetCord
   href: ../../src/Persistord.Adapters.NetCord/README.md
 
-- name: 🧩 Opt-in
+- name: Opt-in
 - name: Persistord.Managed
   href: ../../src/Persistord.Managed/README.md
 - name: Persistord.Protection

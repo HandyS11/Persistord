@@ -1,0 +1,539 @@
+/*
+ * Page frame: shell width, navbar, search, sidebar, in-page rail, breadcrumb,
+ * prev/next, edit link, footer.
+ *
+ * Several docfx and Bootstrap utilities paint with !important (.bg-body,
+ * .border-top, .text-body-tertiary, .link-body-emphasis). Each is overridden
+ * by setting the custom property the utility reads - never with !important.
+ */
+
+/* ------------------------------------------------------------ page shell -- */
+
+/* docfx widens .container-xxl to 1768px at >= 1400px, which strands a
+   three-column page's reading column far from its navigation. */
+.container-xxl {
+  max-width: var(--pd-shell-width);
+}
+
+@media (min-width: 768px) {
+  body:not([data-search])[data-layout=''] > main > .toc-offcanvas {
+    flex: 0 0 var(--pd-sidebar-width);
+    max-width: var(--pd-sidebar-width);
+  }
+}
+
+body:not([data-search])[data-layout=''] > main > .affix {
+  width: var(--pd-affix-width);
+}
+
+/* ---------------------------------------------------------------- navbar -- */
+
+body > header.bg-body {
+  --bs-bg-opacity: 0.82;
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  backdrop-filter: saturate(1.4) blur(12px);
+}
+
+.navbar-brand {
+  gap: 0.625rem;
+  color: var(--pd-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.navbar-brand:hover,
+.navbar-brand:focus {
+  color: var(--pd-heading);
+}
+
+.navbar-brand > #logo {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  border-radius: 7px;
+}
+
+#navbar .navbar-nav .nav-link {
+  position: relative;
+  padding: 0.5rem 0.75rem;
+  color: var(--pd-muted);
+  font-size: 0.9375rem;
+  transition: color var(--pd-ease);
+}
+
+#navbar .navbar-nav .nav-link:hover,
+#navbar .navbar-nav .nav-link.active {
+  color: var(--pd-heading);
+}
+
+#navbar .navbar-nav .nav-link.active::after {
+  content: '';
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0;
+  left: 0.75rem;
+  height: 2px;
+  border-radius: 2px;
+  background-image: var(--pd-gradient-ink);
+}
+
+#navbar form.icons .btn {
+  color: var(--pd-muted);
+}
+
+#navbar form.icons .btn:hover {
+  color: var(--pd-heading);
+}
+
+/* ---------------------------------------------------------------- search -- */
+
+#search {
+  position: relative;
+}
+
+#search-query {
+  width: 15rem;
+  padding-right: 2.25rem;
+  border-color: var(--pd-control-border);
+  border-radius: var(--pd-radius-sm);
+  background-color: var(--pd-surface);
+  color: var(--pd-text);
+  font-size: 0.875rem;
+}
+
+#search-query::placeholder {
+  color: var(--pd-muted);
+}
+
+/* The keyboard hint for the `/` shortcut wired in main.js. The empty
+   alternative text keeps assistive tech from announcing a stray slash. */
+#search::after {
+  content: '/' / '';
+  position: absolute;
+  top: 50%;
+  right: 0.6rem;
+  padding: 0 0.4rem;
+  transform: translateY(-50%);
+  border: 1px solid var(--pd-hairline);
+  border-radius: 4px;
+  color: var(--pd-muted);
+  font-family: var(--pd-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  pointer-events: none;
+}
+
+#search:focus-within::after {
+  visibility: hidden;
+}
+
+/* A touch-only device has no keyboard to press `/` on. */
+@media (hover: none) {
+  #search::after {
+    display: none;
+  }
+}
+
+.form-control:focus {
+  border-color: var(--pd-accent);
+  background-color: var(--pd-surface);
+  box-shadow: 0 0 0 3px var(--pd-accent-wash);
+  color: var(--pd-text);
+}
+
+/* -------------------------------------------------------- search results -- */
+
+/* While a query is in the box, docfx swaps main for #search-results. Its stock
+   rules set the count in a fixed grey, the URL in green, the title at x-large
+   and underlined, and the pager in Bootstrap blue. Each selector below repeats
+   docfx's own, so source order decides. */
+#search-results > .search-list {
+  margin-bottom: 1.5rem;
+  color: var(--pd-muted);
+  font-size: 0.875rem;
+}
+
+#search-results > .sr-items .sr-item {
+  max-width: var(--pd-measure);
+  margin-bottom: 1.75rem;
+}
+
+#search-results > .sr-items .sr-item > .item-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+#search-results > .sr-items .sr-item > .item-title a {
+  color: var(--pd-heading);
+  text-decoration: none;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+#search-results > .sr-items .sr-item > .item-title a:hover,
+#search-results > .sr-items .sr-item > .item-title a:focus-visible {
+  text-decoration: underline;
+}
+
+#search-results > .sr-items .sr-item > .item-href {
+  margin-top: 0.125rem;
+  color: var(--pd-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+#search-results > .sr-items .sr-item > .item-brief {
+  margin-top: 0.375rem;
+  color: var(--pd-text);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* docfx bolds every query term it finds. */
+#search-results > .sr-items .sr-item b {
+  color: var(--pd-heading);
+  font-weight: 600;
+}
+
+#search-results .pagination {
+  --bs-pagination-padding-y: 0.25rem;
+  --bs-pagination-font-size: 0.875rem;
+  --bs-pagination-color: var(--pd-text);
+  --bs-pagination-bg: var(--pd-surface);
+  --bs-pagination-border-color: var(--pd-hairline);
+  --bs-pagination-border-radius: var(--pd-radius-sm);
+  --bs-pagination-hover-color: var(--pd-heading);
+  --bs-pagination-hover-bg: var(--pd-raised);
+  --bs-pagination-hover-border-color: var(--pd-hairline);
+  --bs-pagination-focus-color: var(--pd-heading);
+  --bs-pagination-focus-bg: var(--pd-raised);
+  --bs-pagination-focus-box-shadow: none;
+  --bs-pagination-active-color: var(--pd-page);
+  --bs-pagination-active-bg: var(--pd-accent);
+  --bs-pagination-active-border-color: var(--pd-accent);
+  --bs-pagination-disabled-color: var(--pd-muted);
+  --bs-pagination-disabled-bg: var(--pd-page);
+  --bs-pagination-disabled-border-color: var(--pd-hairline);
+  margin-top: 2rem;
+}
+
+/* docfx's `.page-link:focus` removes the outline in favour of the shadow
+   silenced above; the id outranks it to restore the theme's focus ring. */
+#search-results .page-link:focus-visible {
+  outline: 2px solid var(--pd-accent);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------- sidebar -- */
+
+.toc form.filter > input {
+  border-color: var(--pd-control-border);
+  border-radius: var(--pd-radius-sm);
+  background-color: var(--pd-surface);
+  color: var(--pd-text);
+  font-size: 0.875rem;
+}
+
+/* docfx's own `.toc > .no-result` misses: the message renders one div deeper. */
+.toc .no-result {
+  padding: 0.3rem 0.625rem;
+  color: var(--pd-muted);
+  font-size: 0.875rem;
+}
+
+.toc ul {
+  font-size: 0.875rem;
+}
+
+.toc li {
+  margin: 0.125rem 0;
+}
+
+.toc li > a {
+  display: block;
+  position: relative;
+  padding: 0.3rem 0.625rem;
+  border-radius: var(--pd-radius-sm);
+  color: var(--pd-muted);
+  line-height: 1.45;
+  text-decoration: none;
+  transition: background-color var(--pd-ease), color var(--pd-ease);
+}
+
+.toc li > a:hover,
+.toc li > a:focus-visible {
+  background-color: var(--pd-raised);
+  color: var(--pd-heading);
+  text-decoration: none;
+}
+
+/* docfx renders group headings as `span.name-only.text-body-tertiary`; the
+   utility's colour comes from --bs-tertiary-color-rgb, mapped to --pd-muted in
+   tokens.css. */
+.toc span.name-only {
+  display: block;
+  margin: 1.5rem 0 0.375rem;
+  padding: 0 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.toc > div > ul > li:first-child > span.name-only {
+  margin-top: 0.25rem;
+}
+
+/* docfx marks every ancestor of the current page `active` - the nested API
+   tree carries it on several rows at once - so the page itself is the active
+   row with no active descendant. Where :has() is unsupported these rules drop
+   and docfx's own active colour remains. */
+.toc li.active:not(:has(li.active)) > a {
+  background-color: var(--pd-accent-wash);
+  color: var(--pd-heading);
+}
+
+.toc li.active:not(:has(li.active)) > a::before {
+  content: '';
+  position: absolute;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  left: 0;
+  width: 3px;
+  border-radius: 3px;
+  background-image: var(--pd-gradient-ink);
+}
+
+/* ----------------------------------------------------------- in-page rail -- */
+
+/* The rail's links carry .link-body-emphasis (h2) and .link-secondary (h3),
+   whose !important colours read these two variables. */
+.affix {
+  --bs-emphasis-color-rgb: var(--pd-muted-rgb);
+  --bs-secondary-rgb: var(--pd-muted-rgb);
+  font-size: 0.8125rem;
+}
+
+.affix h5 {
+  --bs-border-width: 0;
+  display: block;
+  margin: 0 0 0.625rem;
+  padding: 0;
+  color: var(--pd-heading);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.affix ul {
+  border-left: 1px solid var(--pd-hairline);
+}
+
+.affix ul li {
+  margin: 0;
+}
+
+.affix ul li a {
+  display: block;
+  margin-left: -1px;
+  padding: 0.25rem 0 0.25rem 0.875rem;
+  border-left: 2px solid transparent;
+  line-height: 1.45;
+  text-decoration: none;
+  transition: color var(--pd-ease), border-color var(--pd-ease);
+}
+
+.affix ul li a.link-secondary {
+  padding-left: 1.625rem;
+}
+
+.affix ul li a:hover,
+.affix ul li a:focus-visible {
+  --bs-emphasis-color-rgb: var(--pd-heading-rgb);
+  --bs-secondary-rgb: var(--pd-heading-rgb);
+  --bs-link-opacity: 1;
+  text-decoration: none;
+}
+
+/* Set by trackAffix() in main.js. */
+.affix ul li a.pd-current {
+  --bs-emphasis-color-rgb: var(--pd-accent-rgb);
+  --bs-secondary-rgb: var(--pd-accent-rgb);
+  border-left-color: var(--pd-accent);
+}
+
+/* ------------------------------------------------------------ breadcrumb -- */
+
+#breadcrumb .breadcrumb {
+  --bs-breadcrumb-divider-color: var(--pd-muted);
+  --bs-breadcrumb-item-active-color: var(--pd-muted);
+  margin-bottom: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+#breadcrumb .breadcrumb a {
+  color: var(--pd-muted);
+  text-decoration: none;
+}
+
+#breadcrumb .breadcrumb a:hover {
+  color: var(--pd-heading);
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------ edit link and prev/next -- */
+
+.contribution {
+  margin-top: 3rem;
+  font-size: 0.875rem;
+}
+
+.contribution a.edit-link {
+  color: var(--pd-muted);
+}
+
+.contribution a.edit-link:hover,
+.contribution a.edit-link:focus-visible {
+  color: var(--pd-heading);
+}
+
+.next-article {
+  --bs-border-width: 0;
+  gap: 1rem;
+}
+
+.next-article:has(div) {
+  margin-top: 1.25rem;
+  padding-top: 0;
+}
+
+.next-article > div {
+  display: flex;
+  position: relative;
+  flex: 0 1 calc(50% - 0.5rem);
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.875rem 1.125rem;
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-surface);
+  transition: background-color var(--pd-ease), border-color var(--pd-ease);
+}
+
+.next-article > div.next {
+  align-items: flex-end;
+  margin-left: auto;
+  text-align: right;
+}
+
+.next-article > div:hover,
+.next-article > div:focus-within {
+  border-color: var(--pd-accent);
+  background-color: var(--pd-raised);
+}
+
+.next-article > div > span {
+  color: var(--pd-muted);
+  font-size: 0.8125rem;
+  opacity: 1;
+}
+
+.next-article > div > a {
+  color: var(--pd-heading);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Stretches the link over the whole card. */
+.next-article > div > a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+@media (max-width: 575.98px) {
+  .next-article {
+    flex-direction: column;
+  }
+
+  .next-article > div {
+    flex-basis: auto;
+  }
+
+  /* In a column, the auto margin that pushes a lone Next card right would
+     also shrink it to its text. */
+  .next-article > div.next {
+    margin-left: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- footer -- */
+
+/* [data-layout] matches docfx's `body[data-layout=landing] > footer`, which
+   pins the landing footer to 60px, so source order decides on every layout. */
+body[data-layout] > footer {
+  height: auto;
+  margin-top: 4rem;
+  padding: 2.5rem 0 2rem;
+  background-color: var(--pd-surface);
+  font-size: 0.875rem;
+}
+
+body[data-layout] > footer > div {
+  align-items: stretch;
+}
+
+.pd-footer {
+  display: grid;
+  gap: 2rem;
+  width: 100%;
+}
+
+.pd-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem 4rem;
+}
+
+.pd-footer-title {
+  margin: 0 0 0.625rem;
+  color: var(--pd-heading);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pd-footer ul {
+  display: grid;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pd-footer a {
+  color: var(--pd-muted);
+  text-decoration: none;
+}
+
+.pd-footer a:hover,
+.pd-footer a:focus-visible {
+  color: var(--pd-heading);
+  text-decoration: underline;
+}
+
+.pd-footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--pd-hairline);
+  color: var(--pd-muted);
+}

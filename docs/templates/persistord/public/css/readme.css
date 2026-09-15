@@ -1,0 +1,27 @@
+/*
+ * Package README pages. The READMEs are authored for GitHub and nuget.org and
+ * ship inside each nupkg, so their source is never edited for the site. Each
+ * opens with <div align="center"> holding a badge paragraph and a navigation
+ * paragraph ("<- Persistord docs · Documentation site").
+ *
+ * No hand-written page uses div[align="center"] (site-check scans docs/ to keep
+ * it that way), so these selectors cannot reach an article.
+ */
+
+/* `align="center"` maps to text-align: -webkit-center, which also centres
+   block children. */
+:where(.content article) div[align='center'] {
+  text-align: left;
+}
+
+:where(.content article) div[align='center'] > p:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 1.25rem;
+}
+
+/* On the site the reader is already on the documentation site. */
+:where(.content article) div[align='center'] > p:has(> a[href='https://handys11.github.io/Persistord/']) {
+  display: none;
+}

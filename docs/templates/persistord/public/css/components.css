@@ -1,0 +1,447 @@
+/*
+ * Content components inside articles. Selectors are scoped with
+ * :where(.content article) so they add no specificity: the landing page's own
+ * component rules (.pd-pane pre) still win, while source order still beats
+ * docfx's equal-specificity defaults.
+ */
+
+/* ----------------------------------------------------------- code blocks -- */
+
+/* One frame. docfx paints a second panel on code.hljs (its own background and
+   1em padding) inside the bordered <pre>; that inner panel was the double
+   frame. */
+:where(.content article) pre {
+  position: relative;
+  margin: 1.25rem 0;
+  padding: 0;
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+  background-color: var(--pd-surface);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+[data-bs-theme] :where(.content article) pre > code,
+[data-bs-theme] :where(.content article) pre > code.hljs {
+  display: block;
+  padding: 1rem 1.125rem;
+  overflow-x: auto;
+  background: transparent;
+  color: var(--pd-text);
+  font-size: inherit;
+}
+
+/* Set by labelCodeBlocks() in main.js. */
+:where(.content article) pre[data-pd-lang]::before {
+  content: attr(data-pd-lang);
+  display: block;
+  padding: 0.4rem 1.125rem;
+  border-bottom: 1px solid var(--pd-hairline);
+  color: var(--pd-muted);
+  font-family: var(--pd-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* docfx hides the copy button with display:none until :hover, which also takes
+   it out of the tab order. Opacity keeps it hidden at rest yet reachable. */
+:where(.content article) pre > .code-action {
+  display: block;
+  top: 0.25rem;
+  right: 0.375rem;
+  padding: 0.125rem 0.375rem;
+  color: var(--pd-muted);
+  opacity: 0;
+  transition: opacity var(--pd-ease), color var(--pd-ease);
+}
+
+:where(.content article) pre:hover > .code-action,
+:where(.content article) pre > .code-action:focus-visible {
+  opacity: 1;
+}
+
+:where(.content article) pre > .code-action:hover {
+  color: var(--pd-heading);
+}
+
+/* docfx swaps in `.link-success` once the copy succeeds. The rule above
+   would mute it, so the confirmation takes the tip colour (docfx's utility
+   reads --bs-success-rgb, mapped to the same token in tokens.css); placed
+   after :hover so it holds under the pointer that clicked. */
+:where(.content article) pre > .code-action.link-success {
+  color: var(--pd-tip);
+}
+
+@media (hover: none) {
+  :where(.content article) pre > .code-action {
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------- syntax colour -- */
+
+/* [data-bs-theme] matches docfx's own `[data-bs-theme=dark] .hljs-*` rules in
+   specificity, so source order decides in both themes. */
+/* Plain code text. docfx's dark theme sets these wrappers to its own grey. */
+[data-bs-theme] .hljs-function,
+[data-bs-theme] .hljs-subst,
+[data-bs-theme] .hljs-formula {
+  color: var(--pd-text);
+}
+
+[data-bs-theme] .hljs-keyword,
+[data-bs-theme] .hljs-literal,
+[data-bs-theme] .hljs-built_in,
+[data-bs-theme] .hljs-selector-tag,
+[data-bs-theme] .hljs-symbol,
+[data-bs-theme] .hljs-bullet {
+  color: var(--pd-code-keyword);
+}
+
+/* docfx's dark `.hljs-meta .hljs-string` (a string inside a C# attribute)
+   outranks a single class, so it is matched here. */
+[data-bs-theme] .hljs-string,
+[data-bs-theme] .hljs-meta .hljs-string,
+[data-bs-theme] .hljs-regexp,
+[data-bs-theme] .hljs-addition,
+[data-bs-theme] .hljs-template-string,
+[data-bs-theme] .hljs-link {
+  color: var(--pd-code-string);
+}
+
+[data-bs-theme] .hljs-number {
+  color: var(--pd-code-number);
+}
+
+[data-bs-theme] .hljs-comment,
+[data-bs-theme] .hljs-doctag,
+[data-bs-theme] .hljs-quote,
+[data-bs-theme] .hljs-deletion,
+[data-bs-theme] .hljs-meta,
+[data-bs-theme] .hljs-meta .hljs-keyword {
+  color: var(--pd-code-comment);
+}
+
+[data-bs-theme] .hljs-title,
+[data-bs-theme] .hljs-title.class_,
+[data-bs-theme] .hljs-title.function_,
+[data-bs-theme] .hljs-type,
+[data-bs-theme] .hljs-section,
+[data-bs-theme] .hljs-name {
+  color: var(--pd-code-title);
+}
+
+[data-bs-theme] .hljs-attr,
+[data-bs-theme] .hljs-attribute,
+[data-bs-theme] .hljs-params,
+[data-bs-theme] .hljs-property,
+[data-bs-theme] .hljs-variable,
+[data-bs-theme] .hljs-template-variable,
+[data-bs-theme] .hljs-tag {
+  color: var(--pd-code-attr);
+}
+
+[data-bs-theme] .hljs-emphasis {
+  font-style: italic;
+}
+
+[data-bs-theme] .hljs-strong {
+  font-weight: 700;
+}
+
+/* Lines named by a snippet's `highlight=` query; docfx paints them yellow. */
+[data-bs-theme] pre > code .line-highlight {
+  background-color: var(--pd-accent-wash);
+}
+
+/* -------------------------------------------------------------- callouts -- */
+
+/* docfx turns `> [!NOTE]` into div.NOTE.alert.alert-info > h5 + p. Each kind
+   sets --pd-callout; the rule, tint, and label all read it. */
+:where(.content article) .alert {
+  --pd-callout: var(--pd-note);
+  margin: 1.5rem 0;
+  padding: 0.875rem 1.125rem;
+  border: 0;
+  border-left: 3px solid var(--pd-callout);
+  border-radius: 0 var(--pd-radius) var(--pd-radius) 0;
+  background-color: color-mix(in srgb, var(--pd-callout) 10%, var(--pd-surface));
+  color: var(--pd-text);
+}
+
+:where(.content article) .alert.TIP {
+  --pd-callout: var(--pd-tip);
+}
+
+:where(.content article) .alert.WARNING {
+  --pd-callout: var(--pd-warning);
+}
+
+:where(.content article) .alert.CAUTION {
+  --pd-callout: var(--pd-caution);
+}
+
+:where(.content article) .alert.IMPORTANT {
+  background-color: color-mix(in srgb, var(--pd-callout) 18%, var(--pd-surface));
+}
+
+:where(.content article) .alert > h5 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.375rem;
+  color: var(--pd-callout);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Bootstrap Icons glyphs, from the icon font docfx already ships. */
+:where(.content article) .alert > h5::before {
+  content: '\f431';
+  font-family: bootstrap-icons;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+:where(.content article) .alert.TIP > h5::before {
+  content: '\f46b';
+}
+
+:where(.content article) .alert.IMPORTANT > h5::before {
+  content: '\f333';
+}
+
+:where(.content article) .alert.WARNING > h5::before {
+  content: '\f33b';
+}
+
+:where(.content article) .alert.CAUTION > h5::before {
+  content: '\f337';
+}
+
+:where(.content article) .alert > :last-child {
+  margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------------ tabs -- */
+
+:where(.content article) .tabGroup {
+  margin: 1.5rem 0;
+}
+
+:where(.content article) .tabGroup > .nav-tabs {
+  --bs-nav-tabs-border-width: 0;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--pd-hairline);
+}
+
+:where(.content article) .tabGroup .nav-link {
+  margin-bottom: -1px;
+  padding: 0.5rem 0.875rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--pd-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: color var(--pd-ease), border-color var(--pd-ease);
+}
+
+:where(.content article) .tabGroup .nav-link:hover,
+:where(.content article) .tabGroup .nav-link:focus-visible {
+  border-bottom-color: var(--pd-hairline);
+  color: var(--pd-heading);
+}
+
+:where(.content article) .tabGroup .nav-link.active {
+  border-bottom-color: var(--pd-accent);
+  background: none;
+  color: var(--pd-accent);
+}
+
+:where(.content article) .tabGroup > section.card {
+  margin: 0;
+  padding: 1rem 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+:where(.content article) .tabGroup > section > :first-child {
+  margin-top: 0;
+}
+
+/* ---------------------------------------------------------------- tables -- */
+
+/* docfx wraps every table in div.table-responsive (horizontal scroll) and adds
+   .table-bordered; the frame moves to the wrapper so its radius clips the
+   scrolling table. */
+:where(.content article) .table-responsive {
+  margin: 1.5rem 0;
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+}
+
+:where(.content article) .table-responsive > .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--pd-text);
+  --bs-table-border-color: var(--pd-hairline);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+:where(.content article) .table-responsive > .table > :not(caption) > * {
+  border-width: 0;
+}
+
+:where(.content article) .table-responsive > .table > :not(caption) > * > * {
+  padding: 0.5rem 0.875rem;
+  border-width: 0 0 1px;
+  vertical-align: top;
+}
+
+:where(.content article) .table-responsive > .table > thead th {
+  background-color: var(--pd-raised);
+  color: var(--pd-heading);
+  font-weight: 600;
+}
+
+:where(.content article) .table-responsive > .table > tbody > tr:last-child > * {
+  border-bottom-width: 0;
+}
+
+/* ------------------------------------------------------ heading anchors -- */
+
+/* AnchorJS reveals the anchor on heading hover and on focus. */
+:where(.content article) .anchorjs-link {
+  color: var(--pd-muted);
+}
+
+:where(.content article) .anchorjs-link:hover {
+  color: var(--pd-accent);
+}
+
+/* --------------------------------------------------------------- mermaid -- */
+
+/* `safe` keeps a diagram wider than its frame anchored left, so all of it
+   stays within scroll reach. */
+:where(.content article) pre.mermaid {
+  display: flex;
+  justify-content: safe center;
+  padding: 1.25rem;
+  overflow-x: auto;
+}
+
+/* main.js turns off Mermaid's useMaxWidth, so each SVG carries its natural
+   width and height. Wide screens scale it down to the column; phones keep the
+   natural size and scroll it inside the frame, like code, rather than shrink
+   the labels past legibility. */
+:where(.content article) pre.mermaid > svg {
+  flex: none;
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 575.98px) {
+  :where(.content article) pre.mermaid > svg {
+    max-width: none;
+  }
+}
+
+/* Mermaid scopes its generated theme to the diagram's id (#mermaid-123 .node
+   rect), which outranks any class selector, so recolouring a rendered diagram
+   requires !important. These are the theme's only !important declarations. */
+pre.mermaid .node rect,
+pre.mermaid .node polygon,
+pre.mermaid .node circle,
+pre.mermaid .node ellipse,
+pre.mermaid .node path,
+pre.mermaid rect.actor,
+pre.mermaid .labelBox,
+pre.mermaid .note,
+pre.mermaid .entityBox,
+pre.mermaid .row-rect-even path {
+  fill: var(--pd-raised) !important;
+  stroke: var(--pd-hairline) !important;
+}
+
+pre.mermaid .row-rect-odd path,
+pre.mermaid .edgeLabel rect,
+pre.mermaid .labelBkg {
+  fill: var(--pd-surface) !important;
+}
+
+pre.mermaid .nodeLabel,
+pre.mermaid .edgeLabel,
+pre.mermaid .label {
+  background-color: var(--pd-surface) !important;
+  color: var(--pd-text) !important;
+}
+
+pre.mermaid .node .nodeLabel {
+  background-color: transparent !important;
+}
+
+pre.mermaid text,
+pre.mermaid tspan,
+pre.mermaid .messageText,
+pre.mermaid .labelText,
+pre.mermaid .loopText {
+  fill: var(--pd-text) !important;
+}
+
+pre.mermaid .flowchart-link,
+pre.mermaid .edgePath .path,
+pre.mermaid .messageLine0,
+pre.mermaid .messageLine1,
+pre.mermaid .actor-line,
+pre.mermaid .relationshipLine,
+pre.mermaid .loopLine {
+  stroke: var(--pd-muted) !important;
+}
+
+pre.mermaid marker path,
+pre.mermaid marker circle {
+  stroke: var(--pd-muted) !important;
+}
+
+pre.mermaid .arrowheadPath,
+pre.mermaid marker.flowchart-v2 path,
+pre.mermaid marker.flowchart-v2 circle,
+pre.mermaid marker[id$='arrowhead'] path,
+pre.mermaid marker[id$='filled-head'] path {
+  fill: var(--pd-muted) !important;
+}
+
+/* The ER "zero" cardinality is an open ring; Mermaid fills it white. */
+pre.mermaid marker[id*='er-zeroOr'] circle {
+  fill: var(--pd-surface) !important;
+}
+
+/* ------------------------------------------------- images and quotations -- */
+
+:where(.content article) img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* A figure-like image stands alone in its paragraph; inline images such as
+   README badges share one, so they stay unframed. */
+:where(.content article) p > img:only-child,
+:where(.content article) p > a:only-child > img:only-child {
+  border: 1px solid var(--pd-hairline);
+  border-radius: var(--pd-radius);
+}
+
+:where(.content article) blockquote {
+  margin: 1.5rem 0;
+  padding: 0.125rem 0 0.125rem 1rem;
+  border-left: 3px solid var(--pd-hairline);
+  color: var(--pd-muted);
+}

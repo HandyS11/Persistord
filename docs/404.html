@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Page not found | Persistord</title>
+    <!--
+      GitHub Pages serves this file at whatever URL was missing, so every asset
+      path is absolute. The /Persistord/ prefix is the Pages base path; change it
+      here if the site ever moves.
+    -->
+    <link rel="icon" href="/Persistord/icon.png">
+    <link rel="stylesheet" href="/Persistord/public/docfx.min.css">
+    <link rel="stylesheet" href="/Persistord/public/main.css">
+    <script>
+      /* The same resolution docfx pages use: a stored choice, else the OS. */
+      const theme = localStorage.getItem('theme') || 'auto'
+      document.documentElement.setAttribute(
+        'data-bs-theme',
+        theme === 'auto'
+          ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : theme
+      )
+    </script>
+  </head>
+  <body data-layout="landing">
+    <header class="bg-body border-bottom">
+      <nav class="navbar navbar-expand-md" aria-label="Site">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="/Persistord/">
+            <img id="logo" src="/Persistord/icon.png" alt="">
+            Persistord
+          </a>
+        </div>
+      </nav>
+    </header>
+    <main class="container-xxl">
+      <div class="content">
+        <article class="pd-404">
+          <p class="pd-404-code">404</p>
+          <h1>This page isn't in the model.</h1>
+          <p class="pd-hero-lede">The link may be out of date, or the page moved when the documentation was reorganised.</p>
+          <div class="pd-hero-actions">
+            <a class="pd-btn pd-btn-primary" href="/Persistord/">Home</a>
+            <a class="pd-btn" href="/Persistord/articles/introduction.html">Docs</a>
+            <a class="pd-btn" href="/Persistord/articles/packages.html">Packages</a>
+            <a class="pd-btn" href="/Persistord/api/index.html">API reference</a>
+          </div>
+        </article>
+      </div>
+    </main>
+  </body>
+</html>
