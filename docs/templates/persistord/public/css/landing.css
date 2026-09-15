@@ -153,7 +153,10 @@ body[data-layout='landing'] > main > .content > article {
   text-align: center;
 }
 
-@media (max-width: 900px) {
+/* Each pane's content needs ~300px unwrapped; the 3-column layout only has
+   room for that above ~1140px, so the breakpoint sits there instead of at
+   the page's usual 900px tablet break. */
+@media (max-width: 1140px) {
   .pd-panes {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -188,13 +191,13 @@ body[data-layout='landing'] > main > .content > article {
 
 .pd-pane pre {
   margin: 0;
-  padding: 0.85rem 0.9rem;
+  padding: 0.85rem 0.75rem;
   overflow-x: auto;
   border: 0;
   border-radius: 0;
   background-color: transparent;
   color: var(--pd-muted);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   line-height: 1.6;
 }
 
@@ -278,6 +281,19 @@ body[data-layout='landing'] > main > .content > article {
   color: var(--pd-text);
   font-size: 0.94rem;
   white-space: nowrap;
+}
+
+/* Below 600px the strip already wraps to its own $ / command / Copy rows
+   (.pd-install is flex-wrap); let the command itself wrap onto that row
+   instead of scrolling past it, still copying the exact command
+   (main.js reads code.textContent). */
+@media (max-width: 600px) {
+  .pd-install > code {
+    flex-basis: 100%;
+    overflow-x: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }
 
 .pd-copy {

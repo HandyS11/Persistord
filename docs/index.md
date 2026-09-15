@@ -113,7 +113,7 @@ Content    TEXT     'gg'</pre>
   <ol class="pd-steps">
     <li class="pd-step">
       <h3>Add the model</h3>
-      <p>The meta package brings <a href="../src/Persistord.Core/README.md"><code>Persistord.Core</code></a>, <a href="../src/Persistord.Messages/README.md"><code>Persistord.Messages</code></a> and <a href="../src/Persistord.History/README.md"><code>Persistord.History</code></a> in one reference.</p>
+      <p>The meta package <a href="../src/Persistord/README.md"><code>Persistord</code></a> brings <a href="../src/Persistord.Core/README.md"><code>Persistord.Core</code></a>, <a href="../src/Persistord.Messages/README.md"><code>Persistord.Messages</code></a> and <a href="../src/Persistord.History/README.md"><code>Persistord.History</code></a> in one reference.</p>
       <div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord</code><button class="pd-copy" type="button" aria-live="polite">Copy</button></div>
     </li>
     <li class="pd-step">

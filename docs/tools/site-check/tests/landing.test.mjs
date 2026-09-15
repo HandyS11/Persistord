@@ -172,6 +172,23 @@ test('the proof panes read left to right on desktop and stack with downward conn
   assert.deepEqual(phone.turns, [90, 90])
 })
 
+for (const width of [1440, 1024, 901, 375]) {
+  test(`the proof panes fit their content without a horizontal scroll at ${width}px`, async () => {
+    const { page, close } = await site.open(LANDING, { width })
+    try {
+      const panes = await page.$$eval('.pd-pane pre', pres =>
+        pres.map(pre => ({ scrollWidth: pre.scrollWidth, clientWidth: pre.clientWidth }))
+      )
+      assert.ok(panes.length > 0, 'no proof panes found')
+      panes.forEach((pane, i) => {
+        assert.ok(pane.scrollWidth <= pane.clientWidth, `pane ${i + 1} clips at ${width}px: scrollWidth ${pane.scrollWidth} > clientWidth ${pane.clientWidth}`)
+      })
+    } finally {
+      await close()
+    }
+  })
+}
+
 test('the page is six sections in the spec order', async () => {
   const { page, close } = await site.open(LANDING)
   try {
@@ -249,7 +266,7 @@ test('every package the page names in code links to its README page', async () =
     const named = await page.$$eval('.content article code', codes =>
       codes
         .map(code => [code.textContent.trim(), code.closest('a')?.getAttribute('href') ?? null])
-        .filter(([text]) => /^Persistord(?:\.[A-Za-z]+)+$/.test(text))
+        .filter(([text]) => /^Persistord(?:\.[A-Za-z]+)*$/.test(text))
     )
     assert.ok(named.length >= 9, `only ${named.length} package names found`)
     const unlinked = named.filter(([name, href]) => href !== `src/${name}/README.html`).map(([name, href]) => `${name} -> ${href}`)
@@ -259,14 +276,55 @@ test('every package the page names in code links to its README page', async () =
   }
 })
 
-test('every class landing.css styles is used by the page or main.js', async () => {
+test('the meta package Persistord is named in code and links to its README page', async () => {
+  const { page, close } = await site.open(LANDING)
+  try {
+    const meta = await page.$eval('.pd-stack .pd-step:first-child', step => {
+      const code = [...step.querySelectorAll('p code')].find(candidate => candidate.textContent.trim() === 'Persistord')
+      return { found: Boolean(code), href: code?.closest('a')?.getAttribute('href') ?? null }
+    })
+    assert.ok(meta.found, 'step 1 never names Persistord in <code>')
+    assert.equal(meta.href, 'src/Persistord/README.html')
+  } finally {
+    await close()
+  }
+})
+
+test('every class landing.css styles is used by the page, 404.html or main.js', async () => {
   const docs = new URL('../../../', import.meta.url)
   const css = (await readFile(new URL('templates/persistord/public/css/landing.css', docs), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '')
-  const used = (await readFile(new URL('index.md', docs), 'utf8')) + (await readFile(new URL('templates/persistord/public/main.js', docs), 'utf8'))
+  const used =
+    (await readFile(new URL('index.md', docs), 'utf8')) +
+    (await readFile(new URL('404.html', docs), 'utf8')) +
+    (await readFile(new URL('templates/persistord/public/main.js', docs), 'utf8'))
   const unused = [...new Set([...css.matchAll(/\.(pd-[a-z0-9-]+)/g)].map(([, name]) => name))].filter(
     name => !new RegExp(`(?<![\\w-])${name}(?![\\w-])`).test(used)
   )
   assert.deepEqual(unused, [])
+})
+
+test('every install strip command fits without clipping at 375px', async () => {
+  const { page, close } = await site.open(LANDING, { width: 375 })
+  try {
+    const overflow = selector =>
+      page.$eval(selector, code => ({ scrollWidth: code.scrollWidth, clientWidth: code.clientWidth }))
+    const assertFits = ({ scrollWidth, clientWidth }, label) =>
+      assert.ok(scrollWidth <= clientWidth, `${label} clips: scrollWidth ${scrollWidth} > clientWidth ${clientWidth}`)
+
+    assertFits(await overflow('.pd-hero .pd-install > code'), 'hero strip')
+    assertFits(await overflow('.pd-stack .pd-step:first-child .pd-install > code'), 'step-1 strip')
+
+    await page.waitForSelector('[data-pd-tabs] [role="tab"]')
+    const tabs = await page.$$('[data-pd-tabs] [role="tab"]')
+    assert.ok(tabs.length > 0, 'no adapter tabs found')
+    for (const tab of tabs) {
+      const panelId = await tab.getAttribute('aria-controls')
+      await tab.click()
+      assertFits(await overflow(`#${panelId} .pd-install > code`), `${panelId} strip`)
+    }
+  } finally {
+    await close()
+  }
 })
 
 for (const theme of THEMES) {
