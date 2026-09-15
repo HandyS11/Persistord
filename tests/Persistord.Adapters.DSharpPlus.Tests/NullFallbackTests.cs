@@ -54,6 +54,19 @@ public class NullFallbackTests
     }
 
     [Fact]
+    public void ToMessageEntity_leaves_missing_embed_footer_and_author_urls_null()
+    {
+        const string embed = """[{"footer":{"text":"a footer"},"author":{"name":"an author"}}]""";
+
+        var mapped = Assert.Single(MakeMessage(embeds: embed).ToMessageEntity().Embeds);
+
+        Assert.Equal("a footer", mapped.Footer!.Text);
+        Assert.Null(mapped.Footer.IconUrl);
+        Assert.Equal("an author", mapped.Author!.Name);
+        Assert.Null(mapped.Author.Url);
+    }
+
+    [Fact]
     public void ToMessageEntity_coalesces_null_embed_field_strings_to_empty()
     {
         const string embed = """[{"fields":[{"name":null,"value":null,"inline":false}]}]""";

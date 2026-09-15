@@ -58,10 +58,11 @@ public class MessagesModelTests
                 .Include(m => m.Reactions)
                 .Single(m => m.Id == 10UL);
 
-            Assert.Single(loaded.Embeds);
-            Assert.Single(loaded.Embeds[0].Fields);
+            var embed = Assert.Single(loaded.Embeds);
+            Assert.Equal(10UL, embed.MessageId);
+            Assert.Equal(embed.Id, Assert.Single(embed.Fields).EmbedId);
             Assert.Single(loaded.Attachments);
-            Assert.Single(loaded.Reactions);
+            Assert.Equal(10UL, Assert.Single(loaded.Reactions).MessageId);
         }
     }
 }

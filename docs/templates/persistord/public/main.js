@@ -249,7 +249,7 @@ function rememberTabChoices() {
   const groups = [...document.querySelectorAll('.tabGroup')]
   let attempts = 100
   const apply = () => {
-    if (groups.some(group => group.getAttribute('data-bi-name') !== 'tab-group')) {
+    if (groups.some(group => group.dataset.biName !== 'tab-group')) {
       if (--attempts > 0) {
         setTimeout(apply, 50)
       }

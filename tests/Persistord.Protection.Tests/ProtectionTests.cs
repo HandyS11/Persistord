@@ -112,6 +112,18 @@ public class ProtectionTests
     }
 
     [Fact]
+    public void A_property_implementing_an_unannotated_interface_member_is_left_alone()
+    {
+        using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        using var context =
+            database.CreateContext<SecretContext>(o => new SecretContext(o, new ReversingProvider()));
+
+        var label = context.Model.FindEntityType(typeof(LabelledRow))!.FindProperty(nameof(LabelledRow.Label))!;
+
+        Assert.Null(label.GetValueConverter());
+    }
+
+    [Fact]
     public void An_unannotated_property_without_a_getter_is_left_alone()
     {
         // No getter means no accessor to look up in an interface map: the walker must answer "not
@@ -380,6 +392,19 @@ public sealed class InterfaceSecretRow : ISecretHolder
     public string Token { get; set; } = string.Empty;
 }
 
+/// <summary>An interface whose string member carries no <see cref="ProtectedAttribute"/>.</summary>
+public interface ILabelled
+{
+    string Label { get; set; }
+}
+
+public sealed class LabelledRow : ILabelled
+{
+    public long Id { get; set; }
+
+    public string Label { get; set; } = string.Empty;
+}
+
 /// <summary>
 /// A same-named <c>Token</c> property that does not implement <see cref="ISecretHolder"/>: it must
 /// not be swept up by a name match with the interface member above.
@@ -426,6 +451,7 @@ public sealed class SecretContext(
         modelBuilder.Entity<SecretRow>().ToTable("Secrets");
         modelBuilder.Entity<InterfaceSecretRow>().ToTable("InterfaceSecrets");
         modelBuilder.Entity<UnrelatedTokenRow>().ToTable("UnrelatedTokens");
+        modelBuilder.Entity<LabelledRow>().ToTable("LabelledRows");
         modelBuilder.Entity<ComplexSecretRow>(builder =>
         {
             builder.ToTable("ComplexSecrets");

@@ -16,13 +16,11 @@
     <link rel="stylesheet" href="/Persistord/public/main.css">
     <script>
       /* The same resolution docfx pages use: a stored choice, else the OS. */
-      const theme = localStorage.getItem('theme') || 'auto'
-      document.documentElement.setAttribute(
-        'data-bs-theme',
-        theme === 'auto'
-          ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-          : theme
-      )
+      let theme = localStorage.getItem('theme') || 'auto'
+      if (theme === 'auto') {
+        theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      }
+      document.documentElement.dataset.bsTheme = theme
     </script>
   </head>
   <body data-layout="landing">

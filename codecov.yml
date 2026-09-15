@@ -22,3 +22,4 @@ comment:
 ignore:
   - "samples/**"
   - "tests/**"
+  - "docs/**"
