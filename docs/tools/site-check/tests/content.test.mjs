@@ -377,3 +377,9 @@ for (const slug of ENRICHED.filter(slug => DIAGRAMS[slug])) {
     }
   })
 }
+
+test('every article follows the skeleton, and every tab and diagram page is enriched', async () => {
+  const slugs = (await readdir(ARTICLES)).filter(name => name.endsWith('.md')).map(name => name.slice(0, -3))
+  assert.deepEqual(slugs.filter(slug => !ENRICHED.includes(slug)), [], 'articles missing from ENRICHED')
+  assert.deepEqual([...Object.keys(TABS), ...Object.keys(DIAGRAMS)].filter(slug => !ENRICHED.includes(slug)), [])
+})

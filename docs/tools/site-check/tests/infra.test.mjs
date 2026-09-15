@@ -70,6 +70,22 @@ test('no page in _site carries two meta descriptions', async () => {
   assert.deepEqual(doubled, [])
 })
 
+test('every page in _site carries exactly one meta description', async () => {
+  const offenders = []
+  for (const entry of await readdir(SITE_ROOT, { recursive: true })) {
+    /* toc.html files are sidebar fragments docfx fetches, not pages. */
+    if (!entry.endsWith('.html') || entry.endsWith('toc.html')) {
+      continue
+    }
+    const html = await readFile(join(SITE_ROOT, entry), 'utf8')
+    const count = html.match(/<meta\b[^>]*\bname=["']description["'][^>]*>/gi)?.length ?? 0
+    if (count !== 1) {
+      offenders.push(`${entry}: ${count}`)
+    }
+  }
+  assert.deepEqual(offenders, [])
+})
+
 for (const theme of THEMES) {
   test(`${theme}: a deep missing path renders the fully styled 404`, async () => {
     const { page, response, close } = await site.open('articles/missing/deeper.html', { theme })
