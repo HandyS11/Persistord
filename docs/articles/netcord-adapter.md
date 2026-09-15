@@ -1,9 +1,13 @@
+---
+description: Map NetCord gateway and REST model types to Persistord entities, and pack locally despite NetCord's prerelease-only dependency.
+---
+
 # NetCord Adapter
 
-`Persistord.Adapters.NetCord` is an opt-in adapter that maps
-[NetCord](https://netcord.dev) model types to Persistord entities. The core
-Persistord packages never reference a Discord client library — install this package
-only if you use NetCord.
+`Persistord.Adapters.NetCord` maps [NetCord](https://netcord.dev) model types to Persistord entities.
+
+The core Persistord packages never reference a Discord client library — install this package only
+if you use NetCord.
 
 ```bash
 dotnet add package Persistord.Adapters.NetCord
@@ -86,18 +90,19 @@ This package references `NetCord` as `[1.0.0-beta.19, 2.0.0)` — a floor, not a
 The shipped assembly is compiled against `1.0.0-beta.19`; NuGet resolves a range to
 its lowest satisfying version, and a consumer's newer direct reference wins.
 
-**NetCord has no stable release.** Every published version is a prerelease, so this
-adapter carries a prerelease dependency. A local `dotnet pack` without a version
-override fails with **NU5104** (stable package with a prerelease dependency):
-`Directory.Build.props` sets a local-build placeholder `<Version>1.0.0</Version>`,
-which NuGet reads as stable, and the repo's `TreatWarningsAsErrors` turns that
-mismatch into a hard pack failure. To pack locally, pass a prerelease version
-explicitly: `dotnet pack -p:Version=1.0.0-beta.1`. CD is unaffected — it packs with
-`-p:Version=$VERSION`, and release tags are themselves prerelease (`1.0.0-beta4` and
-the like), so the stable/prerelease mismatch never arises there.
+> [!IMPORTANT]
+> NetCord has no stable release. Every published version is a prerelease, so this adapter carries a
+> prerelease dependency. A local `dotnet pack` without a version override fails with **NU5104**
+> (stable package with a prerelease dependency): `Directory.Build.props` sets a local-build
+> placeholder `<Version>1.0.0</Version>`, which NuGet reads as stable, and the repo's
+> `TreatWarningsAsErrors` turns that mismatch into a hard pack failure. To pack locally, pass a
+> prerelease version explicitly: `dotnet pack -p:Version=1.0.0-beta.1`. CD is unaffected — it packs
+> with `-p:Version=$VERSION`, and release tags are themselves prerelease (`1.0.0-beta4` and the
+> like), so the stable/prerelease mismatch never arises there.
 
 ## See also
 
 - [Messages](messages.md) — `MessageEntity` shape and embed storage decisions.
 - [History](history.md) — `MessageHistoryEntity` and `HistoryChangeType`.
 - [Choosing an Adapter](adapters.md) — compares all three adapters side by side.
+- [Recipes](recipes.md#map-from-your-discord-library) — mapping snippets for all three libraries.

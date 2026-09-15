@@ -1,9 +1,13 @@
+---
+description: Map DSharpPlus model classes to Persistord entities, including the guild id two mappers ask for and the fields DSharpPlus cannot fill.
+---
+
 # DSharpPlus Adapter
 
-`Persistord.Adapters.DSharpPlus` is an opt-in adapter that maps
-[DSharpPlus](https://github.com/DSharpPlus/DSharpPlus) model types to Persistord
-entities. The core Persistord packages never reference a Discord client library —
-install this package only if you use DSharpPlus.
+`Persistord.Adapters.DSharpPlus` maps [DSharpPlus](https://github.com/DSharpPlus/DSharpPlus) model types to Persistord entities.
+
+The core Persistord packages never reference a Discord client library — install this package only
+if you use DSharpPlus.
 
 ```bash
 dotnet add package Persistord.Adapters.DSharpPlus
@@ -101,12 +105,12 @@ This package references `DSharpPlus` as `[4.5.3, 5.0.0)` — a floor, not a pin.
 shipped assembly is compiled against `4.5.3`; NuGet resolves a range to its lowest
 satisfying version, and a consumer's newer direct reference wins.
 
-**4.5.3 is the latest *listed* stable release.** A `DSharpPlus 5.0.0` exists on NuGet
-and sorts higher, but it is unlisted — a withdrawn package — and the
-`5.0.0-nightly-*` line is the in-progress v5 rewrite, published as prereleases only.
-This adapter therefore tracks the 4.5.x line. DSharpPlus v5 reorganises the entity
-model substantially; when it reaches a listed stable release, this adapter needs a
-new major of its own rather than a floor bump.
+> [!NOTE]
+> 4.5.3 is the latest *listed* stable release. A `DSharpPlus 5.0.0` exists on NuGet and sorts
+> higher, but it is unlisted — a withdrawn package — and the `5.0.0-nightly-*` line is the
+> in-progress v5 rewrite, published as prereleases only. This adapter therefore tracks the 4.5.x
+> line. DSharpPlus v5 reorganises the entity model substantially; when it reaches a listed stable
+> release, this adapter needs a new major of its own rather than a floor bump.
 
 Because 4.5.x targets `netstandard2.0`, installing this adapter also brings in
 `Newtonsoft.Json` transitively. That is DSharpPlus's dependency, not Persistord's: no
@@ -117,3 +121,4 @@ other Persistord package references it.
 - [Messages](messages.md) — `MessageEntity` shape and embed storage decisions.
 - [History](history.md) — `MessageHistoryEntity` and `HistoryChangeType`.
 - [Choosing an Adapter](adapters.md) — compares all three adapters side by side.
+- [Recipes](recipes.md#map-from-your-discord-library) — mapping snippets for all three libraries.

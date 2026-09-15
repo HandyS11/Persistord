@@ -27,6 +27,13 @@ const ENRICHED = [
   'managed-resources',
   'protection',
   'testing',
+  'adapters',
+  'discord-net-adapter',
+  'dsharpplus-adapter',
+  'netcord-adapter',
+  'samples',
+  'troubleshooting',
+  'upgrading',
 ]
 
 /* Tab ids per page, one array per group, in page order (spec 4.2). */
@@ -337,6 +344,17 @@ for (const slug of ENRICHED.filter(slug => ER_NODES[slug])) {
     assert.deepEqual(drawn.toSorted(), expected.toSorted())
   })
 }
+
+test('troubleshooting: every entry reads Symptom, Cause, Fix', async () => {
+  const { prose } = await article('troubleshooting')
+  const entries = prose.split(/^## /m).slice(1).filter(section => !section.startsWith('See also\n'))
+  assert.ok(entries.length >= 8, `only ${entries.length} entries`)
+  for (const entry of entries) {
+    const title = entry.split('\n')[0]
+    const labels = [...entry.matchAll(/^\*\*(Symptom|Cause|Fix):\*\*/gm)].map(match => match[1])
+    assert.deepEqual(labels, ['Symptom', 'Cause', 'Fix'], title)
+  }
+})
 
 for (const slug of ENRICHED.filter(slug => DIAGRAMS[slug])) {
   test(`${slug}: diagrams render without a syntax error`, async () => {

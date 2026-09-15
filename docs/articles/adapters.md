@@ -1,4 +1,10 @@
+---
+description: Compare the Discord.Net, DSharpPlus and NetCord adapters by what each binds to, its version range, and the one signature difference.
+---
+
 # Choosing an Adapter
+
+An adapter maps one Discord client library's model types onto Persistord entities, and your bot needs at most one.
 
 Persistord's core packages (`Persistord.Core`, `Persistord.Messages`,
 `Persistord.History`, and the opt-in `Persistord.Managed` / `Persistord.Protection` /
@@ -18,6 +24,52 @@ Persistord ships three:
 - [Discord.Net Adapter](discord-net-adapter.md) — `Persistord.Adapters.DiscordNet`
 - [DSharpPlus Adapter](dsharpplus-adapter.md) — `Persistord.Adapters.DSharpPlus`
 - [NetCord Adapter](netcord-adapter.md) — `Persistord.Adapters.NetCord`
+
+## Install and map
+
+# [Discord.Net](#tab/discordnet)
+
+```bash
+dotnet add package Persistord.Adapters.DiscordNet
+```
+
+```csharp
+using Persistord.Adapters.DiscordNet;
+
+db.Guilds.Add(guild.ToGuildEntity());
+db.Members.Add(guildUser.ToMemberEntity());
+db.Messages.Add(message.ToMessageEntity());
+```
+
+# [DSharpPlus](#tab/dsharpplus)
+
+```bash
+dotnet add package Persistord.Adapters.DSharpPlus
+```
+
+```csharp
+using Persistord.Adapters.DSharpPlus;
+
+db.Guilds.Add(guild.ToGuildEntity());
+db.Members.Add(member.ToMemberEntity(guild.Id));
+db.Messages.Add(message.ToMessageEntity());
+```
+
+# [NetCord](#tab/netcord)
+
+```bash
+dotnet add package Persistord.Adapters.NetCord
+```
+
+```csharp
+using Persistord.Adapters.NetCord;
+
+db.Guilds.Add(guild.ToGuildEntity());
+db.Members.Add(guildUser.ToMemberEntity());
+db.Messages.Add(message.ToMessageEntity());
+```
+
+---
 
 ## Comparing the three
 
@@ -96,3 +148,6 @@ objects, the same way each adapter's own mapper does internally.
 
 - [Getting Started](getting-started.md) — installing Persistord and an adapter.
 - [Introduction](introduction.md) — the package overview.
+- [Discord.Net Adapter](discord-net-adapter.md) — the Discord.Net mappers and channel types.
+- [DSharpPlus Adapter](dsharpplus-adapter.md) — the DSharpPlus mappers and coverage gaps.
+- [NetCord Adapter](netcord-adapter.md) — the NetCord mappers and prerelease packing.
