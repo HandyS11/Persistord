@@ -61,10 +61,11 @@ for (const scheme of ['light', 'dark']) {
     const { page, close } = await site.open(PAGE, { theme: null, colorScheme: scheme })
     try {
       await page.waitForFunction(
-        expected => document.documentElement.getAttribute('data-bs-theme') === expected,
+        expected => document.documentElement.dataset.bsTheme === expected,
         scheme,
         { timeout: 5000 }
       )
+      assert.equal(await page.evaluate(() => document.documentElement.dataset.bsTheme), scheme)
     } finally {
       await close()
     }

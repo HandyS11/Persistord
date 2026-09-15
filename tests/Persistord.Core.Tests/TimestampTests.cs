@@ -174,6 +174,39 @@ public class TimestampTests
     private static DbContextEventData ContextlessEvent() => new(null!, null!, null);
 
     [Fact]
+    public async Task Insert_of_an_updated_at_only_entity_stamps_updated_at()
+    {
+        var clock = new TestTimeProvider(Start);
+        var (database, context) = SqliteFixture.Create<StampContext>(o => new StampContext(o, clock));
+        using (database)
+        await using (context)
+        {
+            await context.Touched.AddAsync(new TouchedEntity());
+            await context.SaveChangesAsync();
+
+            Assert.Equal(Start, (await context.Touched.SingleAsync()).UpdatedAt);
+        }
+    }
+
+    [Fact]
+    public async Task Graph_context_stamps_from_the_clock_it_is_given()
+    {
+        var clock = new TestTimeProvider(Start);
+        var (database, context) = SqliteFixture.Create<StampGraphContext>(o => new StampGraphContext(o, clock));
+        using (database)
+        await using (context)
+        {
+            await context.Notes.AddAsync(new NoteEntity
+            {
+                Text = "hello"
+            });
+            await context.SaveChangesAsync();
+
+            Assert.Equal(Start, (await context.Notes.SingleAsync()).CreatedAt);
+        }
+    }
+
+    [Fact]
     public async Task Parameterless_constructor_stamps_from_the_system_clock()
     {
         var before = DateTimeOffset.UtcNow.AddSeconds(-5);
@@ -218,8 +251,25 @@ public sealed class NoteEntity : ICreatedAt, IUpdatedAt
     public DateTimeOffset UpdatedAt { get; set; }
 }
 
+/// <summary>An entity that tracks only its last write, so an insert has no creation stamp to set.</summary>
+public sealed class TouchedEntity : IUpdatedAt
+{
+    public long Id { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
 public sealed class StampContext(DbContextOptions<StampContext> options, TimeProvider? timeProvider)
     : Persistord.Core.DiscordDbContext(options, timeProvider ?? TimeProvider.System)
+{
+    public DbSet<NoteEntity> Notes => Set<NoteEntity>();
+
+    public DbSet<TouchedEntity> Touched => Set<TouchedEntity>();
+}
+
+/// <summary>A graph context built through the constructor overload that takes a clock.</summary>
+public sealed class StampGraphContext(DbContextOptions<StampGraphContext> options, TimeProvider timeProvider)
+    : Persistord.Core.DiscordGraphDbContext(options, timeProvider)
 {
     public DbSet<NoteEntity> Notes => Set<NoteEntity>();
 }

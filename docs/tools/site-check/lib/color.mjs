@@ -3,26 +3,42 @@
  * fourth element. WCAG 2.x relative luminance and contrast ratio.
  */
 
-const alphaOf = raw =>
-  raw === undefined ? 1 : raw.endsWith('%') ? Number(raw.slice(0, -1)) / 100 : Number(raw)
+function alphaOf(raw) {
+  if (raw === undefined) {
+    return 1
+  }
+  return raw.endsWith('%') ? Number(raw.slice(0, -1)) / 100 : Number(raw)
+}
+
+/**
+ * The arguments of a functional colour notation: three numeric channels and an
+ * optional alpha, separated by commas, spaces or a slash. Null if malformed.
+ */
+function argumentsOf(body) {
+  const parts = body.trim().split(/[\s,/]+/)
+  const numeric = parts.length >= 3 && parts.length <= 4 && parts.every(part => /^[\d.]+%?$/.test(part))
+  return numeric && parts.slice(0, 3).every(part => !part.endsWith('%')) ? parts : null
+}
 
 /** Parses a hex token or any colour string getComputedStyle returns. */
 export function parseColor(value) {
   const text = value.trim()
 
-  let match = /^#([0-9a-f]{6})$/i.exec(text)
-  if (match) {
-    return [0, 2, 4].map(i => parseInt(match[1].slice(i, i + 2), 16) / 255).concat(1)
+  const hex = /^#([0-9a-f]{6})$/i.exec(text)
+  if (hex) {
+    return [0, 2, 4].map(i => Number.parseInt(hex[1].slice(i, i + 2), 16) / 255).concat(1)
   }
 
-  match = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/i.exec(text)
-  if (match) {
-    return [match[1], match[2], match[3]].map(v => Number(v) / 255).concat(alphaOf(match[4]))
+  const rgb = /^rgba?\((.*)\)$/i.exec(text)
+  const rgbArgs = rgb && argumentsOf(rgb[1])
+  if (rgbArgs) {
+    return rgbArgs.slice(0, 3).map(v => Number(v) / 255).concat(alphaOf(rgbArgs[3]))
   }
 
-  match = /^color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+%?))?\s*\)$/i.exec(text)
-  if (match) {
-    return [match[1], match[2], match[3]].map(Number).concat(alphaOf(match[4]))
+  const srgb = /^color\(srgb\s(.*)\)$/i.exec(text)
+  const srgbArgs = srgb && argumentsOf(srgb[1])
+  if (srgbArgs) {
+    return srgbArgs.slice(0, 3).map(Number).concat(alphaOf(srgbArgs[3]))
   }
 
   throw new Error(`Unparseable colour: "${value}"`)

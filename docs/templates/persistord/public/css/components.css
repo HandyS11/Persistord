@@ -201,7 +201,7 @@
 /* Bootstrap Icons glyphs, from the icon font docfx already ships. */
 :where(.content article) .alert > h5::before {
   content: '\f431';
-  font-family: bootstrap-icons;
+  font-family: bootstrap-icons, sans-serif;
   font-size: 1rem;
   font-weight: 400;
   letter-spacing: 0;

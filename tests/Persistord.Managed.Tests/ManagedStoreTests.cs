@@ -48,6 +48,20 @@ public class ManagedStoreTests
     }
 
     [Fact]
+    public async Task A_channel_round_trips_its_parent_and_gets_a_surrogate_key()
+    {
+        await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);
+        await using var context = database.CreateContext<ManagedContext>(o => new ManagedContext(o));
+
+        await context.UpsertManagedAsync<ManagedChannel>(1UL, null, "chat", 100UL, c => c.ParentDiscordId = 50UL);
+        context.ChangeTracker.Clear();
+
+        var channel = await context.Channels.SingleAsync();
+        Assert.Equal(50UL, channel.ParentDiscordId);
+        Assert.NotEqual(0L, channel.Id);
+    }
+
+    [Fact]
     public async Task The_same_key_in_two_scopes_is_two_rows()
     {
         await using var database = SqliteTestDatabase.Private(TestSchema.EnsureCreated);

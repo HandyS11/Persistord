@@ -48,6 +48,16 @@ public class GuildScopeConventionTests
     public void An_unmarked_entity_with_a_guild_id_is_left_alone() =>
         Assert.Empty(IndexesOf(typeof(UnmarkedRow)));
 
+    [Fact]
+    public void A_scoped_entity_whose_guild_id_is_ignored_gets_no_index() =>
+        Assert.Empty(IndexesOf(typeof(IgnoredGuildIdRow)));
+
+    [Fact]
+    public void A_keyless_scoped_entity_gets_a_guild_id_index() =>
+        Assert.Contains(
+            IndexesOf(typeof(KeylessRow)),
+            columns => columns.SequenceEqual([nameof(KeylessRow.GuildId)]));
+
     [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
     internal sealed class ScopedRow : IGuildScoped
     {
@@ -89,6 +99,20 @@ public class GuildScopeConventionTests
         public ulong GuildId { get; set; }
     }
 
+    [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
+    internal sealed class IgnoredGuildIdRow : IGuildScoped
+    {
+        public long Id { get; set; }
+
+        public ulong GuildId { get; set; }
+    }
+
+    [SuppressMessage("Performance", "CA1812", Justification = "Instantiated by EF Core via ModelBuilder.Entity<T>().")]
+    internal sealed class KeylessRow : IGuildScoped
+    {
+        public ulong GuildId { get; set; }
+    }
+
     private sealed class ScopeProbeContext(DbContextOptions<ScopeProbeContext> options)
         : Persistord.Core.DiscordDbContext(options)
     {
@@ -109,6 +133,8 @@ public class GuildScopeConventionTests
                 e.GuildId, e.Key
             });
             modelBuilder.Entity<UnmarkedRow>();
+            modelBuilder.Entity<IgnoredGuildIdRow>().Ignore(e => e.GuildId);
+            modelBuilder.Entity<KeylessRow>().HasNoKey();
         }
     }
 }
