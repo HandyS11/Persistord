@@ -268,3 +268,24 @@ test('every class landing.css styles is used by the page or main.js', async () =
   )
   assert.deepEqual(unused, [])
 })
+
+for (const theme of THEMES) {
+  test(`${theme}: the landing page never scrolls sideways on a phone`, async () => {
+    const { page, close } = await site.open(LANDING, { theme, width: 375, height: 800 })
+    try {
+      const overflow = await page.evaluate(() => {
+        const width = document.documentElement.clientWidth
+        /* Code, install commands and the diagram scroll inside their own frames. */
+        const offenders = [...document.querySelectorAll('.content article *')]
+          .filter(element => !element.closest('.pd-model-scroll, pre, .pd-install > code'))
+          .filter(element => element.getBoundingClientRect().right > width + 1)
+          .map(element => `<${element.tagName.toLowerCase()} class="${element.getAttribute('class') ?? ''}">`)
+        return { page: document.documentElement.scrollWidth - width, offenders: offenders.slice(0, 10) }
+      })
+      assert.deepEqual(overflow.offenders, [], `${theme}: elements past the right edge`)
+      assert.equal(overflow.page, 0, `${theme}: the page is wider than the viewport`)
+    } finally {
+      await close()
+    }
+  })
+}
