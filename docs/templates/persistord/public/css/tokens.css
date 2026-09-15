@@ -42,6 +42,10 @@
   --pd-surface: #181a27;
   --pd-raised: #20233a;
   --pd-hairline: #2d3050;
+  /* A form field's edge is a UI boundary (3:1), which --pd-hairline is not.
+     The first step from hairline toward muted that clears 3:1 on both page
+     (3.30:1) and surface (3.01:1). */
+  --pd-control-border: #616482;
   --pd-heading: #f3f3fb;
   --pd-heading-rgb: 243, 243, 251;
   --pd-text: #e6e6f2;
@@ -103,6 +107,8 @@
   --pd-surface: #ffffff;
   --pd-raised: #f0f0f8;
   --pd-hairline: #e2e2ee;
+  /* See the dark block: 3.01:1 on page, 3.21:1 on surface. */
+  --pd-control-border: #8d8ea4;
   --pd-heading: #0f1019;
   --pd-heading-rgb: 15, 16, 25;
   --pd-text: #181a27;

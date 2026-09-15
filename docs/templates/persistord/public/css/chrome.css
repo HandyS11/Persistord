@@ -95,7 +95,7 @@ body > header.bg-body {
 #search-query {
   width: 15rem;
   padding-right: 2.25rem;
-  border-color: var(--pd-hairline);
+  border-color: var(--pd-control-border);
   border-radius: var(--pd-radius-sm);
   background-color: var(--pd-surface);
   color: var(--pd-text);
@@ -222,7 +222,7 @@ body > header.bg-body {
 /* --------------------------------------------------------------- sidebar -- */
 
 .toc form.filter > input {
-  border-color: var(--pd-hairline);
+  border-color: var(--pd-control-border);
   border-radius: var(--pd-radius-sm);
   background-color: var(--pd-surface);
   color: var(--pd-text);

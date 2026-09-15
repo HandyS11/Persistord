@@ -203,6 +203,20 @@ test('on a phone, previous and next stack as full-width cards', async () => {
 })
 
 for (const theme of THEMES) {
+  test(`${theme}: the search and sidebar filter fields are bounded by the control border`, async () => {
+    const { page, close } = await site.open(ARTICLE, { theme })
+    try {
+      await page.waitForSelector('.toc form.filter > input')
+      const { 'control-border': border } = await tokens(page, ['control-border'])
+      for (const selector of ['#search-query', '.toc form.filter > input']) {
+        const field = await computed(page, selector, ['border-top-color'])
+        assert.ok(sameColor(parseColor(field['border-top-color']), parseColor(border)), `${selector} border is ${field['border-top-color']}`)
+      }
+    } finally {
+      await close()
+    }
+  })
+
   test(`${theme}: the edit link is muted`, async () => {
     const { page, close } = await site.open(ARTICLE, { theme })
     try {

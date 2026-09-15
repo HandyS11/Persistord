@@ -18,18 +18,25 @@ async function themeStylesheets() {
   )
 }
 
-/* [foreground, background] - every pairing text is actually set in. */
+/* WCAG AA: 4.5:1 for text, 3:1 for the boundary of a UI component. */
+const TEXT = 4.5
+const BOUNDARY = 3
+
+/* [foreground, background, minimum] - every pairing text or a control
+   boundary is actually set in. */
 const TOKEN_PAIRS = [
-  ['heading', 'page'],
-  ['text', 'page'],
-  ['text', 'surface'],
-  ['text', 'raised'],
-  ['muted', 'page'],
-  ['muted', 'surface'],
-  ['muted', 'raised'],
-  ['accent', 'page'],
-  ['accent', 'surface'],
-  ['accent', 'raised'],
+  ['heading', 'page', TEXT],
+  ['text', 'page', TEXT],
+  ['text', 'surface', TEXT],
+  ['text', 'raised', TEXT],
+  ['muted', 'page', TEXT],
+  ['muted', 'surface', TEXT],
+  ['muted', 'raised', TEXT],
+  ['accent', 'page', TEXT],
+  ['accent', 'surface', TEXT],
+  ['accent', 'raised', TEXT],
+  ['control-border', 'page', BOUNDARY],
+  ['control-border', 'surface', BOUNDARY],
 ]
 
 const GRADIENT_USES = new Set([
@@ -49,14 +56,15 @@ after(async () => {
 })
 
 for (const theme of THEMES) {
-  test(`${theme}: text, muted, and accent tokens meet WCAG AA on every surface`, async () => {
+  test(`${theme}: text, muted, accent, and control-border tokens meet WCAG AA on every surface`, async () => {
     const { page, close } = await site.open('development/components.html', { theme })
     try {
-      const names = [...new Set(TOKEN_PAIRS.flat())]
+      const names = [...new Set(TOKEN_PAIRS.flatMap(([fg, bg]) => [fg, bg]))]
       const values = await tokens(page, names)
-      for (const [fg, bg] of TOKEN_PAIRS) {
+      for (const [fg, bg, minimum] of TOKEN_PAIRS) {
+        assert.ok(values[fg], `${theme}: --pd-${fg} is not declared`)
         const ratio = contrast(parseColor(values[fg]), parseColor(values[bg]))
-        assert.ok(ratio >= 4.5, `${theme}: --pd-${fg} on --pd-${bg} is ${ratio.toFixed(2)}:1`)
+        assert.ok(ratio >= minimum, `${theme}: --pd-${fg} on --pd-${bg} is ${ratio.toFixed(2)}:1, needs ${minimum}:1`)
       }
     } finally {
       await close()
