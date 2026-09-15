@@ -205,6 +205,34 @@ function wireTabs() {
   }
 }
 
+/**
+ * docfx syncs tab groups that share an id within a page and records the
+ * reader's choice in the `tabs` query parameter, but its links drop that
+ * parameter. Adding it to a same-site page link as the link is followed lets
+ * a choice made on one page (PostgreSQL, say) open the matching tab on the
+ * next. Capture phase, so the href is final before any other click handler
+ * or the navigation reads it.
+ */
+function carryTabChoice() {
+  document.addEventListener(
+    'click',
+    event => {
+      const tabs = new URLSearchParams(location.search).get('tabs')
+      const link = event.target instanceof Element ? event.target.closest('a[href]') : null
+      if (!tabs || !link || link.closest('.tabGroup')) {
+        return
+      }
+      const url = new URL(link.href, location.href)
+      if (url.origin !== location.origin || !url.pathname.endsWith('.html') || url.searchParams.has('tabs')) {
+        return
+      }
+      url.searchParams.set('tabs', tabs)
+      link.href = url.href
+    },
+    true
+  )
+}
+
 /** Runs a callback once the document has parsed. */
 function onReady(callback) {
   if (document.readyState === 'loading') {
@@ -334,6 +362,7 @@ export default {
     onReady(() => {
       wireCopyButtons()
       wireTabs()
+      carryTabChoice()
       labelCodeBlocks()
       wireSearchShortcut()
       trackAffix()

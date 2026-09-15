@@ -1,3 +1,7 @@
+---
+description: What Persistord is, the promise it makes, and what it deliberately leaves to your bot.
+---
+
 # Introduction
 
 Persistord is a **provider-agnostic, Discord-library-agnostic** persistence layer
@@ -53,65 +57,15 @@ ready-made mappers for all three libraries.
 
 ## Packages
 
-Persistord is split into ten NuGet packages:
+Persistord ships ten NuGet packages. The `Persistord` meta package bundles the library-neutral
+mirror stack — `Persistord.Core`, `Persistord.Messages` and `Persistord.History` — and is the
+recommended starting point. Three adapters map Discord.Net, DSharpPlus and NetCord types, and
+`Persistord.Managed`, `Persistord.Protection` and `Persistord.Testing` are opt-in add-ons outside
+the meta package. [Packages](packages.md) lists what each one adds, what it depends on, and how to
+choose.
 
-**`Persistord`** — the convenience meta package. Installing it pulls in the full
-library-neutral stack (`Core`, `Messages`, and `History`) in one reference. This is
-the recommended starting point.
+## See also
 
-**`Persistord.Core`** — the foundation: snowflake conversion, the
-conventions-only `DiscordDbContext` base class, and the abstract
-`DiscordGraphDbContext` that adds the opt-in core skeleton entities
-(`GuildEntity`, `ChannelEntity`, `UserEntity`, `MemberEntity`, `RoleEntity`)
-for a bot that mirrors Discord's guild/channel/user/member/role graph rather
-than owning its own resources.
-
-**`Persistord.Messages`** — the optional message-persistence module. Adds
-`MessageEntity` (with soft-delete), owned embeds, and relational attachments and
-reactions, wired in via `ApplyMessagesModule()`. Depends on `Persistord.Core`.
-
-**`Persistord.History`** — the optional append-only history module. Adds
-`MessageHistoryEntity` with a real foreign key to `MessageEntity`, wired in via
-`ApplyHistoryModule()`. Depends on `Persistord.Messages`.
-
-**`Persistord.Adapters.DiscordNet`** — an optional adapter that maps Discord.Net
-interface types (`IGuild`, `IMessage`, etc.) to Persistord entities via `.To*Entity()`
-extension methods. Install only if you use Discord.Net; the core packages never
-reference a Discord client library.
-
-**`Persistord.Adapters.DSharpPlus`** — an optional adapter that maps DSharpPlus model
-types (`DiscordGuild`, `DiscordMessage`, etc.) to Persistord entities via `.To*Entity()`
-extension methods. Install only if you use DSharpPlus; the core packages never
-reference a Discord client library. `ToMemberEntity` and `ToRoleEntity` take the guild
-id as an argument, because DSharpPlus does not expose it on those two types.
-
-**`Persistord.Adapters.NetCord`** — an optional adapter that maps NetCord model
-types (`RestGuild`, `RestMessage`, etc.) to Persistord entities via `.To*Entity()`
-extension methods. Install only if you use NetCord; the core packages never
-reference a Discord client library.
-
-**`Persistord.Managed`** — records of the categories, channels, anchored
-messages, and webhooks a bot creates and owns, keyed by a name you chose. See
-[Managed Resources](managed-resources.md). Depends on `Persistord.Core`.
-
-**`Persistord.Protection`** — encrypts `[Protected]` string columns of a
-context at rest via ASP.NET Core Data Protection. See
-[Protection](protection.md). Depends on `Persistord.Core`.
-
-**`Persistord.Testing`** — in-memory SQLite fixtures and EF Core model
-assertions for testing a Persistord-based context. See
-[Testing](testing.md). Depends on `Persistord.Core`.
-
-`Persistord.Managed`, `Persistord.Protection`, and `Persistord.Testing` are
-opt-in and **not** part of the `Persistord` meta package: a bot that only
-mirrors Discord never owns resources, encrypts a column, or needs the test
-fixtures, so the meta package stays the library-neutral mirror stack (`Core`,
-`Messages`, `History`) and nothing more.
-
-The dependency graph is not linear: `Messages` depends on `Core`, `History` depends
-on `Messages`, and all three of `Adapters.DiscordNet`, `Adapters.DSharpPlus` and
-`Adapters.NetCord` depend on all three — that chain is the one the meta package
-bundles. `Managed`, `Protection`, and `Testing` each depend on `Core` alone,
-independently of that chain and of each other.
-
-To get started, see [Getting Started](getting-started.md).
+- [Getting Started](getting-started.md) — build a context and write your first records.
+- [Packages](packages.md) — the ten packages, what each adds, and which ones you need.
+- [Snowflake Conversion](snowflake-conversion.md) — how `ulong` snowflakes are stored.
