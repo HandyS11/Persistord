@@ -54,7 +54,7 @@ Content    TEXT     'gg'</pre>
   <p>The tables <a href="../src/Persistord.Core/README.md"><code>Persistord.Core</code></a>, <a href="../src/Persistord.Messages/README.md"><code>Persistord.Messages</code></a> and <a href="../src/Persistord.History/README.md"><code>Persistord.History</code></a> map, and every column that points from one to another.</p>
   <figure class="pd-model-figure">
     <div class="pd-model-scroll" role="region" aria-label="Entity model diagram" tabindex="0">
-      <svg class="pd-model-svg" viewBox="0 0 1120 590" role="img" aria-labelledby="pd-model-title pd-model-desc">
+      <svg class="pd-model-svg" viewBox="0 0 1120 590" role="img" aria-labelledby="pd-model-title" aria-describedby="pd-model-desc">
         <title id="pd-model-title">The Persistord entity model</title>
         <desc id="pd-model-desc">Persistord.Core maps GuildEntity, UserEntity, MemberEntity, RoleEntity and ChannelEntity. Its only foreign key is ChannelEntity.ParentId, which points at a parent ChannelEntity. ChannelEntity.GuildId, RoleEntity.GuildId and MemberEntity.GuildId refer to GuildEntity, MemberEntity.UserId and GuildEntity.OwnerId refer to UserEntity, and none of them is a foreign key. Persistord.Messages maps MessageEntity. Embed, AttachmentEntity and ReactionEntity each have a MessageId foreign key to MessageEntity, and EmbedField has an EmbedId foreign key to Embed, which also owns a footer and an author. MessageEntity.ChannelId refers to ChannelEntity and MessageEntity.AuthorId to UserEntity, without foreign keys. Persistord.History maps MessageHistoryEntity, whose MessageId is a foreign key to MessageEntity.</desc>
         <defs>
@@ -121,7 +121,7 @@ Content    TEXT     'gg'</pre>
       <p>An adapter maps one Discord library's objects to Persistord entities. Take at most one, or write the mapping yourself.</p>
       <div class="pd-adapters" data-pd-tabs="Discord library">
         <section class="pd-adapter" id="adapter-discordnet" data-pd-tab>
-          <h4>Discord.Net</h4>
+          <h4 class="no-anchor">Discord.Net</h4>
           <div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord.Adapters.DiscordNet</code><button class="pd-copy" type="button" aria-live="polite">Copy</button></div>
 <pre><code class="lang-csharp">db.Guilds.Add(guild.ToGuildEntity());
 db.Members.Add(guildUser.ToMemberEntity());
@@ -129,7 +129,7 @@ db.Messages.Add(message.ToMessageEntity());</code></pre>
           <p class="pd-adapter-links"><a href="../src/Persistord.Adapters.DiscordNet/README.md"><code>Persistord.Adapters.DiscordNet</code></a> · <a href="articles/discord-net-adapter.md">Discord.Net guide</a></p>
         </section>
         <section class="pd-adapter" id="adapter-dsharpplus" data-pd-tab>
-          <h4>DSharpPlus</h4>
+          <h4 class="no-anchor">DSharpPlus</h4>
           <div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord.Adapters.DSharpPlus</code><button class="pd-copy" type="button" aria-live="polite">Copy</button></div>
 <pre><code class="lang-csharp">db.Guilds.Add(guild.ToGuildEntity());
 db.Members.Add(member.ToMemberEntity(guild.Id));
@@ -137,7 +137,7 @@ db.Messages.Add(message.ToMessageEntity());</code></pre>
           <p class="pd-adapter-links"><a href="../src/Persistord.Adapters.DSharpPlus/README.md"><code>Persistord.Adapters.DSharpPlus</code></a> · <a href="articles/dsharpplus-adapter.md">DSharpPlus guide</a></p>
         </section>
         <section class="pd-adapter" id="adapter-netcord" data-pd-tab>
-          <h4>NetCord</h4>
+          <h4 class="no-anchor">NetCord</h4>
           <div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord.Adapters.NetCord</code><button class="pd-copy" type="button" aria-live="polite">Copy</button></div>
 <pre><code class="lang-csharp">db.Guilds.Add(guild.ToGuildEntity());
 db.Members.Add(guildUser.ToMemberEntity());

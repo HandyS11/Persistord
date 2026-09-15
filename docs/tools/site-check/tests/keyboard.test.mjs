@@ -13,7 +13,7 @@ const PAGES = [
   { path: 'index.html', ready: ['[data-pd-tabs] [role="tab"]', 'footer a'] },
 ]
 
-/* Far more stops than either page has; the walk ends at the footer. */
+/* Far more stops than any of these pages has; the walk ends at the footer. */
 const MAX_TABS = 400
 
 /* Groups the walk must reach, so a walk that stalls in the navigation cannot

@@ -3,7 +3,8 @@
  * diagram, adapter picker, capability list, and start-here cards. The
  * .pd-snowflake / .pd-row-id marks are the only place the gateway-vs-column
  * colour rule survives, and only inside the proof panes. Every class here is
- * used by docs/index.md or main.js (tests/landing.test.mjs).
+ * used by docs/index.md, docs/404.html (the hero lede/actions/button classes)
+ * or main.js (tests/landing.test.mjs).
  */
 
 /* ------------------------------------------------------------- container -- */
@@ -580,6 +581,21 @@ body[data-layout='landing'] > main > .content > article {
 .pd-tab[aria-selected='true'] {
   border-bottom-color: var(--pd-accent);
   color: var(--pd-accent);
+}
+
+/* At narrow widths the three tabs no longer fit their wrapped padding on one
+   row, which strands the active underline above the hairline instead of on
+   it. Keep them on one row: tighten the padding first, then let the tablist
+   itself scroll if a longer label ever still overflows. */
+@media (max-width: 600px) {
+  .pd-tablist {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .pd-tab {
+    padding-inline: 0.4rem;
+  }
 }
 
 .pd-addons {

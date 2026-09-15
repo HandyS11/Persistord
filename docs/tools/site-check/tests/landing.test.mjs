@@ -243,7 +243,7 @@ test("What's in the box is a 3 x 3 list of guides with a left rule and no card c
   }
 })
 
-test('Start here holds the only card chrome on the page: three cards', async () => {
+test('the only .pd-card elements on the page are the three Start-here cards, and retired blocks are gone', async () => {
   const { page, close } = await site.open(LANDING)
   try {
     const cards = await page.$$eval('.content article .pd-card', links =>

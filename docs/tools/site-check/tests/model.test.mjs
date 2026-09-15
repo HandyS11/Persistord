@@ -28,28 +28,28 @@ const EDGES = [
   {
     kind: 'fk', from: 'Embed', to: 'MessageEntity', column: 'MessageId',
     evidence: [
-      ['src/Persistord.Messages/Entities/MessageEntity.cs', 'public List<Embed> Embeds'],
+      ['src/Persistord.Messages/Entities/MessageEntity.cs', 'public List<Embed> Embeds {'],
       ['src/Persistord.Messages/Configurations/MessageEntityConfiguration.cs', 'builder.HasMany(m => m.Embeds).WithOne().HasForeignKey(e => e.MessageId);'],
     ],
   },
   {
     kind: 'fk', from: 'AttachmentEntity', to: 'MessageEntity', column: 'MessageId',
     evidence: [
-      ['src/Persistord.Messages/Entities/MessageEntity.cs', 'public List<AttachmentEntity> Attachments'],
+      ['src/Persistord.Messages/Entities/MessageEntity.cs', 'public List<AttachmentEntity> Attachments {'],
       ['src/Persistord.Messages/Configurations/MessageEntityConfiguration.cs', 'builder.HasMany(m => m.Attachments).WithOne().HasForeignKey(a => a.MessageId);'],
     ],
   },
   {
     kind: 'fk', from: 'ReactionEntity', to: 'MessageEntity', column: 'MessageId',
     evidence: [
-      ['src/Persistord.Messages/Entities/MessageEntity.cs', 'public List<ReactionEntity> Reactions'],
+      ['src/Persistord.Messages/Entities/MessageEntity.cs', 'public List<ReactionEntity> Reactions {'],
       ['src/Persistord.Messages/Configurations/MessageEntityConfiguration.cs', 'builder.HasMany(m => m.Reactions).WithOne().HasForeignKey(r => r.MessageId);'],
     ],
   },
   {
     kind: 'fk', from: 'EmbedField', to: 'Embed', column: 'EmbedId',
     evidence: [
-      ['src/Persistord.Messages/Owned/Embed.cs', 'public List<EmbedField> Fields'],
+      ['src/Persistord.Messages/Owned/Embed.cs', 'public List<EmbedField> Fields {'],
       ['src/Persistord.Messages/Configurations/EmbedEntityConfiguration.cs', 'builder.HasMany(e => e.Fields).WithOne().HasForeignKey(f => f.EmbedId);'],
     ],
   },
@@ -98,7 +98,7 @@ async function modelSource() {
       const path = `${relativePath}${entry.name}`
       files.push({ path, source })
 
-      const declarations = source.matchAll(/\bpublic (?:sealed |abstract |static )*class (\w+)(?:\([^)]*\))? ?(:[^{]*)?\{/g)
+      const declarations = source.matchAll(/\b(?:public |internal )?(?:sealed |abstract |static )*class (\w+)(?:\([^)]*\))? ?(:[^{]*)?\{/g)
       for (const [, name, bases] of declarations) {
         classes.set(name, { packageName, source, bases: bases?.trim() ?? '' })
       }
@@ -208,7 +208,8 @@ test('every reference column on a drawn entity is drawn', () => {
 })
 
 test('every navigation from a drawn entity to another drawn entity is a recorded edge', () => {
-  const NAVIGATION = /public (?:(?:List|ICollection|IEnumerable)<(\w+)>|(\w+)\??) (\w+) \{/g
+  const NAVIGATION =
+    /public (?:virtual )?(?:(?:List|ICollection|IEnumerable|IList|IReadOnlyList|IReadOnlyCollection|HashSet)<(\w+)>|(\w+)\??) (\w+) \{/g
   for (const name of NODE_NAMES) {
     for (const [, collectionType, scalarType, propertyName] of classes.get(name).source.matchAll(NAVIGATION)) {
       const referenced = collectionType ?? scalarType
@@ -343,7 +344,8 @@ test('the diagram has an accessible name and a description naming every entity',
   const { page, close } = await site.open(LANDING)
   try {
     const a11y = await page.$eval(SVG, svg => {
-      const [title, desc] = (svg.getAttribute('aria-labelledby') ?? '').split(/\s+/).map(id => document.getElementById(id))
+      const title = document.getElementById(svg.getAttribute('aria-labelledby') ?? '')
+      const desc = document.getElementById(svg.getAttribute('aria-describedby') ?? '')
       return {
         role: svg.getAttribute('role'),
         title: title?.tagName.toLowerCase() === 'title' ? title.textContent.trim() : null,
@@ -352,7 +354,7 @@ test('the diagram has an accessible name and a description naming every entity',
       }
     })
     assert.equal(a11y.role, 'img')
-    assert.ok(a11y.title, 'aria-labelledby does not start with the <title>')
+    assert.ok(a11y.title, 'aria-labelledby does not point at the <title>')
     for (const name of NODE_NAMES) {
       assert.match(a11y.desc, new RegExp(`\\b${name}\\b`), `the <desc> never mentions ${name}`)
     }

@@ -281,7 +281,7 @@ centred 1120 px container:
    ② pick one adapter — an accessible tablist (Discord.Net / DSharpPlus / NetCord), each panel
    showing its install command and a ≤3-line mapper snippet checked against that adapter's source
    (DSharpPlus's `guildId` parameter on member and role mappers included);
-   ③ optional add-ons as one compact row: Managed · Protection · Testing, one line each.
+   ③ optional add-ons — Managed · Protection · Testing — each a linked package name and one sentence.
    A "Compare all ten packages →" link goes to `articles/packages.md`.
    The tablist follows the ARIA Authoring Practices tabs pattern (roving `tabindex`, arrow keys,
    Home/End), wired in `start()`. Without JavaScript the three panels render stacked.
