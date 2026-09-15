@@ -60,6 +60,7 @@
 
   --pd-note: #9d9cf7;
   --pd-tip: #4fd1c0;
+  --pd-tip-rgb: 79, 209, 192;
   --pd-warning: #f0b54f;
   --pd-caution: #f58398;
 
@@ -98,6 +99,8 @@
   --bs-link-hover-color: var(--pd-accent-hover);
   --bs-link-hover-color-rgb: 184, 182, 245;
   --bs-focus-ring-color: rgb(134 133 244 / 0.4);
+  --bs-success: var(--pd-tip);
+  --bs-success-rgb: var(--pd-tip-rgb);
 }
 
 [data-bs-theme='light'] {
@@ -123,6 +126,7 @@
 
   --pd-note: #4635c2;
   --pd-tip: #0f766e;
+  --pd-tip-rgb: 15, 118, 110;
   --pd-warning: #9a5b06;
   --pd-caution: #be123c;
 
@@ -158,4 +162,6 @@
   --bs-link-hover-color: var(--pd-accent-hover);
   --bs-link-hover-color-rgb: 61, 38, 184;
   --bs-focus-ring-color: rgb(70 53 194 / 0.35);
+  --bs-success: var(--pd-tip);
+  --bs-success-rgb: var(--pd-tip-rgb);
 }

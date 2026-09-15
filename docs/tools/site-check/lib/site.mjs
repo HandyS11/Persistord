@@ -19,12 +19,15 @@ export async function launchSite() {
       width = 1440,
       height = 900,
       reducedMotion = 'no-preference',
+      /* A touch-only device: matches `(hover: none)` and `(pointer: coarse)`. */
+      hasTouch = false,
     } = options
 
     const context = await browser.newContext({
       viewport: { width, height },
       colorScheme,
       reducedMotion,
+      hasTouch,
     })
 
     /* docfx reads localStorage.theme before first paint; `theme: null` leaves it

@@ -6,20 +6,12 @@
  * !important, while they still beat docfx's bare h1-h4 rules by source order.
  */
 
-/* docfx itself sets `scroll-margin-top: 60px` (== --pd-header-height) on every
-   heading inside .content article at >= 768px, to clear the sticky header on
-   anchor navigation. Below 768px it does not, so scroll-padding-top there
-   carries the full header clearance; at and above it, only the extra
-   breathing room is needed - the two insets are additive, and stacking the
-   full clearance twice would land anchors --pd-header-height too far down. */
+/* Breathing room above an anchor target. docfx's header is sticky only at
+   >= 768px, and at that width docfx itself clears it with
+   `scroll-margin-top: 60px` on every [id] in the article; the two insets add
+   up. Below 768px the header scrolls away, so no clearance is needed. */
 html {
-  scroll-padding-top: calc(var(--pd-header-height) + 1rem);
-}
-
-@media (min-width: 768px) {
-  html {
-    scroll-padding-top: 1rem;
-  }
+  scroll-padding-top: 1rem;
 }
 
 body {
@@ -42,6 +34,15 @@ pre,
 samp,
 .font-monospace {
   font-family: var(--pd-mono);
+}
+
+/* JetBrains Mono would draw `=>` and `->` as single arrows; code samples show
+   exactly what is typed. */
+code,
+kbd,
+pre,
+samp {
+  font-variant-ligatures: none;
 }
 
 h1,

@@ -65,6 +65,14 @@
   color: var(--pd-heading);
 }
 
+/* docfx swaps in `.link-success` once the copy succeeds. The rule above
+   would mute it, so the confirmation takes the tip colour (docfx's utility
+   reads --bs-success-rgb, mapped to the same token in tokens.css); placed
+   after :hover so it holds under the pointer that clicked. */
+:where(.content article) pre > .code-action.link-success {
+  color: var(--pd-tip);
+}
+
 @media (hover: none) {
   :where(.content article) pre > .code-action {
     opacity: 1;

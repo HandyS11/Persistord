@@ -278,6 +278,25 @@ test('the copy button is reachable and visible by keyboard', async () => {
   }
 })
 
+for (const theme of THEMES) {
+  test(`${theme}: a copied code block confirms in the tip colour`, async () => {
+    const { page, close } = await site.open(PAGE, { theme })
+    try {
+      await page.waitForSelector('.code-action', { state: 'attached' })
+      /* docfx swaps in `a.link-success.code-action` once the clipboard write
+         resolves; headless runs have no clipboard, so the state is set here. */
+      await page.$eval(`${CSHARP} > .code-action`, button => button.classList.add('link-success'))
+      await page.waitForTimeout(250)
+      const { tip } = await tokens(page, ['tip'])
+      const copied = await computed(page, `${CSHARP} > .code-action`, ['color', 'text-decoration-color'])
+      assert.ok(sameColor(parseColor(copied.color), parseColor(tip)), `copied state is ${copied.color}`)
+      assert.ok(sameColor(parseColor(copied['text-decoration-color']), parseColor(tip)), `copied underline is ${copied['text-decoration-color']}`)
+    } finally {
+      await close()
+    }
+  })
+}
+
 test('inline code is a borderless tint that wraps as one span', async () => {
   const { page, close } = await site.open(PAGE)
   try {

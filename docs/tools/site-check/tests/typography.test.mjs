@@ -44,6 +44,18 @@ test('body text uses the vendored sans at 16px with a 1.7 line height', async ()
   }
 })
 
+test('code is set without ligatures, so => and -> read as typed', async () => {
+  const { page, close } = await site.open(PAGE)
+  try {
+    for (const selector of ['.content article pre > code', '.content article p > code']) {
+      const code = await computed(page, selector, ['font-variant-ligatures'])
+      assert.equal(code['font-variant-ligatures'], 'none', selector)
+    }
+  } finally {
+    await close()
+  }
+})
+
 for (const scheme of ['light', 'dark']) {
   test(`with no stored choice the theme follows an OS ${scheme} preference`, async () => {
     const { page, close } = await site.open(PAGE, { theme: null, colorScheme: scheme })

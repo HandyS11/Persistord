@@ -108,6 +108,53 @@ test('pressing / focuses search, but not while typing in another field', async (
   }
 })
 
+test('the / hint is hidden from assistive tech, and from touch devices with no keyboard shortcut to hint', async () => {
+  const desktop = await site.open(ARTICLE)
+  try {
+    const hint = await computed(desktop.page, '#search', ['content', 'display'], '::after')
+    assert.equal(hint.content, '"/" / ""')
+    assert.notEqual(hint.display, 'none')
+  } finally {
+    await desktop.close()
+  }
+
+  const touch = await site.open(ARTICLE, { hasTouch: true })
+  try {
+    const hint = await computed(touch.page, '#search', ['display'], '::after')
+    assert.equal(hint.display, 'none')
+  } finally {
+    await touch.close()
+  }
+})
+
+/* docfx's header is sticky, and its headings carry scroll-margin-top: 60px,
+   only from 768px up; below that an anchor needs no header clearance.
+   Reduced motion turns off Bootstrap's smooth scrolling, so the jump settles
+   at once. */
+test('a jump to a heading lands just below the sticky header, or near the top on a phone', async () => {
+  for (const [width, header] of [[1440, true], [375, false]]) {
+    const { page, close } = await site.open(ARTICLE, { width, reducedMotion: 'reduce' })
+    try {
+      const id = await page.$eval('.content article h2[id]:nth-of-type(2)', heading => heading.id)
+      await page.evaluate(target => {
+        location.hash = target
+      }, id)
+      await page.waitForFunction(() => window.scrollY > 0)
+      const { top, headerBottom } = await page.evaluate(target => ({
+        top: document.getElementById(target).getBoundingClientRect().top,
+        headerBottom: document.querySelector('body > header').getBoundingClientRect().bottom,
+      }), id)
+      if (header) {
+        assert.ok(top >= headerBottom && top <= headerBottom + 24, `${width}px: heading lands at ${top}px under a ${headerBottom}px header`)
+      } else {
+        assert.ok(top >= 0 && top <= 24, `${width}px: heading lands at ${top}px`)
+      }
+    } finally {
+      await close()
+    }
+  }
+})
+
 test('sidebar group labels are small uppercase captions and the sidebar is 260px', async () => {
   const { page, close } = await site.open(ARTICLE)
   try {

@@ -106,9 +106,10 @@ body > header.bg-body {
   color: var(--pd-muted);
 }
 
-/* The keyboard hint for the `/` shortcut wired in main.js. */
+/* The keyboard hint for the `/` shortcut wired in main.js. The empty
+   alternative text keeps assistive tech from announcing a stray slash. */
 #search::after {
-  content: '/';
+  content: '/' / '';
   position: absolute;
   top: 50%;
   right: 0.6rem;
@@ -125,6 +126,13 @@ body > header.bg-body {
 
 #search:focus-within::after {
   visibility: hidden;
+}
+
+/* A touch-only device has no keyboard to press `/` on. */
+@media (hover: none) {
+  #search::after {
+    display: none;
+  }
 }
 
 .form-control:focus {
