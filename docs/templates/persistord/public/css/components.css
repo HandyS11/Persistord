@@ -75,15 +75,26 @@
 
 /* [data-bs-theme] matches docfx's own `[data-bs-theme=dark] .hljs-*` rules in
    specificity, so source order decides in both themes. */
+/* Plain code text. docfx's dark theme sets these wrappers to its own grey. */
+[data-bs-theme] .hljs-function,
+[data-bs-theme] .hljs-subst,
+[data-bs-theme] .hljs-formula {
+  color: var(--pd-text);
+}
+
 [data-bs-theme] .hljs-keyword,
 [data-bs-theme] .hljs-literal,
 [data-bs-theme] .hljs-built_in,
 [data-bs-theme] .hljs-selector-tag,
-[data-bs-theme] .hljs-symbol {
+[data-bs-theme] .hljs-symbol,
+[data-bs-theme] .hljs-bullet {
   color: var(--pd-code-keyword);
 }
 
+/* docfx's dark `.hljs-meta .hljs-string` (a string inside a C# attribute)
+   outranks a single class, so it is matched here. */
 [data-bs-theme] .hljs-string,
+[data-bs-theme] .hljs-meta .hljs-string,
 [data-bs-theme] .hljs-regexp,
 [data-bs-theme] .hljs-addition,
 [data-bs-theme] .hljs-template-string,
@@ -96,6 +107,7 @@
 }
 
 [data-bs-theme] .hljs-comment,
+[data-bs-theme] .hljs-doctag,
 [data-bs-theme] .hljs-quote,
 [data-bs-theme] .hljs-deletion,
 [data-bs-theme] .hljs-meta,
@@ -128,6 +140,11 @@
 
 [data-bs-theme] .hljs-strong {
   font-weight: 700;
+}
+
+/* Lines named by a snippet's `highlight=` query; docfx paints them yellow. */
+[data-bs-theme] pre > code .line-highlight {
+  background-color: var(--pd-accent-wash);
 }
 
 /* -------------------------------------------------------------- callouts -- */

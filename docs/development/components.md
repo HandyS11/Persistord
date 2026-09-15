@@ -60,6 +60,33 @@ dotnet add package Persistord
 dotnet ef migrations add Initial
 ```
 
+API pages are generated from XML doc comments, so public members carry them:
+
+```csharp
+/// <summary>Renamed to <see cref="ApplyCoreGraph"/>.</summary>
+[Obsolete("Renamed to ApplyCoreGraph. This forwarder is kept for one release and will be removed.")]
+public static ModelBuilder ApplyCoreConfiguration(this ModelBuilder modelBuilder) =>
+    modelBuilder.ApplyCoreGraph();
+```
+
+## Lists
+
+Use a bulleted list for parallel items, and a numbered list only when the order matters.
+
+```markdown
+- Guilds, channels, and roles
+- Members and users
+
+1. Add the package.
+2. Derive your context from `DiscordGraphDbContext`.
+```
+
+- Guilds, channels, and roles
+- Members and users
+
+1. Add the package.
+2. Derive your context from `DiscordGraphDbContext`.
+
 ## Callouts
 
 Use a callout only for text that is already a note or a warning, and at most about two per page.

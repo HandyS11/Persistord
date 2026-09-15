@@ -14,7 +14,26 @@ const CALLOUTS = [
   ['CAUTION', 'caution'],
 ]
 
-const SYNTAX = ['.hljs-keyword', '.hljs-string', '.hljs-number', '.hljs-comment', '.hljs-title', '.hljs-attr', '.hljs-link']
+/* Classes the component page must keep producing, so the syntax check below
+   cannot pass on a page that lost its samples. The check itself covers every
+   .hljs-* span that renders, listed here or not. */
+const SYNTAX = [
+  'hljs-keyword',
+  'hljs-string',
+  'hljs-number',
+  'hljs-comment',
+  'hljs-doctag',
+  'hljs-meta',
+  'hljs-title',
+  'hljs-function',
+  'hljs-params',
+  'hljs-attr',
+  'hljs-link',
+  'hljs-bullet',
+]
+
+/* Every colour a highlighted span may take: plain code text or a code token. */
+const SYNTAX_PALETTE = ['text', 'code-keyword', 'code-string', 'code-number', 'code-comment', 'code-title', 'code-attr']
 
 /* Resolves once every Mermaid fence on the page has been replaced by its SVG. */
 const diagramsRendered = page =>
@@ -105,17 +124,53 @@ for (const theme of THEMES) {
     }
   })
 
-  test(`${theme}: every syntax colour meets AA on the code surface`, async () => {
+  test(`${theme}: every highlighted span takes a palette colour that meets AA on the code surface`, async () => {
     const { page, close } = await site.open(PAGE, { theme })
     try {
-      for (const selector of SYNTAX) {
-        const pair = await page.$eval(`.content article pre ${selector}`, element => ({
+      const palette = Object.values(await tokens(page, SYNTAX_PALETTE)).map(parseColor)
+      const spans = await page.$$eval('.content article pre > code [class*="hljs-"]', elements =>
+        elements.map(element => ({
+          name: [...element.classList].join('.'),
+          within: element.parentElement.className.split(' ').find(name => name.startsWith('hljs-')) ?? 'code',
           color: getComputedStyle(element).color,
           background: getComputedStyle(element.closest('pre')).backgroundColor,
         }))
-        const ratio = contrast(parseColor(pair.color), parseColor(pair.background))
-        assert.ok(ratio >= 4.5, `${theme} ${selector} is ${ratio.toFixed(2)}:1`)
+      )
+
+      const rendered = new Set(spans.flatMap(span => span.name.split('.')))
+      assert.deepEqual(SYNTAX.filter(name => !rendered.has(name)), [], 'classes missing from the component page')
+
+      const failures = new Set()
+      for (const span of spans) {
+        const color = parseColor(span.color)
+        const ratio = contrast(color, parseColor(span.background))
+        if (ratio < 4.5) {
+          failures.add(`.${span.name} in .${span.within} is ${ratio.toFixed(2)}:1`)
+        }
+        if (!palette.some(token => sameColor(color, token))) {
+          failures.add(`.${span.name} in .${span.within} is off-palette ${span.color}`)
+        }
       }
+      assert.deepEqual([...failures], [], `${theme} syntax colours`)
+    } finally {
+      await close()
+    }
+  })
+
+  test(`${theme}: a highlighted line is tinted with the accent wash`, async () => {
+    const { page, close } = await site.open(PAGE, { theme })
+    try {
+      /* docfx wraps the lines named by a snippet's highlight= query in this
+         span; the component page has no snippet include, so one is made. */
+      await page.$eval(`${CSHARP} > code`, code => {
+        const span = document.createElement('span')
+        span.className = 'line-highlight'
+        span.textContent = 'highlighted'
+        code.prepend(span)
+      })
+      const { 'accent-wash': wash } = await tokens(page, ['accent-wash'])
+      const line = await computed(page, `${CSHARP} > code > .line-highlight`, ['background-color'])
+      assert.ok(sameColor(parseColor(line['background-color']), parseColor(wash), 0.01), `highlighted line is ${line['background-color']}`)
     } finally {
       await close()
     }
