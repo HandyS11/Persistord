@@ -108,37 +108,54 @@ Content    TEXT     'gg'</pre>
   </figure>
 </section>
 
-<section class="pd-section">
-  <h2>Ten packages</h2>
-  <p>Take the meta package, add at most one adapter, and add the opt-in packages only if you need them.</p>
-  <div class="pd-packages">
-    <div class="pd-package-group">
-      <h3>The stack</h3>
-      <ul>
-        <li><a class="pd-package" href="https://www.nuget.org/packages/Persistord"><code>Persistord</code><span>Meta package — Core, Messages and History in one reference.</span></a></li>
-        <li><a class="pd-package" href="https://www.nuget.org/packages/Persistord.Core"><code>Persistord.Core</code><span>Snowflake conversion, <code>DiscordDbContext</code>, the skeleton graph, upsert and purge.</span></a></li>
-        <li><a class="pd-package" href="https://www.nuget.org/packages/Persistord.Messages"><code>Persistord.Messages</code><span>Soft-deleted messages with embeds, attachments and reactions.</span></a></li>
-        <li><a class="pd-package" href="https://www.nuget.org/packages/Persistord.History"><code>Persistord.History</code><span>Append-only edit history with a real foreign key to messages.</span></a></li>
+<section class="pd-section pd-stack">
+  <h2>Build your stack</h2>
+  <ol class="pd-steps">
+    <li class="pd-step">
+      <h3>Add the model</h3>
+      <p>The meta package brings <a href="../src/Persistord.Core/README.md"><code>Persistord.Core</code></a>, <a href="../src/Persistord.Messages/README.md"><code>Persistord.Messages</code></a> and <a href="../src/Persistord.History/README.md"><code>Persistord.History</code></a> in one reference.</p>
+      <div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord</code><button class="pd-copy" type="button" aria-live="polite">Copy</button></div>
+    </li>
+    <li class="pd-step">
+      <h3>Pick one adapter</h3>
+      <p>An adapter maps one Discord library's objects to Persistord entities. Take at most one, or write the mapping yourself.</p>
+      <div class="pd-adapters" data-pd-tabs="Discord library">
+        <section class="pd-adapter" id="adapter-discordnet" data-pd-tab>
+          <h4>Discord.Net</h4>
+          <div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord.Adapters.DiscordNet</code><button class="pd-copy" type="button" aria-live="polite">Copy</button></div>
+<pre><code class="lang-csharp">db.Guilds.Add(guild.ToGuildEntity());
+db.Members.Add(guildUser.ToMemberEntity());
+db.Messages.Add(message.ToMessageEntity());</code></pre>
+          <p class="pd-adapter-links"><a href="../src/Persistord.Adapters.DiscordNet/README.md"><code>Persistord.Adapters.DiscordNet</code></a> · <a href="articles/discord-net-adapter.md">Discord.Net guide</a></p>
+        </section>
+        <section class="pd-adapter" id="adapter-dsharpplus" data-pd-tab>
+          <h4>DSharpPlus</h4>
+          <div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord.Adapters.DSharpPlus</code><button class="pd-copy" type="button" aria-live="polite">Copy</button></div>
+<pre><code class="lang-csharp">db.Guilds.Add(guild.ToGuildEntity());
+db.Members.Add(member.ToMemberEntity(guild.Id));
+db.Messages.Add(message.ToMessageEntity());</code></pre>
+          <p class="pd-adapter-links"><a href="../src/Persistord.Adapters.DSharpPlus/README.md"><code>Persistord.Adapters.DSharpPlus</code></a> · <a href="articles/dsharpplus-adapter.md">DSharpPlus guide</a></p>
+        </section>
+        <section class="pd-adapter" id="adapter-netcord" data-pd-tab>
+          <h4>NetCord</h4>
+          <div class="pd-install"><span class="pd-prompt">$</span><code>dotnet add package Persistord.Adapters.NetCord</code><button class="pd-copy" type="button" aria-live="polite">Copy</button></div>
+<pre><code class="lang-csharp">db.Guilds.Add(guild.ToGuildEntity());
+db.Members.Add(guildUser.ToMemberEntity());
+db.Messages.Add(message.ToMessageEntity());</code></pre>
+          <p class="pd-adapter-links"><a href="../src/Persistord.Adapters.NetCord/README.md"><code>Persistord.Adapters.NetCord</code></a> · <a href="articles/netcord-adapter.md">NetCord guide</a></p>
+        </section>
+      </div>
+    </li>
+    <li class="pd-step">
+      <h3>Add what you need</h3>
+      <ul class="pd-addons">
+        <li><a href="../src/Persistord.Managed/README.md"><code>Persistord.Managed</code></a><span>The categories, channels, anchored messages and webhooks your bot owns.</span></li>
+        <li><a href="../src/Persistord.Protection/README.md"><code>Persistord.Protection</code></a><span>Encrypts <code>[Protected]</code> string columns at rest.</span></li>
+        <li><a href="../src/Persistord.Testing/README.md"><code>Persistord.Testing</code></a><span>In-memory SQLite fixtures and EF Core model assertions.</span></li>
       </ul>
-    </div>
-    <div class="pd-package-group">
-      <h3>Adapters — pick at most one</h3>
-      <ul>
-        <li><a class="pd-package" href="https://www.nuget.org/packages/Persistord.Adapters.DiscordNet"><code>Persistord.Adapters.DiscordNet</code><span><code>.To*Entity()</code> mappers for Discord.Net types.</span></a></li>
-        <li><a class="pd-package" href="https://www.nuget.org/packages/Persistord.Adapters.DSharpPlus"><code>Persistord.Adapters.DSharpPlus</code><span><code>.To*Entity()</code> mappers for DSharpPlus types.</span></a></li>
-        <li><a class="pd-package" href="https://www.nuget.org/packages/Persistord.Adapters.NetCord"><code>Persistord.Adapters.NetCord</code><span><code>.To*Entity()</code> mappers for NetCord types.</span></a></li>
-      </ul>
-    </div>
-    <div class="pd-package-group">
-      <h3>Opt-in</h3>
-      <ul>
-        <li><a class="pd-package" href="https://www.nuget.org/packages/Persistord.Managed"><code>Persistord.Managed</code><span>The categories, channels, anchored messages and webhooks your bot owns.</span></a></li>
-        <li><a class="pd-package" href="https://www.nuget.org/packages/Persistord.Protection"><code>Persistord.Protection</code><span>Encrypts <code>[Protected]</code> string columns at rest.</span></a></li>
-        <li><a class="pd-package" href="https://www.nuget.org/packages/Persistord.Testing"><code>Persistord.Testing</code><span>In-memory SQLite fixtures and EF Core model assertions.</span></a></li>
-      </ul>
-    </div>
-  </div>
-  <p class="pd-note">The <a href="articles/packages.md">packages page</a> has the full matrix, the dependency graph, and the reasoning behind which three stay out of the meta package.</p>
+    </li>
+  </ol>
+  <p class="pd-more"><a href="articles/packages.md">Compare all ten packages<span aria-hidden="true"> →</span></a></p>
 </section>
 
 <section class="pd-section">
