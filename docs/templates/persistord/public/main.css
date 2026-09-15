@@ -27,7 +27,10 @@
  *   body[data-layout], body[data-yaml-mime]
  *   body > header.bg-body, .navbar-brand > #logo, #navbar .navbar-nav .nav-link(.active)
  *   #search, #search-query, #navbar form.icons
- *   main > .toc-offcanvas, #toc span.name-only, .toc li(.active) > a, .toc form.filter
+ *   #search-results > .search-list, #search-results > .sr-items .sr-item > .item-title /
+ *   .item-href / .item-brief, #search-results .pagination .page-link
+ *   main > .toc-offcanvas, #toc span.name-only, .toc li(.active) > a, .toc form.filter,
+ *   .toc .no-result
  *   main > .affix, .affix h5, .affix a.link-body-emphasis / a.link-secondary
  *   #breadcrumb .breadcrumb, .contribution a.edit-link, .next-article > div(.prev|.next) > span + a
  *   pre > code.hljs, pre > .code-action, .hljs-*
