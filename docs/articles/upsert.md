@@ -1,10 +1,14 @@
+---
+description: The natural-key UpsertAsync and UpsertIfChangedAsync, the unique index their race recovery needs, and the filters and tracking they override.
+---
+
 # Upsert
 
-`UpsertAsync` is `Persistord.Core`'s natural-key upsert: read by natural key,
-create or mutate, save, and recover exactly once from a lost insert race. It
-collapses the find-then-add-or-update-with-a-recovery-block every consumer
-eventually hand-writes into one call — see [Before and after](#before-and-after)
-below for the two side by side.
+`UpsertAsync` is `Persistord.Core`'s natural-key upsert: read by natural key, create or mutate, save, and recover exactly once from a lost insert race.
+
+It collapses the find-then-add-or-update-with-a-recovery-block every consumer eventually
+hand-writes into one call — see [Before and after](#before-and-after) below for the two side by
+side.
 
 ## Signature
 
@@ -28,7 +32,7 @@ It returns the tracked row.
 
 ## The unique index is what makes race recovery work
 
-`UpsertAsync` reads with `set.AsTracking().SingleOrDefaultAsync(naturalKey, ...)`.
+`UpsertAsync` reads with `set.IgnoreQueryFilters().AsTracking().SingleOrDefaultAsync(naturalKey, ...)`.
 When nothing matches, it builds the row, adds it, and saves inside a `try`. If
 two callers race — both read "no row", both build one — exactly one insert can
 win *if a unique index backs the natural key*: the loser's `SaveChangesAsync`
@@ -73,16 +77,16 @@ filtered or not — the same reasoning
 [`PurgeGuildAsync`](guild-lifecycle.md) already applies when it deletes a
 guild that global filtering would otherwise hide.
 
-This means `UpsertAsync` can revive a soft-deleted or soft-marked row instead
-of throwing. That is exactly what the guild re-invite recipe in
-[Guild Lifecycle](guild-lifecycle.md) wants: a guild marked `LeftAt` and
-hidden by `ApplyGuildRoot(filterLeftGuilds: true)` is still the row a fresh
-`JoinedGuild` upsert must find and update, not a phantom unique constraint
-collision. Without `IgnoreQueryFilters()`, the filtered-out row is invisible
-to the read, the upsert takes the create branch, the insert fails against the
-still-present unique index, and the lost-race recovery re-read is filtered
-too — so the original `DbUpdateException` surfaces instead of being recovered
-from, and the row is left exactly as it was.
+> [!IMPORTANT]
+> `UpsertAsync` can revive a soft-deleted or soft-marked row instead of throwing. That is exactly
+> what the guild re-invite recipe in [Guild Lifecycle](guild-lifecycle.md) wants: a guild marked
+> `LeftAt` and hidden by `ApplyGuildRoot(filterLeftGuilds: true)` is still the row a fresh
+> `JoinedGuild` upsert must find and update, not a phantom unique constraint collision.
+
+Without `IgnoreQueryFilters()`, the filtered-out row is invisible to the read, the upsert takes
+the create branch, the insert fails against the still-present unique index, and the lost-race
+recovery re-read is filtered too — so the original `DbUpdateException` surfaces instead of being
+recovered from, and the row is left exactly as it was.
 
 ## `UpsertIfChangedAsync` and the dirty-check short-circuit
 
@@ -141,16 +145,18 @@ if (!changed)
 The natural-key read calls `.AsTracking()` explicitly, so the row `UpsertAsync`
 hands back is tracked even in a context configured with
 `UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)`. This is
-deliberate: the dirty check reads `context.Entry(row).State`, and a detached
-entry always reports `Detached`, never `Modified` — under a context-wide
+deliberate: the dirty check is `context.ChangeTracker.HasChanges()`, and a mutation
+applied to an untracked row never reaches the change tracker — under a context-wide
 `NoTracking` default, an untracked read would make every mutation look like a
 no-op and silently drop it instead of saving it.
 `tests/Persistord.Core.Tests/UpsertTests.cs`'s
 `UpsertIfChanged_persists_the_change_under_context_wide_NoTracking` pins this
-behaviour. The side effect worth knowing about: an entity returned from
-`UpsertAsync`/`UpsertIfChangedAsync` stays in the change tracker afterwards,
-even under a `NoTracking` context and even if nothing else in that unit of work
-is tracked.
+behaviour.
+
+> [!NOTE]
+> An entity returned from `UpsertAsync`/`UpsertIfChangedAsync` stays in the change tracker
+> afterwards, even under a `NoTracking` context and even if nothing else in that unit of work is
+> tracked.
 
 ## `SaveChangesAsync` flushes the whole context
 

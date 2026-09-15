@@ -1,10 +1,55 @@
+---
+description: Register PostgreSQL, SQL Server or SQLite, and the SQLite and PostgreSQL behaviour a Persistord bot needs to know before shipping.
+---
+
 # Providers
 
-Persistord's model is provider-agnostic — see
-[Swap the database provider](recipes.md#swap-the-database-provider) — but SQLite
-and PostgreSQL each have real behaviour a consumer needs to know before shipping
-on them. This article collects the ones that actually bite; it is not a general
-provider tutorial.
+Persistord's model runs on any EF Core 10 relational provider, but SQLite and PostgreSQL each have behaviour a bot needs to know before shipping on them.
+
+This article collects the ones that actually bite; it is not a general provider tutorial.
+
+## Register a provider
+
+The model is the same on every provider — see
+[Swap the database provider](recipes.md#swap-the-database-provider). Install the provider package
+and pass it to the context factory:
+
+# [PostgreSQL](#tab/postgresql)
+
+```bash
+dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
+```
+
+```csharp
+services.AddDbContextFactory<MyBotContext>(options => options.UseNpgsql(connectionString));
+```
+
+# [SQL Server](#tab/sqlserver)
+
+```bash
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+```
+
+```csharp
+services.AddDbContextFactory<MyBotContext>(options => options.UseSqlServer(connectionString));
+```
+
+# [SQLite](#tab/sqlite)
+
+```bash
+dotnet add package Microsoft.EntityFrameworkCore.Sqlite
+```
+
+```csharp
+var connectionString = "Data Source=bot.db;Default Timeout=5"; // busy_timeout, in seconds
+
+services.AddDbContextFactory<MyBotContext>(options => options.UseSqlite(connectionString));
+```
+
+See [`journal_mode=WAL` and `busy_timeout`](#journal_modewal-and-busy_timeout) for why the timeout
+is there.
+
+---
 
 ## SQLite
 
@@ -63,9 +108,11 @@ var connectionString = "Data Source=bot.db;Default Timeout=5"; // busy_timeout, 
 services.AddDbContextFactory<MyBotContext>(options => options.UseSqlite(connectionString));
 ```
 
-`journal_mode=WAL` is not a connection-string keyword — it is a property of the
-database file itself, set once with a `PRAGMA` and then persistent across every
-future connection to that file:
+> [!NOTE]
+> `journal_mode=WAL` is not a connection-string keyword — it is a property of the database file
+> itself, set once with a `PRAGMA` and then persistent across every future connection to that file.
+
+Set it once:
 
 ```csharp
 await using var db = await factory.CreateDbContextAsync();

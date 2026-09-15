@@ -19,6 +19,11 @@ const ENRICHED = [
   'history',
   'soft-delete-and-query-filters',
   'dbcontext-lifetime',
+  'migrations',
+  'providers',
+  'upsert',
+  'guild-lifecycle',
+  'recipes',
 ]
 
 /* Tab ids per page, one array per group, in page order (spec 4.2). */
