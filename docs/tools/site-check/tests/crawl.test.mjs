@@ -26,13 +26,24 @@ async function exists(path) {
 
 const SKIP = /^(?:#|mailto:|javascript:|data:|tel:)/i
 const ABSOLUTE = /^(?:[a-z][a-z0-9+.-]*:)?\/\//i
+/* The published site; an absolute link to it (READMEs use them, so they work
+   on GitHub too) is still an internal link and must resolve in _site. */
+const PAGES_ORIGIN = 'https://handys11.github.io'
 
 test('every internal link and asset in _site resolves', async () => {
   const broken = []
   for await (const file of htmlFiles(SITE_ROOT)) {
     const html = await readFile(file, 'utf8')
-    for (const [, url] of html.matchAll(/\s(?:href|src)="([^"]*)"/g)) {
-      if (!url || SKIP.test(url) || ABSOLUTE.test(url)) {
+    for (const [, raw] of html.matchAll(/\s(?:href|src)="([^"]*)"/g)) {
+      let url = raw
+      if (ABSOLUTE.test(url)) {
+        const absolute = new URL(url, PAGES_ORIGIN)
+        if (absolute.origin !== PAGES_ORIGIN || !absolute.pathname.startsWith(BASE)) {
+          continue
+        }
+        url = absolute.pathname
+      }
+      if (!url || SKIP.test(url)) {
         continue
       }
       const path = decodeURI(url.split(/[?#]/)[0])
@@ -43,7 +54,7 @@ test('every internal link and asset in _site resolves', async () => {
         ? join(SITE_ROOT, path.slice(BASE.length))
         : resolve(dirname(file), path)
       if (!(await exists(target))) {
-        broken.push(`${relative(SITE_ROOT, file)} -> ${url}`)
+        broken.push(`${relative(SITE_ROOT, file)} -> ${raw}`)
       }
     }
   }
