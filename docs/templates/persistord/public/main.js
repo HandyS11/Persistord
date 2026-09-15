@@ -259,7 +259,7 @@ function rememberTabChoices() {
     for (const group of groups) {
       const first = group.querySelector(TAB_LINKS)
       const ids = first ? groupTabIds(first) : []
-      const id = ids.find(tab => explicit.includes(tab)) ?? choices.findLast(tab => ids.includes(tab))
+      const id = ids.find(tab => explicit.includes(tab)) ?? [...choices].reverse().find(tab => ids.includes(tab))
       const link = id && group.querySelector(`:scope > ul > li > a[data-tab="${CSS.escape(id)}"]`)
       if (link && link.getAttribute('aria-selected') !== 'true') {
         link.dispatchEvent(new CustomEvent('click', { bubbles: true }))
