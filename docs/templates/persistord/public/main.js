@@ -127,6 +127,84 @@ function labelCodeBlocks() {
   }
 }
 
+/**
+ * Upgrades each `[data-pd-tabs]` container of stacked panels into a tabs
+ * widget, following the WAI-ARIA Authoring Practices pattern with automatic
+ * activation: one tab stop (roving tabindex), Left/Right arrows that wrap, and
+ * Home/End. Panels are authored stacked, each under its own h4, so the page
+ * still reads correctly when this never runs; the h4 becomes the tab's label
+ * and landing.css hides it once the tablist exists.
+ */
+function wireTabs() {
+  for (const container of document.querySelectorAll('[data-pd-tabs]')) {
+    const panels = [...container.querySelectorAll(':scope > [data-pd-tab]')]
+    if (panels.length < 2) {
+      continue
+    }
+
+    const tablist = document.createElement('div')
+    tablist.className = 'pd-tablist'
+    tablist.setAttribute('role', 'tablist')
+    tablist.setAttribute('aria-label', container.dataset.pdTabs)
+
+    const tabs = panels.map(panel => {
+      const tab = document.createElement('button')
+      tab.type = 'button'
+      tab.className = 'pd-tab'
+      tab.id = `${panel.id}-tab`
+      tab.textContent = panel.querySelector(':scope > h4')?.textContent.trim() ?? panel.id
+      tab.setAttribute('role', 'tab')
+      tab.setAttribute('aria-controls', panel.id)
+      panel.setAttribute('role', 'tabpanel')
+      panel.setAttribute('aria-labelledby', tab.id)
+      tablist.append(tab)
+      return tab
+    })
+
+    const select = (index, focus) => {
+      tabs.forEach((tab, i) => {
+        const selected = i === index
+        tab.setAttribute('aria-selected', String(selected))
+        tab.tabIndex = selected ? 0 : -1
+        panels[i].hidden = !selected
+      })
+      if (focus) {
+        tabs[index].focus()
+      }
+    }
+
+    tablist.addEventListener('click', event => {
+      const index = tabs.indexOf(event.target.closest('[role="tab"]'))
+      if (index >= 0) {
+        select(index, false)
+      }
+    })
+
+    tablist.addEventListener('keydown', event => {
+      const current = tabs.indexOf(document.activeElement)
+      if (current < 0) {
+        return
+      }
+      const last = tabs.length - 1
+      const next = {
+        ArrowRight: current === last ? 0 : current + 1,
+        ArrowLeft: current === 0 ? last : current - 1,
+        Home: 0,
+        End: last,
+      }[event.key]
+      if (next === undefined) {
+        return
+      }
+      event.preventDefault()
+      select(next, true)
+    })
+
+    container.prepend(tablist)
+    container.classList.add('pd-tabs-ready')
+    select(0, false)
+  }
+}
+
 /** Runs a callback once the document has parsed. */
 function onReady(callback) {
   if (document.readyState === 'loading') {
@@ -255,6 +333,7 @@ export default {
   start: () => {
     onReady(() => {
       wireCopyButtons()
+      wireTabs()
       labelCodeBlocks()
       wireSearchShortcut()
       trackAffix()

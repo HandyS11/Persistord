@@ -255,8 +255,8 @@ centred 1120 px container:
    - Headline kept: *"Every Discord bot rewrites the same tables. Persistord ships them."*
    - Lede, two lines at desktop width: an EF Core 10 model for guilds, channels, users, members,
      roles and messages that never picks your database provider or your Discord library.
-   - Actions: **Get started** (primary, gradient), **Browse packages** (outline), "GitHub →"
-     (text link).
+   - Actions: **Get started** (primary, gradient), **Browse packages** (outline), "GitHub"
+     (text link; its arrow is DocFX's external-link icon).
    - Install strip `dotnet add package Persistord` with the existing copy button behaviour.
    - One muted meta line replacing the facts row:
      `EF Core 10 · PostgreSQL · SQL Server · SQLite · Discord.Net · DSharpPlus · NetCord`.
@@ -268,17 +268,20 @@ centred 1120 px container:
 3. **The model you'd have written.** A hand-authored inline SVG, coloured from the tokens so it
    follows the theme, with `role="img"`, a `<title>`, and a `<desc>` summarising the graph. Nodes are
    grouped and labelled by package: the `Persistord.Core` skeleton (`GuildEntity`, `ChannelEntity`,
-   `RoleEntity`, `MemberEntity`, `UserEntity`), `Persistord.Messages` (`MessageEntity` with owned
-   `Embed`s, `AttachmentEntity`, `ReactionEntity`), and `Persistord.History`
-   (`MessageHistoryEntity`). **Every node and every edge is verified against the entity classes and
-   their `IEntityTypeConfiguration`s** before merge; the diagram draws only relationships the model
-   configures.
+   `RoleEntity`, `MemberEntity`, `UserEntity`), `Persistord.Messages` (`MessageEntity`, `Embed` —
+   a keyed entity that owns `EmbedFooter` and `EmbedAuthor` — `EmbedField`, `AttachmentEntity`,
+   `ReactionEntity`), and `Persistord.History` (`MessageHistoryEntity`). **Every node and every edge
+   is verified against the entity classes and their `IEntityTypeConfiguration`s** before merge, by
+   `docs/tools/site-check/tests/model.test.mjs`. Two edge styles: a solid edge is a foreign key the
+   model configures; a dashed edge is a snowflake id column that refers to another entity with no
+   foreign key (the Core skeleton's only foreign key is `ChannelEntity.ParentId`). Arrows point at
+   the referenced entity; nothing else is drawn.
 4. **Build your stack.** Three steps replacing the ten package cards:
    ① `dotnet add package Persistord`;
    ② pick one adapter — an accessible tablist (Discord.Net / DSharpPlus / NetCord), each panel
    showing its install command and a ≤3-line mapper snippet checked against that adapter's source
    (DSharpPlus's `guildId` parameter on member and role mappers included);
-   ③ optional add-ons as one compact row: Managed · Protection · Testing, one line each.
+   ③ optional add-ons — Managed · Protection · Testing — each a linked package name and one sentence.
    A "Compare all ten packages →" link goes to `articles/packages.md`.
    The tablist follows the ARIA Authoring Practices tabs pattern (roving `tabindex`, arrow keys,
    Home/End), wired in `start()`. Without JavaScript the three panels render stacked.
@@ -286,16 +289,17 @@ centred 1120 px container:
    left rule, title, one sentence, the whole item linking to its guide. No card chrome.
 6. **Start here.** Three cards: Getting Started, Guides, API Reference.
 
-**Mobile.** All sections stack; the SVG scales through its `viewBox`; the proof panes stack
-vertically with connectors rotated to point down.
+**Mobile.** All sections stack; the SVG scales through its `viewBox` down to an 880 px minimum and
+scrolls inside its figure below that, as the Mermaid diagrams do, so its labels stay legible; the
+proof panes stack vertically with connectors rotated to point down.
 
 ### 3.3 Acceptance
 
 - The landing page has at most three card-chromed elements (the "Start here" cards); the proof
   panes and the adapter tab panels are figures and panels, not cards.
 - Every link resolves; every package named links to its NuGet page or its README page.
-- The model SVG has been checked edge-by-edge against source, and the review comment on the PR
-  lists the configuration each edge came from.
+- The model SVG has been checked edge-by-edge against source (`tests/model.test.mjs` re-checks it on
+  every run), and the PR description lists the configuration or column each edge came from.
 - The adapter tablist is fully operable by keyboard and renders stacked with JavaScript disabled.
 - Correctly stacked and legible at 375 px; no animation under `prefers-reduced-motion: reduce`.
 
@@ -389,9 +393,9 @@ global `_description` would give every described article two tags. Therefore the
 
 - `docs/index.md` and every article carry page-level `description:` front matter (the articles in
   PR 3; the landing page in PR 2).
-- `fileMetadata._description` covers the pages that have no front matter of their own: `api/**.yml`
-  (a generic API-reference description), `src/*/README.md`, and `samples/README.md`. These globs do
-  not overlap the described pages.
+- `fileMetadata.description` covers the pages that have no front matter of their own: `api/**.yml`
+  (a generic API-reference description), `src/*/README.md`, `samples/README.md`, and `license.md`.
+  These globs do not overlap the described pages.
 
 `docs/404.html` is a **self-contained static page**, copied verbatim as a resource rather than built
 as content. It links `/Persistord/public/docfx.min.css` and `/Persistord/public/main.css` by absolute
@@ -424,8 +428,9 @@ Each PR runs the checks covering its scope:
    warning-clean on `develop` today, so the gate is meaningful from the first PR.
 2. **Screenshot matrix.** The built site served locally and driven with Playwright at 1440 px and
    375 px, in light and dark, across: landing; `core-graph` (Mermaid); `getting-started` (tabs);
-   `protection` (callouts); one package README; one API namespace page; one API class page; the 404
-   at a deep missing path. Pass means nothing unstyled, unreadable, clipped, or overflowing.
+   `protection` (callouts); one package README; one API namespace page; one API class page; the
+   search results view; the 404 at a deep missing path. Pass means nothing unstyled, unreadable,
+   clipped, or overflowing.
 3. **Contrast.** A script computes WCAG contrast for: text, muted, and accent on page, surface, and
    raised; each status colour's label on its tinted callout surface; code tokens on the code surface.
    Both themes. Pass is AA (4.5:1 body text, 3:1 large text and UI boundaries).

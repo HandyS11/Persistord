@@ -1,8 +1,10 @@
 /*
- * Landing page (docs/index.md, `layout: landing`) and the button and copy
- * strip it uses. Ported onto the design tokens in PR 1 of the revamp; PR 2
- * rewrites the page. The .pd-snowflake / .pd-row-id marks are the only place
- * the old gateway-vs-column colour rule survives.
+ * Landing page (docs/index.md, `layout: landing`): hero, proof panes, model
+ * diagram, adapter picker, capability list, and start-here cards. The
+ * .pd-snowflake / .pd-row-id marks are the only place the gateway-vs-column
+ * colour rule survives, and only inside the proof panes. Every class here is
+ * used by docs/index.md, docs/404.html (the hero lede/actions/button classes)
+ * or main.js (tests/landing.test.mjs).
  */
 
 /* ------------------------------------------------------------- container -- */
@@ -19,7 +21,35 @@ body[data-layout='landing'] > main > .content > article {
 /* ------------------------------------------------------------------ hero -- */
 
 .pd-hero {
-  padding: 2.8rem 0 2.6rem;
+  padding: 3.5rem 0 3.25rem;
+}
+
+.pd-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1.25rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+/* The icon is a mark, not a figure: components.css frames lone images. */
+.pd-eyebrow > img {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--pd-radius-sm);
+}
+
+/* One of the gradient's sanctioned uses (main.css header). Every
+   --pd-gradient-ink stop holds 4.5:1 on its theme's page. */
+.pd-wordmark {
+  background-image: var(--pd-gradient-ink);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .pd-hero h1 {
@@ -30,18 +60,42 @@ body[data-layout='landing'] > main > .content > article {
 }
 
 .pd-hero-lede {
-  margin: 1.15rem 0 0;
-  max-width: 64ch;
+  margin: 1.25rem 0 0;
+  max-width: 66ch;
   color: var(--pd-muted);
-  font-size: 1.1rem;
-  line-height: 1.62;
+  font-size: 1.15rem;
+  line-height: 1.6;
 }
 
 .pd-hero-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.7rem;
   margin-top: 1.9rem;
+}
+
+.pd-text-link {
+  padding: 0.6rem 0.35rem;
+  color: var(--pd-accent);
+  font-size: 0.96rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pd-text-link:hover {
+  color: var(--pd-accent-hover);
+  text-decoration: underline;
+}
+
+.pd-hero .pd-install {
+  margin-top: 1.75rem;
+}
+
+.pd-hero-meta {
+  margin: 1rem 0 0;
+  color: var(--pd-muted);
+  font-size: 0.875rem;
 }
 
 /* --------------------------------------------------------------- buttons -- */
@@ -87,13 +141,29 @@ body[data-layout='landing'] > main > .content > article {
 
 .pd-panes {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.6rem;
 }
 
-@media (max-width: 900px) {
+/* Decorative: the pane order already reads as a sequence. */
+.pd-connector {
+  align-self: center;
+  color: var(--pd-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  text-align: center;
+}
+
+/* Each pane's content needs ~300px unwrapped; the 3-column layout only has
+   room for that above ~1140px, so the breakpoint sits there instead of at
+   the page's usual 900px tablet break. */
+@media (max-width: 1140px) {
   .pd-panes {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pd-connector {
+    transform: rotate(90deg);
   }
 }
 
@@ -122,13 +192,13 @@ body[data-layout='landing'] > main > .content > article {
 
 .pd-pane pre {
   margin: 0;
-  padding: 0.85rem 0.9rem;
+  padding: 0.85rem 0.75rem;
   overflow-x: auto;
   border: 0;
   border-radius: 0;
   background-color: transparent;
   color: var(--pd-muted);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   line-height: 1.6;
 }
 
@@ -164,6 +234,24 @@ body[data-layout='landing'] > main > .content > article {
   }
 }
 
+.pd-section > .pd-caption {
+  margin: 1rem 0 0;
+  max-width: none;
+  color: var(--pd-muted);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.pd-caption a {
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.pd-caption a:hover {
+  text-decoration: underline;
+}
+
 /* --------------------------------------------------------------- install -- */
 
 .pd-install {
@@ -172,7 +260,7 @@ body[data-layout='landing'] > main > .content > article {
   align-items: center;
   gap: 0.6rem;
   max-width: 34rem;
-  margin: 0 0 2.6rem;
+  margin: 0;
   padding: 0.5rem 0.6rem 0.5rem 1rem;
   border: 1px solid var(--pd-hairline);
   border-radius: var(--pd-radius);
@@ -194,6 +282,19 @@ body[data-layout='landing'] > main > .content > article {
   color: var(--pd-text);
   font-size: 0.94rem;
   white-space: nowrap;
+}
+
+/* Below 600px the strip already wraps to its own $ / command / Copy rows
+   (.pd-install is flex-wrap); let the command itself wrap onto that row
+   instead of scrolling past it, still copying the exact command
+   (main.js reads code.textContent). */
+@media (max-width: 600px) {
+  .pd-install > code {
+    flex-basis: 100%;
+    overflow-x: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }
 
 .pd-copy {
@@ -220,43 +321,101 @@ body[data-layout='landing'] > main > .content > article {
   color: var(--pd-accent);
 }
 
-/* ----------------------------------------------------------------- stats -- */
+/* ----------------------------------------------------------------- model -- */
 
-.pd-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-  gap: 1px;
-  margin: 0 0 3rem;
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--pd-hairline);
+/* Below 880px the diagram scrolls inside its figure instead of shrinking its
+   labels past legibility - the trade PR 1 made for Mermaid diagrams. */
+.pd-model-figure {
+  margin: 0;
+}
+
+.pd-model-scroll {
+  overflow-x: auto;
   border-radius: var(--pd-radius);
-  background-color: var(--pd-hairline);
 }
 
-.pd-stat {
-  padding: 1.05rem 1.2rem;
-  background-color: var(--pd-surface);
+.pd-model-svg {
+  display: block;
+  width: 100%;
+  min-width: 880px;
+  height: auto;
+  font-family: var(--pd-sans);
 }
 
-.pd-stat dt {
-  color: var(--pd-text);
+.pd-model-frame {
+  fill: var(--pd-surface);
+  stroke: var(--pd-hairline);
+  stroke-width: 1;
+}
+
+.pd-model-package {
+  fill: var(--pd-accent);
   font-family: var(--pd-mono);
-  font-size: 1.85rem;
-  font-weight: 700;
-  line-height: 1;
+  font-size: 13px;
 }
 
-.pd-stat dd {
-  margin: 0.4rem 0 0;
+/* A node's edge is a meaningful boundary, so it takes the 3:1 control border
+   rather than the decorative hairline. */
+.pd-model-node > rect {
+  fill: var(--pd-raised);
+  stroke: var(--pd-control-border);
+  stroke-width: 1;
+}
+
+.pd-model-name,
+.pd-model-cols {
+  text-anchor: middle;
+}
+
+.pd-model-name {
+  fill: var(--pd-text);
+  font-family: var(--pd-mono);
+  font-size: 15px;
+}
+
+.pd-model-cols {
+  fill: var(--pd-muted);
+  font-size: 12.5px;
+}
+
+.pd-model-edge {
+  fill: none;
+  stroke: var(--pd-muted);
+  stroke-width: 1.5;
+}
+
+.pd-model-edge[data-kind='id'] {
+  stroke-dasharray: 6 5;
+}
+
+.pd-model-head {
+  fill: var(--pd-muted);
+}
+
+.pd-model-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin-top: 0.85rem;
   color: var(--pd-muted);
-  font-size: 0.86rem;
+  font-size: 0.875rem;
+}
+
+.pd-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pd-legend-swatch {
+  width: 36px;
+  height: 10px;
 }
 
 /* -------------------------------------------------------------- sections -- */
 
 .pd-section {
-  margin: 0 0 3.2rem;
+  margin: 0 0 4rem;
 }
 
 .pd-section > h2 {
@@ -270,49 +429,284 @@ body[data-layout='landing'] > main > .content > article {
   color: var(--pd-muted);
 }
 
-.pd-section > .pd-note {
-  margin: 1.15rem 0 0;
-  max-width: 78ch;
-  color: var(--pd-muted);
-  font-size: 0.92rem;
-  line-height: 1.65;
+/* Package and API names in landing copy read as texture, so the inline-code
+   tint is dropped. */
+.pd-section > p code,
+.pd-step > p code,
+.pd-adapter-links code,
+.pd-addons code,
+.pd-feature code,
+.pd-card code {
+  padding: 0;
+  background-color: transparent;
+  color: inherit;
+  font-size: 0.94em;
 }
 
-.pd-section > .pd-note strong {
-  color: var(--pd-text);
+.pd-section > .pd-more {
+  margin: 1.75rem 0 0;
 }
 
-/* ------------------------------------------------------ packages, cards -- */
+.pd-more a {
+  font-weight: 600;
+  text-decoration: none;
+}
 
-.pd-packages {
+.pd-more a:hover {
+  text-decoration: underline;
+}
+
+/* ----------------------------------------------------------------- stack -- */
+
+.pd-steps {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 2.25rem;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: pd-step;
+}
+
+.pd-step {
+  position: relative;
+  min-width: 0;
+  padding-left: 3rem;
+  counter-increment: pd-step;
+}
+
+/* The step number is a boundary-drawn badge, so its ring takes the 3:1
+   control border. */
+.pd-step::before {
+  content: counter(pd-step);
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--pd-control-border);
+  border-radius: 50%;
+  color: var(--pd-heading);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.pd-step > h3 {
+  margin: 0.2rem 0 0.4rem;
+  font-size: 1.1rem;
+}
+
+.pd-step > p {
+  margin: 0 0 0.9rem;
+  max-width: 72ch;
+  color: var(--pd-muted);
+}
+
+.pd-step .pd-install {
+  max-width: 40rem;
+}
+
+/* Stacked until main.js builds the tablist; stays stacked without JS.
+   grid-template-columns is explicit (rather than the implicit single 'auto'
+   column) because an auto column's max function still grows to a child's
+   max-content width - here the install strip's command line - even past a
+   definite container width; only an explicit 1fr track is clamped to it. */
+.pd-adapters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
 }
 
-.pd-package-group > h3 {
-  margin: 0 0 0.65rem;
-  color: var(--pd-muted);
-  font-size: 0.76rem;
-  font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+.pd-tabs-ready {
+  gap: 0;
 }
 
-.pd-package-group > ul {
+.pd-adapter {
   display: grid;
-  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.pd-adapter[hidden] {
+  display: none;
+}
+
+.pd-adapter > h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.pd-tabs-ready > .pd-adapter > h4 {
+  display: none;
+}
+
+.pd-adapter pre {
+  margin: 0;
+}
+
+.pd-adapter-links {
+  margin: 0;
+  color: var(--pd-muted);
+  font-size: 0.9rem;
+}
+
+.pd-tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0 0 1rem;
+  border-bottom: 1px solid var(--pd-hairline);
+}
+
+.pd-tab {
+  margin-bottom: -1px;
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--pd-muted);
+  font-family: var(--pd-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--pd-ease), border-color var(--pd-ease);
+}
+
+.pd-tab:hover {
+  color: var(--pd-text);
+}
+
+.pd-tab[aria-selected='true'] {
+  border-bottom-color: var(--pd-accent);
+  color: var(--pd-accent);
+}
+
+/* At narrow widths the three tabs no longer fit their wrapped padding on one
+   row, which strands the active underline above the hairline instead of on
+   it. Keep them on one row: tighten the padding first, then let the tablist
+   itself scroll if a longer label ever still overflows. */
+@media (max-width: 600px) {
+  .pd-tablist {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .pd-tab {
+    padding-inline: 0.4rem;
+  }
+}
+
+.pd-addons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem 1.5rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.pd-package,
+@media (max-width: 900px) {
+  .pd-addons {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pd-addons > li > a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pd-addons > li > a:hover {
+  text-decoration: underline;
+}
+
+.pd-addons > li > span {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--pd-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+/* ------------------------------------------------------------------- box -- */
+
+.pd-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.75rem 2rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 900px) {
+  .pd-features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .pd-features {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A left rule and no card chrome. The rule is decorative - the title and
+   sentence carry the item - so it rests as a hairline and takes the accent on
+   hover and focus. */
+.pd-feature {
+  display: block;
+  height: 100%;
+  padding: 0.1rem 0 0.1rem 1rem;
+  border-left: 2px solid var(--pd-hairline);
+  color: var(--pd-text);
+  text-decoration: none;
+  transition: border-color var(--pd-ease);
+}
+
+.pd-feature:hover,
+.pd-feature:focus-visible {
+  border-left-color: var(--pd-accent);
+  color: var(--pd-text);
+  text-decoration: none;
+}
+
+.pd-feature > strong {
+  display: block;
+  color: var(--pd-heading);
+  font-weight: 600;
+}
+
+.pd-feature > span {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--pd-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+/* ----------------------------------------------------------------- start -- */
+
+.pd-start-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .pd-start-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The page's only card chrome (spec 3.3). */
 .pd-card {
   display: block;
-  position: relative;
   height: 100%;
-  padding: 0.75rem 0.95rem;
+  padding: 1.1rem 1.25rem;
   border: 1px solid var(--pd-hairline);
   border-radius: var(--pd-radius);
   background-color: var(--pd-surface);
@@ -321,8 +715,6 @@ body[data-layout='landing'] > main > .content > article {
   transition: background-color var(--pd-ease), border-color var(--pd-ease);
 }
 
-.pd-package:hover,
-.pd-package:focus-visible,
 .pd-card:hover,
 .pd-card:focus-visible {
   border-color: var(--pd-muted);
@@ -331,50 +723,17 @@ body[data-layout='landing'] > main > .content > article {
   text-decoration: none;
 }
 
-.pd-package > code,
 .pd-card > strong {
   display: block;
-  font-size: 0.95rem;
+  color: var(--pd-heading);
+  font-size: 1.05rem;
   font-weight: 600;
-  overflow-wrap: anywhere;
 }
 
-.pd-package.external > code {
-  padding-right: 1.3rem;
-}
-
-/* Package names and API names in running landing copy read as texture here,
-   so the inline-code tint is dropped. */
-.pd-hero-lede code,
-.pd-note code,
-.pd-package code,
-.pd-card code {
-  padding: 0;
-  background-color: transparent;
-  color: inherit;
-  font-size: 0.94em;
-}
-
-.pd-package.external::after {
-  position: absolute;
-  top: 0.8rem;
-  right: 0.85rem;
-  margin: 0;
-  color: var(--pd-muted);
-}
-
-.pd-package > span,
 .pd-card > span {
   display: block;
-  margin-top: 0.25rem;
+  margin-top: 0.35rem;
   color: var(--pd-muted);
-  font-size: 0.85rem;
-  line-height: 1.5;
-}
-
-.pd-cards,
-.pd-next {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
-  gap: 0.8rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
 }

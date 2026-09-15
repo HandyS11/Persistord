@@ -43,6 +43,7 @@ const GRADIENT_USES = new Set([
   '#navbar .navbar-nav .nav-link.active::after',
   '.toc li.active:not(:has(li.active)) > a::before',
   '.pd-btn-primary',
+  '.pd-wordmark',
 ])
 
 let site

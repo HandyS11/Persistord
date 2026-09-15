@@ -21,6 +21,8 @@ export async function launchSite() {
       reducedMotion = 'no-preference',
       /* A touch-only device: matches `(hover: none)` and `(pointer: coarse)`. */
       hasTouch = false,
+      /* false renders the page as a reader without JavaScript sees it. */
+      javaScriptEnabled = true,
     } = options
 
     const context = await browser.newContext({
@@ -28,6 +30,7 @@ export async function launchSite() {
       colorScheme,
       reducedMotion,
       hasTouch,
+      javaScriptEnabled,
     })
 
     /* docfx reads localStorage.theme before first paint; `theme: null` leaves it

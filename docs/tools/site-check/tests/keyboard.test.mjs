@@ -3,11 +3,17 @@ import { after, before, test } from 'node:test'
 import { contrast, parseColor } from '../lib/color.mjs'
 import { THEMES, computed, launchSite, tokens } from '../lib/site.mjs'
 
-/* An article with the in-page rail and prev/next, and the component page,
-   which adds copy buttons and a tab group. */
-const PAGES = ['articles/upsert.html', 'development/components.html']
+/* An article with the in-page rail and prev/next; the component page, which
+   adds copy buttons and a tab group; and the landing page, which has no
+   sidebar but adds buttons, copy strips, the diagram region and the adapter
+   tabs. `ready` lists what must render before the walk starts. */
+const PAGES = [
+  { path: 'articles/upsert.html', ready: ['#toc li a', '.next-article a', 'footer a'] },
+  { path: 'development/components.html', ready: ['#toc li a', '.next-article a', 'footer a'] },
+  { path: 'index.html', ready: ['[data-pd-tabs] [role="tab"]', 'footer a'] },
+]
 
-/* Far more stops than either page has; the walk ends at the footer. */
+/* Far more stops than any of these pages has; the walk ends at the footer. */
 const MAX_TABS = 400
 
 /* Groups the walk must reach, so a walk that stalls in the navigation cannot
@@ -18,6 +24,12 @@ const MUST_REACH = {
   'a tab': '.content article .tabGroup [role="tab"]',
   'a previous/next link': '.next-article a',
   'a footer link': 'footer a',
+  'a landing button': '.pd-btn',
+  'a copy strip': '.pd-copy',
+  'the diagram region': '.pd-model-scroll',
+  'an adapter tab': '.pd-tablist [role="tab"]',
+  'a capability': '.pd-feature',
+  'a start-here card': '.pd-card',
 }
 
 let site
@@ -31,13 +43,13 @@ after(async () => {
 })
 
 for (const theme of THEMES) {
-  for (const path of PAGES) {
+  for (const { path, ready } of PAGES) {
     test(`${theme}: ${path} shows the theme focus indicator on every Tab stop through to the footer`, async () => {
       const { page, close } = await site.open(path, { theme })
       try {
-        await page.waitForSelector('#toc li a')
-        await page.waitForSelector('.next-article a')
-        await page.waitForSelector('footer a')
+        for (const selector of ready) {
+          await page.waitForSelector(selector)
+        }
         if (await page.$('.content article pre > code')) {
           await page.waitForSelector('.code-action', { state: 'attached' })
         }
