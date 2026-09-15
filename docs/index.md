@@ -19,7 +19,6 @@ description: Persistord ships the EF Core 10 model every Discord bot rewrites �
 
 <section class="pd-section pd-transform">
   <h2>A gateway payload, a mapper call, a row</h2>
-  <p>Discord hands you a 64-bit <em>unsigned</em> id. An adapter maps the payload to <code>MessageEntity</code>. EF Core writes it to a signed column — and reads back exactly what went in.</p>
   <div class="pd-panes">
     <figure class="pd-pane">
       <figcaption class="pd-pane-bar">1 · gateway event</figcaption>
@@ -29,6 +28,7 @@ description: Persistord ships the EF Core 10 model every Discord bot rewrites �
   "content": "gg"
 }</pre>
     </figure>
+    <span class="pd-connector" aria-hidden="true">→</span>
     <figure class="pd-pane">
       <figcaption class="pd-pane-bar">2 · .ToMessageEntity()</figcaption>
       <pre>// Persistord.Adapters.DiscordNet
@@ -36,6 +36,7 @@ var row = message.ToMessageEntity();
 db.Messages.Add(row);
 await db.SaveChangesAsync();</pre>
     </figure>
+    <span class="pd-connector" aria-hidden="true">→</span>
     <figure class="pd-pane">
       <figcaption class="pd-pane-bar">3 · messages row</figcaption>
       <pre>column     type     value
@@ -45,7 +46,7 @@ ChannelId  BIGINT   1547300000000000000
 Content    TEXT     'gg'</pre>
     </figure>
   </div>
-  <p class="pd-note"><strong>PostgreSQL and SQL Server have no native unsigned 64-bit type, so Persistord converts every snowflake into a signed <code>BIGINT</code>. The same 64 bits go in and come back out — for every <code>ulong</code>, not just the ones that fit.</strong> Without the conversion the model still builds; the snowflake just lands in a 20-digit fixed-point column — <code>numeric(20,0)</code> on PostgreSQL, <code>decimal(20,0)</code> on SQL Server — instead of a 64-bit integer one. <code>DiscordDbContext</code> registers <code>UlongToLongConverter</code> in <code>ConfigureConventions</code>, so every <code>ulong</code> and <code>ulong?</code> in your model converts globally and you never annotate an id. The cast is <code>unchecked</code>, so it is bit-faithful across all 2<sup>64</sup> values — including the ones past 2<sup>63</sup> that a Discord snowflake will not reach until roughly 2084. <a href="articles/snowflake-conversion.md">How the conversion works</a></p>
+  <p class="pd-caption">Discord ids are unsigned 64-bit integers, and PostgreSQL and SQL Server have no native unsigned 64-bit type. <code>DiscordDbContext</code> converts every <code>ulong</code> to a signed <code>BIGINT</code>: the same 64 bits go in and come back out, and no id is ever annotated. <a href="articles/snowflake-conversion.md">How the conversion works<span aria-hidden="true"> →</span></a></p>
 </section>
 
 <section class="pd-section">

@@ -100,3 +100,73 @@ for (const theme of THEMES) {
     }
   })
 }
+
+test('the proof shows one snowflake, unchanged, from gateway payload to column', async () => {
+  const { page, close } = await site.open(LANDING)
+  try {
+    const proof = await page.$eval('.pd-transform', section => ({
+      panes: section.querySelectorAll('.pd-panes > .pd-pane').length,
+      connectors: section.querySelectorAll('.pd-panes > .pd-connector[aria-hidden="true"]').length,
+      snowflake: section.querySelector('.pd-snowflake')?.textContent.trim(),
+      rowId: section.querySelector('.pd-row-id')?.textContent.trim(),
+      link: section.querySelector('.pd-caption a')?.getAttribute('href'),
+      notes: section.querySelectorAll('.pd-note').length,
+      text: section.textContent.replace(/\s+/g, ' '),
+    }))
+
+    assert.equal(proof.panes, 3)
+    assert.equal(proof.connectors, 2)
+    assert.ok(proof.snowflake, 'the gateway pane marks its snowflake')
+    assert.equal(proof.rowId, proof.snowflake, 'the id must never be shown changing value')
+    assert.equal(proof.link, 'articles/snowflake-conversion.html')
+    assert.equal(proof.notes, 0, 'the long explanation is replaced by the caption')
+
+    /* Claims the spec forbids (spec 3.2, previous spec 3.2): a sign flip, a
+       Steam64 example, an over-broad provider claim, and "won't build". */
+    for (const forbidden of [
+      /-\d{15,}/,
+      /steam/i,
+      /no relational (provider|database)/i,
+      /\b(cannot|can't|won't|will not|does not|doesn't) (map|build|compile)\b/i,
+      /\bat all\b/i,
+    ]) {
+      assert.doesNotMatch(proof.text, forbidden)
+    }
+
+    const lines = await lineCount(page, '.pd-caption')
+    assert.ok(lines <= 2, `the caption wraps to ${lines} lines`)
+  } finally {
+    await close()
+  }
+})
+
+test('the proof panes read left to right on desktop and stack with downward connectors on a phone', async () => {
+  const layout = async width => {
+    const { page, close } = await site.open(LANDING, { width })
+    try {
+      return await page.$eval('.pd-panes', panes => ({
+        tops: [...panes.querySelectorAll('.pd-pane')].map(pane => Math.round(pane.getBoundingClientRect().top)),
+        lefts: [...panes.querySelectorAll('.pd-pane')].map(pane => Math.round(pane.getBoundingClientRect().left)),
+        turns: [...panes.querySelectorAll('.pd-connector')].map(connector => {
+          const match = /matrix\(([^)]+)\)/.exec(getComputedStyle(connector).transform)
+          if (!match) {
+            return 0
+          }
+          const [a, b] = match[1].split(',').map(Number)
+          return Math.round((Math.atan2(b, a) * 180) / Math.PI)
+        }),
+      }))
+    } finally {
+      await close()
+    }
+  }
+
+  const desktop = await layout(1440)
+  assert.equal(new Set(desktop.tops).size, 1, `desktop pane tops: ${desktop.tops}`)
+  assert.deepEqual(desktop.turns, [0, 0])
+
+  const phone = await layout(375)
+  assert.ok(phone.tops[0] < phone.tops[1] && phone.tops[1] < phone.tops[2], `phone pane tops: ${phone.tops}`)
+  assert.equal(new Set(phone.lefts).size, 1, `phone pane lefts: ${phone.lefts}`)
+  assert.deepEqual(phone.turns, [90, 90])
+})
