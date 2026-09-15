@@ -69,11 +69,16 @@ const ER_NODES = {
 /* `Referenced ||--o{ Holder : "Column"`; `--` is a foreign key, `..` a plain id column. */
 const ER_LINE = /^\s*(\w+)\s+[|}o{]{2}(--|\.\.)[|}o{]{2}\s+(\w+)\s*:\s*"(\w+)"\s*$/gm
 
+/* An attribute inside an entity block: `type Name`, optional keys, optional "comment". */
+const ER_ATTRIBUTE = /^\s*\w+\s+\w+(?:\s+(?:PK|FK|UK)(?:\s*,\s*(?:PK|FK|UK))*)?(?:\s+"[^"]*")?\s*$/
+
 const diagramsRendered = page =>
   page.waitForFunction(
     () => {
       const diagrams = document.querySelectorAll('pre.mermaid')
-      return diagrams.length > 0 && [...diagrams].every(pre => pre.querySelector(':scope > svg'))
+      /* Any svg, not just a direct child: Mermaid nests its error graphic in a
+         wrapper, and that must reach the "failed to parse" assertion below. */
+      return diagrams.length > 0 && [...diagrams].every(pre => pre.querySelector('svg'))
     },
     null,
     { timeout: 15000 }
@@ -224,32 +229,90 @@ for (const slug of ENRICHED) {
   })
 }
 
-test('a tab choice carries to the next page the reader opens', async () => {
-  const { page, close } = await site.open('development/components.html')
+/** Clicks a tab as a reader would and waits for docfx to select it. */
+async function chooseTab(page, id) {
+  const tab = `.tabGroup > ul > li > a[data-tab="${id}"]`
+  await page.waitForFunction(() => [...document.querySelectorAll('.tabGroup')].every(group => group.tabGroup))
+  await page.click(tab)
+  await page.waitForSelector(`${tab}[aria-selected="true"]`)
+}
+
+/** Follows the sidebar link to an article and waits for the page to load. */
+async function openFromSidebar(page, slug) {
+  const link = `#toc a[href$="articles/${slug}.html"]`
+  await page.waitForSelector(link)
+  await Promise.all([page.waitForURL(new RegExp(`articles/${slug}\\.html`)), page.click(link)])
+  await page.waitForFunction(() => window.docfx?.ready)
+}
+
+/** Asserts the tab ids selected on the page, one per group in page order, once they settle. */
+async function assertSelected(page, expected) {
+  const deadline = Date.now() + 5000
+  let actual
+  do {
+    actual = await page.$$eval('.tabGroup > ul a[aria-selected="true"]', links => links.map(link => link.dataset.tab))
+    if (JSON.stringify(actual) === JSON.stringify(expected)) {
+      break
+    }
+    await page.waitForTimeout(100)
+  } while (Date.now() < deadline)
+  assert.deepEqual(actual, expected)
+}
+
+test('a provider choice on getting-started selects the same provider on providers', async () => {
+  const { page, close } = await site.open('articles/getting-started.html')
   try {
-    await page.waitForSelector('.tabGroup a[data-tab="sqlite"]')
-    await page.click('.tabGroup a[data-tab="sqlite"]')
-    await page.waitForURL(/[?&]tabs=sqlite/)
-    await page.waitForSelector('#toc a[href$="articles/getting-started.html"]')
-    await page.click('#toc a[href$="articles/getting-started.html"]')
-    await page.waitForURL(/articles\/getting-started\.html\?tabs=sqlite$/)
+    await chooseTab(page, 'sqlite')
+    await openFromSidebar(page, 'providers')
+    await assertSelected(page, ['sqlite'])
   } finally {
     await close()
   }
 })
 
-test('links leave the tabs parameter alone when the reader chose no tab', async () => {
-  /* development/components.html would not do: docfx's own tab-sync script
-     writes a default `tabs=` query parameter into the URL for any page that
-     has a `.tabGroup`, before the reader ever clicks anything (verified by
-     inspecting docfx.min.js — `i(document.body)` calls `s(G)` unconditionally
-     once `G.groups.length` is nonzero). introduction.html has no tab group,
-     so its URL genuinely stays bare — the real "reader chose no tab" case. */
-  const { page, close } = await site.open('articles/introduction.html')
+test('an adapter choice on getting-started selects the same adapter on recipes', async () => {
+  const { page, close } = await site.open('articles/getting-started.html')
   try {
-    await page.waitForSelector('#toc a[href$="articles/getting-started.html"]')
-    await page.click('#toc a[href$="articles/getting-started.html"]')
-    await page.waitForURL(/articles\/getting-started\.html$/)
+    await chooseTab(page, 'netcord')
+    await openFromSidebar(page, 'recipes')
+    await assertSelected(page, ['netcord'])
+  } finally {
+    await close()
+  }
+})
+
+test('a page without the provider group does not forget the provider choice', async () => {
+  const { page, close } = await site.open('articles/getting-started.html')
+  try {
+    await chooseTab(page, 'sqlite')
+    await openFromSidebar(page, 'adapters')
+    await assertSelected(page, ['discordnet'])
+    await openFromSidebar(page, 'providers')
+    await assertSelected(page, ['sqlite'])
+  } finally {
+    await close()
+  }
+})
+
+test('with no choice made, a tab page opens on the docfx default tabs', async () => {
+  const { page, close } = await site.open('articles/getting-started.html')
+  try {
+    await page.waitForFunction(() => window.docfx?.ready)
+    await page.waitForTimeout(500)
+    await assertSelected(page, ['postgresql', 'discordnet'])
+  } finally {
+    await close()
+  }
+})
+
+test('an explicit tabs parameter wins over the remembered choice', async () => {
+  const { page, close } = await site.open('articles/getting-started.html')
+  try {
+    await chooseTab(page, 'sqlite')
+    await page.goto(site.server.url('articles/providers.html?tabs=sqlserver'), { waitUntil: 'networkidle' })
+    await page.waitForFunction(() => window.docfx?.ready)
+    await page.waitForTimeout(500)
+    await assertSelected(page, ['sqlserver'])
   } finally {
     await close()
   }
@@ -319,23 +382,25 @@ test('getting-started: reads as a tutorial', async () => {
   ])
 })
 
-test('a carried tab choice opens the matching tab on the next page', async () => {
-  const { page, close } = await site.open('articles/providers.html?tabs=sqlite')
-  try {
-    await page.waitForSelector('#toc a[href$="articles/getting-started.html"]')
-    await page.click('#toc a[href$="articles/getting-started.html"]')
-    await page.waitForURL(/getting-started\.html\?tabs=sqlite$/)
-    await page.waitForSelector('.tabGroup a[data-tab="sqlite"][aria-selected="true"]')
-  } finally {
-    await close()
-  }
-})
-
 for (const slug of ENRICHED.filter(slug => ER_NODES[slug])) {
   test(`${slug}: ER relationships match the model`, async () => {
     const { body } = await article(slug)
     const source = /^```mermaid\n([\s\S]*?)^```$/m.exec(body)?.[1] ?? ''
     assert.match(source, /^erDiagram$/m)
+    /* Every line must be the keyword, a line ER_LINE reads, or an attribute block,
+       so a relationship written in another form cannot slip past the comparison. */
+    let inBlock = false
+    for (const line of source.split('\n').filter(line => line.trim())) {
+      if (inBlock) {
+        inBlock = line.trim() !== '}'
+        assert.ok(!inBlock || ER_ATTRIBUTE.test(line), `not an attribute line: ${line}`)
+      } else if (/^\s*\w+\s*\{\s*$/.test(line)) {
+        inBlock = true
+      } else {
+        assert.ok(line.trim() === 'erDiagram' || new RegExp(ER_LINE.source).test(line), `not a relationship line ER_LINE reads: ${line}`)
+      }
+    }
+    assert.equal(inBlock, false, 'an attribute block is not closed')
     const drawn = [...source.matchAll(ER_LINE)].map(([, to, line, from, column]) =>
       edgeKey({ kind: line === '--' ? 'fk' : 'id', from, to, column })
     )

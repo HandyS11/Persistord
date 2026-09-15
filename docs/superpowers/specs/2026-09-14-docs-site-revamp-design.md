@@ -337,7 +337,7 @@ so `docs/development/toc.yml` and `docs/samples/toc.yml` are deleted; no page fi
 **New page:** `articles/upgrading.md`, holding the "Upgrading from 1.0.0-beta2" section extracted
 from `articles/core-graph.md` (which keeps a one-line pointer to it). Future upgrade notes go here.
 
-**Enrichment rules, applied to all 22 articles:**
+**Enrichment rules, applied to every article:**
 
 - **Callouts** replace prose that is *already* a note, warning, or caution — for example the
   plaintext warning in `protection.md`, the long-lived-context failure modes in
@@ -347,9 +347,10 @@ from `articles/core-graph.md` (which keeps a one-line pointer to it). Future upg
   provider setup (PostgreSQL / SQL Server / SQLite) in `getting-started.md` and `providers.md`;
   adapter usage (Discord.Net / DSharpPlus / NetCord) in `getting-started.md`, `recipes.md`
   ("Map from …"), and `adapters.md`. Tab ids are shared (`#tab/postgresql`, `#tab/discordnet`, …)
-  so a reader's choice carries across pages: DocFX syncs same-id groups within a page and records
-  the choice as `?tabs=<id>`, and `carryTabChoice()` in `start()` adds that parameter to same-site
-  links as they are followed.
+  so a reader's choice carries across pages: DocFX syncs same-id groups within a page and honours
+  `?tabs=<id>`, and the theme (`rememberTabChoices()` in `start()`) remembers the reader's choices
+  for the browsing session and applies them on each page; an explicit `?tabs=` wins for the groups
+  it names.
 - **Mermaid diagrams**, themed per section 2:
   `core-graph.md` (entity relationships), `messages.md` (message → embeds, attachments, reactions),
   `history.md` (message → history), `guild-lifecycle.md` (JoinedGuild/LeftGuild sequence),

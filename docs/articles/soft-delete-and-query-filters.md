@@ -4,12 +4,13 @@ description: How a MessageEntity is soft-deleted, the query filter that hides de
 
 # Soft-delete & Query Filters
 
-Deleting a `MessageEntity` sets two soft-delete fields instead of removing its row.
+A `MessageEntity` is soft-deleted: your code sets two fields instead of removing its row.
 
-- `IsDeleted` (`bool`) — set to `true` when the message is deleted.
-- `DeletedAt` (`DateTimeOffset?`) — the timestamp of the deletion.
+- `IsDeleted` (`bool`) — set it to `true` to mark the message deleted.
+- `DeletedAt` (`DateTimeOffset?`) — set it to the time of the deletion.
 
-The row survives physically, which is what keeps the [History](history.md) foreign key valid:
+Persistord never sets these for you: `Remove()` on a message is still a hard delete. Keeping
+the row is what keeps the [History](history.md) foreign key valid:
 `MessageHistoryEntity` holds a real FK to `MessageEntity` configured with
 `DeleteBehavior.Restrict`, so the database refuses to hard-delete a message that has history rows,
 and a soft-delete keeps every history row — including the one that logged the deletion — pointing
