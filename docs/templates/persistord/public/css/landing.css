@@ -304,6 +304,97 @@ body[data-layout='landing'] > main > .content > article {
   color: var(--pd-accent);
 }
 
+/* ----------------------------------------------------------------- model -- */
+
+/* Below 880px the diagram scrolls inside its figure instead of shrinking its
+   labels past legibility - the trade PR 1 made for Mermaid diagrams. */
+.pd-model-figure {
+  margin: 0;
+}
+
+.pd-model-scroll {
+  overflow-x: auto;
+  border-radius: var(--pd-radius);
+}
+
+.pd-model-svg {
+  display: block;
+  width: 100%;
+  min-width: 880px;
+  height: auto;
+  font-family: var(--pd-sans);
+}
+
+.pd-model-frame {
+  fill: var(--pd-surface);
+  stroke: var(--pd-hairline);
+  stroke-width: 1;
+}
+
+.pd-model-package {
+  fill: var(--pd-accent);
+  font-family: var(--pd-mono);
+  font-size: 13px;
+}
+
+/* A node's edge is a meaningful boundary, so it takes the 3:1 control border
+   rather than the decorative hairline. */
+.pd-model-node > rect {
+  fill: var(--pd-raised);
+  stroke: var(--pd-control-border);
+  stroke-width: 1;
+}
+
+.pd-model-name,
+.pd-model-cols {
+  text-anchor: middle;
+}
+
+.pd-model-name {
+  fill: var(--pd-text);
+  font-family: var(--pd-mono);
+  font-size: 15px;
+}
+
+.pd-model-cols {
+  fill: var(--pd-muted);
+  font-size: 12.5px;
+}
+
+.pd-model-edge {
+  fill: none;
+  stroke: var(--pd-muted);
+  stroke-width: 1.5;
+}
+
+.pd-model-edge[data-kind='id'] {
+  stroke-dasharray: 6 5;
+}
+
+.pd-model-head {
+  fill: var(--pd-muted);
+}
+
+.pd-model-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin-top: 0.85rem;
+  color: var(--pd-muted);
+  font-size: 0.875rem;
+}
+
+.pd-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pd-legend-swatch {
+  width: 36px;
+  height: 10px;
+}
+
 /* -------------------------------------------------------------- sections -- */
 
 .pd-section {
@@ -396,6 +487,7 @@ body[data-layout='landing'] > main > .content > article {
 
 /* Package names and API names in running landing copy read as texture here,
    so the inline-code tint is dropped. */
+.pd-model > p code,
 .pd-caption code,
 .pd-note code,
 .pd-package code,
