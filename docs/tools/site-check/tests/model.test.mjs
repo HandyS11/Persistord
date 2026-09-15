@@ -71,42 +71,66 @@ const EDGES = [
 const NODE_NAMES = [...new Set(EDGES.flatMap(edge => [edge.from, edge.to]))]
 const edgeKey = ({ kind, from, column, to }) => `${kind} ${from}.${column} -> ${to}`
 
-/** Every class declared in the three model packages: package, flattened source, base list. */
-async function modelClasses() {
-  const found = new Map()
+/*
+ * Reads every .cs file in the three model packages exactly once, so a repeated class name
+ * (every package has its own `ModelBuilderExtensions`) can never shadow another file's source
+ * out of the drift guards below. `files` is the source of truth for "does this codebase mention
+ * X anywhere"; `classes` is a name-keyed lookup for tests that already know which single class
+ * they want (entity and configuration names are unique across the three packages).
+ */
+async function modelSource() {
+  const classes = new Map()
+  const files = []
 
-  async function walk(directory, packageName) {
+  async function walk(directory, relativePath, packageName) {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       if (entry.name === 'bin' || entry.name === 'obj') {
         continue
       }
       if (entry.isDirectory()) {
-        await walk(new URL(`${entry.name}/`, directory), packageName)
+        await walk(new URL(`${entry.name}/`, directory), `${relativePath}${entry.name}/`, packageName)
         continue
       }
       if (!entry.name.endsWith('.cs')) {
         continue
       }
       const source = flatten(await readFile(new URL(entry.name, directory), 'utf8'))
+      const path = `${relativePath}${entry.name}`
+      files.push({ path, source })
+
       const declarations = source.matchAll(/\bpublic (?:sealed |abstract |static )*class (\w+)(?:\([^)]*\))? ?(:[^{]*)?\{/g)
       for (const [, name, bases] of declarations) {
-        found.set(name, { packageName, source, bases: bases?.trim() ?? '' })
+        classes.set(name, { packageName, source, bases: bases?.trim() ?? '' })
       }
     }
   }
 
   for (const packageName of PACKAGES) {
-    await walk(new URL(`src/${packageName}/`, REPO), packageName)
+    await walk(new URL(`src/${packageName}/`, REPO), `src/${packageName}/`, packageName)
   }
-  return found
+  return { classes, files }
 }
+
+/*
+ * The only navigations a drawn entity has to another drawn entity today. Each backs an `fk` edge
+ * already drawn from the *dependent's* foreign key column (Embed.MessageId, AttachmentEntity.MessageId,
+ * ReactionEntity.MessageId, EmbedField.EmbedId) - these four are the matching *principal-side*
+ * collection navigations, not a second relationship.
+ */
+const ALLOWED_NAVIGATIONS = new Set([
+  'MessageEntity.Embeds',
+  'MessageEntity.Attachments',
+  'MessageEntity.Reactions',
+  'Embed.Fields',
+])
 
 let site
 let classes
+let files
 
 before(async () => {
   site = await launchSite()
-  classes = await modelClasses()
+  ;({ classes, files } = await modelSource())
 })
 
 after(async () => {
@@ -145,14 +169,28 @@ test('every solid edge is a foreign key the configurations declare', async () =>
 })
 
 test('every dashed edge is a snowflake column with no foreign key behind it', () => {
-  const everything = [...new Set([...classes.values()].map(({ source }) => source))].join('\n')
+  /*
+   * GuildRootExtensions.cs calls HasForeignKey(nameof(IGuildScoped.GuildId)), but generically -
+   * it never names a specific entity, and it only reaches types that implement IGuildScoped. The
+   * "no bases" assertion below already proves no drawn entity does, so this file can never be the
+   * source of a foreign key on a drawn dashed-edge column and is exempt from the statement scan.
+   */
+  const EXEMPT = 'src/Persistord.Core/GuildRootExtensions.cs'
+  const foreignKeyStatements = files
+    .filter(({ path }) => path !== EXEMPT)
+    .flatMap(({ source }) => source.split(';'))
+    .filter(statement => statement.includes('HasForeignKey'))
+
   for (const edge of EDGES.filter(({ kind }) => kind === 'id')) {
     const label = `${edge.from}.${edge.column}`
     const entity = classes.get(edge.from)
     assert.match(entity.source, new RegExp(`public ulong\\?? ${edge.column} \\{`), `${label} is not a ulong column`)
-    assert.doesNotMatch(
-      everything,
-      new RegExp(`HasForeignKey\\( ?\\w+ => \\w+\\.${edge.column} ?\\)`),
+    /* Matches any form - lambda, nameof, string, generic type argument, composite key - because a
+       HasForeignKey statement anywhere that mentions this column name means it may no longer be
+       a bare, unconfigured snowflake reference. */
+    const column = new RegExp(`\\b${edge.column}\\b`)
+    assert.ok(
+      !foreignKeyStatements.some(statement => column.test(statement)),
       `${label} now has a configured foreign key - redraw it solid`
     )
     /* ApplyGuildRoot keys only IGuildScoped types; a base list could add one. */
@@ -167,6 +205,55 @@ test('every reference column on a drawn entity is drawn', () => {
       assert.ok(drawn.has(`${name}.${column}`), `${name}.${column} refers to another entity but is not drawn`)
     }
   }
+})
+
+test('every navigation from a drawn entity to another drawn entity is a recorded edge', () => {
+  const NAVIGATION = /public (?:(?:List|ICollection|IEnumerable)<(\w+)>|(\w+)\??) (\w+) \{/g
+  for (const name of NODE_NAMES) {
+    for (const [, collectionType, scalarType, propertyName] of classes.get(name).source.matchAll(NAVIGATION)) {
+      const referenced = collectionType ?? scalarType
+      if (!NODE_NAMES.includes(referenced)) {
+        continue
+      }
+      const key = `${name}.${propertyName}`
+      assert.ok(ALLOWED_NAVIGATIONS.has(key), `${key} navigates to ${referenced}, which is not drawn as an edge`)
+    }
+  }
+})
+
+test('every IEntityTypeConfiguration in the three packages configures a drawn entity', () => {
+  for (const [name, { bases }] of classes) {
+    const configured = /IEntityTypeConfiguration<(\w+)>/.exec(bases)
+    if (!configured) {
+      continue
+    }
+    assert.ok(NODE_NAMES.includes(configured[1]), `${name} configures ${configured[1]}, which is not drawn`)
+  }
+})
+
+test('every HasMany element type on a configured entity is drawn', () => {
+  for (const [name, { bases, source }] of classes) {
+    const configured = /IEntityTypeConfiguration<(\w+)>/.exec(bases)
+    if (!configured) {
+      continue
+    }
+    const entityName = configured[1]
+    const entity = classes.get(entityName)
+    assert.ok(entity, `${name} configures ${entityName}, which is not a class in ${PACKAGES.join(', ')}`)
+    for (const [, nav] of source.matchAll(/HasMany\(\w+ => \w+\.(\w+)\)/g)) {
+      const declaration = new RegExp(`public (?:List|ICollection|IEnumerable)<(\\w+)> ${nav} \\{`).exec(entity.source)
+      assert.ok(declaration, `${name}: HasMany(...${nav}) but ${entityName} declares no List<T> ${nav}`)
+      assert.ok(NODE_NAMES.includes(declaration[1]), `${entityName}.${nav} is a HasMany to ${declaration[1]}, which is not drawn`)
+    }
+  }
+})
+
+test('the configured foreign keys in the three packages equal the drawn fk edges', () => {
+  const count = files
+    .filter(({ path }) => path.includes('/Configurations/'))
+    .reduce((total, { source }) => total + (source.match(/\bHasForeignKey\b/g) ?? []).length, 0)
+  const fkEdges = EDGES.filter(({ kind }) => kind === 'fk').length
+  assert.equal(count, fkEdges, `Configurations/ folders declare ${count} HasForeignKey call(s), but EDGES records ${fkEdges} fk edge(s)`)
 })
 
 test('Embed shows the two types it owns', async () => {
