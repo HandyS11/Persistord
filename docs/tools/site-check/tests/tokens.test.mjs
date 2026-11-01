@@ -101,7 +101,7 @@ test('no stylesheet except tokens.css hard-codes a colour', async () => {
     if (name === 'tokens.css') {
       continue
     }
-    for (const match of css.matchAll(/:[^;{}]*?(#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?)\()/gi)) {
+    for (const match of css.matchAll(/:[^:;{}]*?(#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?)\()/gi)) {
       offenders.push(`${name}: ${match[0].trim()}`)
     }
   }

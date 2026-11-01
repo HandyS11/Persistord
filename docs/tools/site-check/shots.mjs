@@ -37,27 +37,48 @@ const PAGES = [
 const WIDTHS = [1440, 375]
 const OUT = new URL('./out/', import.meta.url)
 
+/* Browser contexts open at once. Each one is a renderer process, so the whole
+   matrix in parallel would exhaust memory on a laptop, while one at a time
+   makes the run several times longer than it needs to be. */
+const CONCURRENCY = 4
+
+const SHOTS = PAGES.flatMap(([name, path, prepare]) =>
+  THEMES.flatMap(theme => WIDTHS.map(width => ({ name, path, prepare, theme, width })))
+)
+
+async function shoot(site, { name, path, prepare, theme, width }) {
+  const { page, close } = await site.open(path, { theme, width, height: 900 })
+  try {
+    await prepare?.(page)
+    /* Mermaid renders after load. */
+    await page.waitForTimeout(600)
+    const file = new URL(`${name}-${theme}-${width}.png`, OUT)
+    await page.screenshot({ path: file.pathname, fullPage: true })
+    console.log(`shot ${name}-${theme}-${width}.png`)
+  } finally {
+    await close()
+  }
+}
+
+/* Runs `jobs` with at most `limit` in flight: each worker picks up the next
+   job as soon as its current one settles. */
+function runLimited(jobs, limit) {
+  const queue = [...jobs]
+  const worker = async () => {
+    const job = queue.shift()
+    if (job) {
+      await job()
+      await worker()
+    }
+  }
+  return Promise.all(Array.from({ length: limit }, worker))
+}
+
 await mkdir(OUT, { recursive: true })
 const site = await launchSite()
 
 try {
-  for (const [name, path, prepare] of PAGES) {
-    for (const theme of THEMES) {
-      for (const width of WIDTHS) {
-        const { page, close } = await site.open(path, { theme, width, height: 900 })
-        try {
-          await prepare?.(page)
-          /* Mermaid renders after load. */
-          await page.waitForTimeout(600)
-          const file = new URL(`${name}-${theme}-${width}.png`, OUT)
-          await page.screenshot({ path: file.pathname, fullPage: true })
-          console.log(`shot ${name}-${theme}-${width}.png`)
-        } finally {
-          await close()
-        }
-      }
-    }
-  }
+  await runLimited(SHOTS.map(shot => () => shoot(site, shot)), CONCURRENCY)
 } finally {
   await site.close()
 }

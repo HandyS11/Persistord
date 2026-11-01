@@ -104,6 +104,7 @@ npm ci
 npx playwright install chromium   # first run only
 npm run build                     # dotnet docfx docs/docfx.json --warningsAsErrors
 npm test
+npm run lint                      # ESLint with the SonarQube rule set (what the server will report)
 npm run shots                     # screenshot matrix into docs/tools/site-check/out/
 ```
 

@@ -10,9 +10,14 @@
     "build": "cd ../../.. && dotnet tool restore && dotnet docfx docs/docfx.json --warningsAsErrors",
     "build:fast": "cd ../../.. && dotnet docfx build docs/docfx.json --warningsAsErrors",
     "test": "node --test --test-concurrency=1 --test-timeout=120000 \"tests/*.test.mjs\"",
-    "shots": "node shots.mjs"
+    "shots": "node shots.mjs",
+    "lint": "eslint ."
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.14.0",
+    "eslint-plugin-sonarjs": "4.2.2",
+    "globals": "17.13.0",
     "playwright": "1.63.0"
   }
 }

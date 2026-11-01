@@ -413,6 +413,8 @@ dotnet_diagnostic.Moq1410.severity = none # Set behaviour to Strict
 
 dotnet_diagnostic.S2094.severity = none # Empty classes — intentional discriminated-union marker records (Marker/Note/EventArg hierarchies)
 
+dotnet_diagnostic.VSTHRD202.severity = warning # Return the Task directly instead of async/await — Info by default, so it never failed the build, but Sonar imports every Roslyn diagnostic as an issue
+
 dotnet_diagnostic.T0003.severity = none # Do not use tuples
 dotnet_diagnostic.T0006.severity = none # Do not use Helper in type name
 dotnet_diagnostic.T0008.severity = none # Move methods before nested types
