@@ -28,14 +28,12 @@ test('the hero leads with the wordmark, headline, lede, actions, install strip a
   const { page, close } = await site.open(LANDING)
   try {
     const hero = await page.$eval('.content article .pd-hero', section => {
-      const kind = link =>
-        link.classList.contains('pd-btn-primary')
-          ? 'primary'
-          : link.classList.contains('pd-btn')
-            ? 'outline'
-            : link.classList.contains('pd-text-link')
-              ? 'text'
-              : link.className
+      const KINDS = [
+        ['pd-btn-primary', 'primary'],
+        ['pd-btn', 'outline'],
+        ['pd-text-link', 'text'],
+      ]
+      const kind = link => KINDS.find(([className]) => link.classList.contains(className))?.[1] ?? link.className
       const text = element => element?.textContent.replace(/\s+/g, ' ').trim()
       return {
         mark: section.querySelector('.pd-eyebrow > img')?.getAttribute('alt'),

@@ -174,15 +174,14 @@ public static class ManagedStoreExtensions
             .Where(r => r.GuildId == guildId && r.Scope == scope)
             .ExecuteDeleteAsync(cancellationToken);
 
-    private static async Task<List<string>> ScopesOfAsync<TResource>(
+    private static Task<List<string>> ScopesOfAsync<TResource>(
         DbContext context,
         ulong guildId,
         CancellationToken cancellationToken)
         where TResource : ManagedResource =>
-        await context.Set<TResource>()
+        context.Set<TResource>()
             .Where(r => r.GuildId == guildId)
             .Select(r => r.Scope)
             .Distinct()
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
+            .ToListAsync(cancellationToken);
 }

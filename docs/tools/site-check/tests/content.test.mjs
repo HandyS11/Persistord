@@ -67,9 +67,11 @@ const ER_NODES = {
 }
 
 /* `Referenced ||--o{ Holder : "Column"`; `--` is a foreign key, `..` a plain id column. */
+// eslint-disable-next-line sonarjs/super-linear-regex -- parses a few dozen lines of a Mermaid source the repo owns
 const ER_LINE = /^\s*(\w+)\s+[|}o{]{2}(--|\.\.)[|}o{]{2}\s+(\w+)\s*:\s*"(\w+)"\s*$/gm
 
 /* An attribute inside an entity block: `type Name`, optional keys, optional "comment". */
+// eslint-disable-next-line sonarjs/regex-complexity -- parses a few dozen lines of a Mermaid source the repo owns
 const ER_ATTRIBUTE = /^\s*\w+\s+\w+(?:\s+(?:PK|FK|UK)(?:\s*,\s*(?:PK|FK|UK))*)?(?:\s+"[^"]*")?\s*$/
 
 const diagramsRendered = page =>
@@ -97,6 +99,7 @@ async function article(slug) {
   const header = /^---\n([\s\S]*?)\n---\n/.exec(text)
   const body = header ? text.slice(header[0].length) : text
   const description = header ? /^description: (.+)$/m.exec(header[1])?.[1] ?? null : null
+  // eslint-disable-next-line sonarjs/super-linear-regex -- blanks fenced code blocks in a handful of repo-owned articles
   const prose = body.replace(/^(`{3,}|~{3,})[^\n]*\n[\s\S]*?^\1[ \t]*$/gm, block => block.replace(/[^\n]/g, ''))
   return { text, body, prose, description }
 }
